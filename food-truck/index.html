@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Startup Tycoon: Food Truck Season</title>
+<style>
+ *{box-sizing:border-box}
+ body{margin:0;font-family:system-ui,Segoe UI,Arial,sans-serif;background:#0f1115;color:#e8e8e8}
+ header{padding:14px 18px;background:#151922;border-bottom:1px solid #2a2f3a;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center}
+ h1{margin:0;font-size:1.2rem;color:#f4a261;letter-spacing:.5px}
+ main{max-width:900px;margin:16px auto;padding:0 12px}
+ .panel{background:#171b24;border:1px solid #2a2f3a;border-radius:10px;padding:16px;margin-bottom:14px}
+ .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+ .stat{background:#1e2330;border-radius:8px;padding:10px}
+ .stat .k{font-size:.75rem;color:#9aa3b2;text-transform:uppercase}
+ .stat .v{font-size:1.3rem;font-weight:700}
+ label{display:block;margin:10px 0 4px;color:#c9cfd9}
+ input[type=range]{width:100%}
+ button{font:inherit;font-weight:600;background:#f4a261;color:#111;border:none;border-radius:8px;padding:10px 16px;cursor:pointer;margin:4px 4px 0 0}
+ button.sec{background:#2a2f3a;color:#e8e8e8}
+ .good{color:#7bd389}.bad{color:#ef6f6c}.muted{color:#9aa3b2;font-size:.9rem}
+ table{width:100%;border-collapse:collapse;font-size:.9rem}td,th{padding:6px;border-bottom:1px solid #2a2f3a;text-align:right}td:first-child,th:first-child{text-align:left}
+ .choice{background:#1e2330;border:1px solid #39404f;border-radius:8px;padding:12px;margin:8px 0;cursor:pointer}
+ .choice:hover{border-color:#f4a261}
+ .quote{border-left:3px solid #f4a261;padding-left:10px;color:#c9cfd9;font-style:italic}
+</style>
+</head>
+<body>
+<header><h1>🚚 STARTUP TYCOON — Food Truck Season</h1><span class="muted" id="best"></span></header>
+<main id="app"></main>
+<script>
+const WEEKS=12, START_CASH=1500, COST_PER_MEAL=3.5, TRUCK_FEE=250;
+const WEATHER=[{n:"☀️ Sunny",m:1.25},{n:"⛅ Cloudy",m:1.0},{n:"🌧️ Rainy",m:0.55},{n:"🔥 Heat wave",m:1.1},{n:"🎉 Festival week",m:1.8}];
+const DILEMMAS=[
+ {t:"Your supplier offers cheap meat that's close to its expiration date. It would cut your cost per meal by $1 this week.",
+  a:{l:"Take the cheap meat",now:s=>{s.costCut=1},later:{w:3,f:s=>{s.rep-=25;return"Two customers got sick. Word spread fast. Reputation −25."}}},
+  b:{l:"Pay full price for fresh food",now:s=>{},later:{w:3,f:s=>{s.rep+=10;return"A food blogger praised your fresh ingredients. Reputation +10."}}},
+  q:"\"If it is not right, do not do it; if it is not true, do not say it.\" — Marcus Aurelius"},
+ {t:"A rival truck parks right next to you and undercuts your prices. You could post fake bad reviews about them online.",
+  a:{l:"Post the fake reviews",now:s=>{s.rep+=5},later:{w:2,f:s=>{s.rep-=35;return"The reviews were traced back to you. Reputation −35."}}},
+  b:{l:"Compete on quality instead",now:s=>{},later:{w:2,f:s=>{s.rep+=8;return"Customers noticed you stayed classy. Reputation +8."}}},
+  q:"\"The best revenge is not to be like your enemy.\" — Marcus Aurelius"},
+ {t:"Your teen employee asks for a raise of $40/week. They're your hardest worker.",
+  a:{l:"Say no — keep costs down",now:s=>{},later:{w:2,f:s=>{s.speed-=0.15;return"Your best worker quit. You serve 15% fewer customers."}}},
+  b:{l:"Give the raise",now:s=>{s.wage+=40},later:{w:2,f:s=>{s.speed+=0.1;return"Your crew is motivated. You serve 10% more customers."}}},
+  q:"\"We are made for cooperation, like feet, like hands.\" — Marcus Aurelius"},
+ {t:"A big storm wrecks your awning. You can feel frustrated and close for the week, or spend $200 fixing it and keep going.",
+  a:{l:"Close for the week",now:s=>{s.closed=true},later:null},
+  b:{l:"Fix it and open ($200)",now:s=>{s.cash-=200},later:{w:1,f:s=>{s.rep+=5;return"Regulars admired that you never quit. Reputation +5."}}},
+  q:"\"The impediment to action advances action. What stands in the way becomes the way.\" — Marcus Aurelius"}
+];
+let s, pending, log;
+const best=()=>+localStorage.getItem("tycoonBest")||0;
+function showBest(){document.getElementById("best").textContent=`Personal best: $${best().toLocaleString()}`;}
+function newGame(){
+ s={week:1,cash:START_CASH,rep:50,speed:1,wage:120,costCut:0,closed:false,price:8,history:[]};
+ pending=[];log=[];
+ forecast();intro();
+}
+function forecast(){
+ const r=Math.random();
+ s.wx=r<.3?WEATHER[0]:r<.6?WEATHER[1]:r<.8?WEATHER[2]:r<.93?WEATHER[3]:WEATHER[4];
+ s.dilemma=(s.week%3===0)?DILEMMAS[(s.week/3-1)%DILEMMAS.length]:null;
+}
+const app=document.getElementById("app");
+function intro(){
+ app.innerHTML=`<div class="panel"><h2>Your mission</h2>
+ <p>You've got <b>$${START_CASH.toLocaleString()}</b> and a food truck. Run it for <b>${WEEKS} weeks</b>. Each week, set your price and decide how many meals to prep. The math decides everything:</p>
+ <ul><li>Each meal costs <b>$${COST_PER_MEAL.toFixed(2)}</b> to make. Leftovers are thrown away.</li>
+ <li>Higher prices mean fewer customers. <b>Reputation</b> and <b>weather</b> change demand.</li>
+ <li>Fixed costs every week: $${TRUCK_FEE} truck fee plus your crew's wages.</li>
+ <li>Every few weeks you'll face a decision. Some shortcuts pay off now… and come back later.</li></ul>
+ <p>Beat your personal best. If your cash drops below $0, you're out of business.</p>
+ <button onclick="week()">Start Week 1</button></div>`;
+}
+function demand(price){
+ const base=220*Math.max(0,(1-(price-5)/12))*(s.rep/50)*s.wx.m;
+ return Math.max(0,Math.round(base));
+}
+function stats(){
+ return `<div class="stats">
+  <div class="stat"><div class="k">Week</div><div class="v">${Math.min(s.week,WEEKS)} / ${WEEKS}</div></div>
+  <div class="stat"><div class="k">Cash</div><div class="v ${s.cash<0?"bad":""}">$${Math.round(s.cash).toLocaleString()}</div></div>
+  <div class="stat"><div class="k">Reputation</div><div class="v">${s.rep}</div></div>
+  <div class="stat"><div class="k">Forecast</div><div class="v" style="font-size:1rem">${s.wx.n}</div></div></div>`;
+}
+function week(){
+ if(s.dilemma && !s.dilemmaDone){return dilemma();}
+ const cost=(COST_PER_MEAL-s.costCut).toFixed(2);
+ app.innerHTML=`<div class="panel">${stats()}</div>
+ <div class="panel"><h2>Week ${s.week} plan</h2>
+ ${s.closed?`<p class="bad">You closed this week. No sales, but fixed costs still apply.</p><button onclick="run()">Continue</button>`:`
+ <label>Price per meal: <b>$<span id="pv">${s.price}</span></b></label>
+ <input type="range" id="price" min="4" max="16" step="0.5" value="${s.price}" oninput="document.getElementById('pv').textContent=this.value">
+ <label>Meals to prep (cost $${cost} each)</label>
+ <input type="range" id="prep" min="0" max="400" step="10" value="150" oninput="document.getElementById('qv').textContent=this.value">
+ <p>Prep: <b id="qv">150</b> meals</p>
+ <p class="muted">Tip: rainy weeks cut demand a lot. Festivals nearly double it. Every meal you don't sell is lost money.</p>
+ <button onclick="run()">Run the week ▶</button>`}
+ </div>${historyTable()}`;
+}
+function dilemma(){
+ const d=s.dilemma;
+ app.innerHTML=`<div class="panel">${stats()}</div>
+ <div class="panel"><h2>⚖️ Decision time</h2><p>${d.t}</p>
+ <div class="choice" onclick="choose('a')">${d.a.l}</div>
+ <div class="choice" onclick="choose('b')">${d.b.l}</div></div>`;
+}
+function choose(k){
+ const opt=s.dilemma[k];
+ opt.now(s);
+ if(opt.later)pending.push({at:s.week+opt.later.w,f:opt.later.f});
+ s.lastQuote=s.dilemma.q;
+ s.dilemmaDone=true;week();
+}
+function run(){
+ let sold=0,rev=0,prep=0,price=s.price,cost=COST_PER_MEAL-s.costCut;
+ if(!s.closed){
+  price=+document.getElementById("price").value;prep=+document.getElementById("prep").value;
+  s.price=price;
+  const d=Math.round(demand(price)*s.speed);
+  sold=Math.min(d,prep);rev=sold*price;
+  if(prep>0 && sold<d*0.8 && sold===prep) s.rep=Math.max(0,s.rep-3); // sold out, lines unhappy
+ }
+ const food=prep*cost, fixed=TRUCK_FEE+s.wage, profit=rev-food-fixed;
+ s.cash+=profit;
+ const events=[];
+ pending=pending.filter(p=>{if(p.at<=s.week){events.push(p.f(s));return false}return true});
+ s.rep=Math.max(0,Math.min(100,s.rep));
+ s.history.push({w:s.week,wx:s.wx.n,price,prep,sold,profit});
+ const quote=s.lastQuote;s.lastQuote=null;
+ app.innerHTML=`<div class="panel">${stats()}</div>
+ <div class="panel"><h2>Week ${s.week} results</h2>
+ <table><tr><td>Meals sold</td><td>${sold} / ${prep} prepped</td></tr>
+ <tr><td>Revenue</td><td>$${rev.toFixed(2)}</td></tr>
+ <tr><td>Food cost</td><td>−$${food.toFixed(2)}</td></tr>
+ <tr><td>Truck fee + wages</td><td>−$${fixed.toFixed(2)}</td></tr>
+ <tr><th>Profit</th><th class="${profit>=0?"good":"bad"}">${profit>=0?"+":""}$${profit.toFixed(2)}</th></tr></table>
+ ${events.map(e=>`<p><b>Consequence:</b> ${e}</p>`).join("")}
+ ${quote?`<p class="quote">${quote}</p>`:""}
+ <button onclick="next()">${s.cash<0||s.week>=WEEKS?"See final results":"Next week ▶"}</button></div>`;
+ s.closed=false;s.costCut=0;
+}
+function next(){
+ if(s.cash<0)return end(true);
+ if(s.week>=WEEKS)return end(false);
+ s.week++;s.dilemmaDone=false;forecast();week();
+}
+function historyTable(){
+ if(!s.history.length)return "";
+ return `<div class="panel"><h2>Ledger</h2><table><tr><th>Wk</th><th>Weather</th><th>Price</th><th>Prep</th><th>Sold</th><th>Profit</th></tr>
+ ${s.history.map(h=>`<tr><td>${h.w}</td><td>${h.wx}</td><td>$${h.price}</td><td>${h.prep}</td><td>${h.sold}</td><td class="${h.profit>=0?"good":"bad"}">${h.profit.toFixed(0)}</td></tr>`).join("")}</table></div>`;
+}
+function end(broke){
+ const final=Math.round(s.cash);
+ const pb=best(); let msg="";
+ if(!broke && final>pb){localStorage.setItem("tycoonBest",final);msg=`<p class="good"><b>New personal best!</b> Previous: $${pb.toLocaleString()}</p>`;}
+ showBest();
+ app.innerHTML=`<div class="panel"><h2>${broke?"💸 Out of business":"🏁 Season over"}</h2>
+ <p>Final cash: <b>$${final.toLocaleString()}</b> (started with $${START_CASH.toLocaleString()})</p>
+ <p>Final reputation: <b>${s.rep}</b></p>${msg}
+ <p class="muted">Ask yourself: Which week lost the most money, and why? What would you change next season?</p>
+ <button onclick="newGame()">Play another season</button></div>${historyTable()}`;
+}
+showBest();newGame();
+</script>
+</body>
+</html>

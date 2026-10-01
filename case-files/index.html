@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Officer Cam's Case Files</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Trebuchet MS",Arial,sans-serif;background:#1c2541;color:#1c1c1c;min-height:100vh}
+  header{background:#0b132b;color:#ffd166;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+  header h1{margin:0;font-size:1.3rem;letter-spacing:1px}
+  .badge{background:#ffd166;color:#0b132b;border-radius:20px;padding:4px 12px;font-weight:bold;font-size:.9rem}
+  main{max-width:860px;margin:18px auto;padding:0 12px}
+  .card{background:#fdf6e3;border-radius:12px;padding:18px;margin-bottom:16px;box-shadow:0 4px 0 #0b132b}
+  .file{background:#f4e1b0;border-left:8px solid #c0392b}
+  h2{margin-top:0;color:#0b132b}
+  button{font:inherit;font-weight:bold;border:none;border-radius:8px;padding:10px 16px;margin:4px;cursor:pointer;background:#3a86ff;color:#fff}
+  button:hover{filter:brightness(1.1)}
+  button.alt{background:#6c757d}
+  button.red{background:#c0392b}
+  button.done{background:#2a9d8f}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  .suspect{background:#fff;border-radius:10px;padding:12px;border:2px solid #ddd}
+  .suspect .face{font-size:2.4rem}
+  input{font:inherit;padding:9px;border-radius:8px;border:2px solid #aaa;width:160px}
+  .msg{margin-top:10px;font-weight:bold}
+  .ok{color:#2a9d8f}.bad{color:#c0392b}
+  .evidence li{margin:4px 0}
+  .locked{opacity:.55}
+  .hint{font-size:.9rem;color:#555;font-style:italic}
+  .stamp{display:inline-block;border:4px solid #c0392b;color:#c0392b;padding:6px 14px;font-size:1.6rem;transform:rotate(-8deg);font-weight:900;margin:10px 0}
+  table{border-collapse:collapse;margin:8px 0}td,th{border:1px solid #999;padding:6px 10px;background:#fff}
+</style>
+</head>
+<body>
+<header><h1>🚔 OFFICER CAM'S CASE FILES</h1><span class="badge" id="rank">Rank: Rookie • 0 ⭐</span></header>
+<main id="app"></main>
+<script>
+const CASES = [
+ {
+  id:"cookies", title:"Case #1: The Cookie Jar Caper",
+  intro:"Someone swiped 24 chocolate chip cookies from the Huntertown Bakery! Three suspects were seen near the bakery. Solve the clues to find out who did it.",
+  suspects:[
+   {name:"Baker Bella",face:"👩‍🍳",note:"Owns the bakery. Says she left at 5:00 PM."},
+   {name:"Rex the Raccoon Wrangler",face:"🧔",note:"Was 'catching raccoons' near the back door."},
+   {name:"Penny Paperboy",face:"🧒",note:"Delivers papers. Has a big empty bag."}
+  ],
+  culprit:"Rex the Raccoon Wrangler",
+  puzzles:[
+   {type:"math",q:"The jar held 24 cookies. Crumbs show the thief ate 1/4 of them right away. How many cookies did the thief eat at the scene?",a:"6",hint:"1/4 of 24 means 24 ÷ 4.",evidence:"🍪 Crumb trail: the thief ate 6 cookies at the scene, then headed toward the BACK door."},
+   {type:"read",q:"Decode the note found by the jar. Each letter is shifted ONE letter forward in the alphabet (B means A).\n\nSBDDPPO",a:"RACCOON",hint:"Move each letter back one: S→R, B→A…",evidence:"📝 Secret note decoded: 'RACCOON'. Who was near raccoons?"},
+   {type:"math",q:"A muddy boot print is 30 cm long. Penny's shoe is 22 cm, Bella's is 24 cm, Rex's is 30 cm. Whose shoe matches EXACTLY?",a:"rex",hint:"Type the first name of the suspect.",evidence:"👢 Boot print match: 30 cm — exactly Rex's size."}
+  ]
+ },
+ {
+  id:"bike", title:"Case #2: The Vanishing Bike",
+  intro:"A brand-new bike vanished from the park bike rack. The park camera recorded times, and witnesses left statements. Build the timeline!",
+  suspects:[
+   {name:"Coach Carter",face:"🧑‍🏫",note:"Says he was running laps from 2:00 to 3:00."},
+   {name:"Dana the Dog Walker",face:"👩",note:"Walked 3 dogs around the lake."},
+   {name:"Marty the Mechanic",face:"👨‍🔧",note:"Has a shop full of bike parts."}
+  ],
+  culprit:"Marty the Mechanic",
+  puzzles:[
+   {type:"math",q:"The bike was locked at 1:45 PM and gone at 2:25 PM. How many minutes was the window for the theft?",a:"40",hint:"From 1:45 to 2:00 is 15 minutes. Then add 2:00 to 2:25.",evidence:"⏱️ Theft window: 40 minutes (1:45–2:25 PM)."},
+   {type:"read",q:"Witness statement: \"I saw someone in a grease-stained apron wheel a bike toward the street. They were NOT walking dogs and NOT wearing a whistle.\"\n\nWhat stained the person's apron? (one word)",a:"grease",hint:"Read the statement again carefully.",evidence:"🧾 Witness: grease-stained apron, no dogs, no whistle."},
+   {type:"math",q:"Dana walked 3 laps of the 1.5-mile lake path. How many miles did she walk? (She was seen by 10 people the whole time.)",a:"4.5",hint:"3 × 1.5",evidence:"🐕 Dana's alibi checks out: 4.5 miles with witnesses the whole time."}
+  ]
+ },
+ {
+  id:"cart", title:"Case #3: The Great Getaway Cart (Physics Case!)",
+  intro:"A grocery cart full of stolen watermelons rolled down Ramp Hill and crashed. The thief claims it rolled by itself from the parking lot. Use science to bust the story!",
+  suspects:[
+   {name:"Gus the Grocer",face:"👴",note:"Says the cart rolled away by accident."},
+   {name:"Sally Skater",face:"🛹",note:"Was skating on Ramp Hill."},
+   {name:"Ned the Neighbor",face:"🧑",note:"Owns a big wagon and LOVES watermelon."}
+  ],
+  culprit:"Ned the Neighbor",
+  puzzles:[
+   {type:"math",q:"The cart travelled 60 meters in 12 seconds. What was its average speed in meters per second?",a:"5",hint:"Speed = distance ÷ time.",evidence:"📏 Cart speed: 5 m/s — way too fast to be an accident from a flat lot."},
+   {type:"read",q:"Science fact: A cart only rolls on its own if it's on a slope. Gravity pulls it DOWN the hill. The parking lot is perfectly flat.\n\nTrue or false: a cart on flat ground starts rolling by itself. (type true or false)",a:"false",hint:"Gravity needs a slope to pull the cart.",evidence:"🧪 Science: carts don't start rolling on flat ground. Someone PUSHED it from the top of the hill."},
+   {type:"math",q:"Wagon tracks at the top of the hill hold 5 watermelons per row and there are 4 rows of dents. How many watermelons were loaded from a WAGON?",a:"20",hint:"5 × 4",evidence:"🍉 Wagon tracks: 20 watermelons moved by WAGON. Who owns a big wagon?"}
+  ]
+ }
+];
+
+const save = JSON.parse(localStorage.getItem("ocam")||"{}");
+save.solved = save.solved||{};
+save.stars = save.stars||0;
+function persist(){localStorage.setItem("ocam",JSON.stringify(save));rank();}
+function rank(){
+  const n=Object.keys(save.solved).length;
+  const r=n>=3?"Detective Chief":n==2?"Sergeant":n==1?"Officer":"Rookie";
+  document.getElementById("rank").textContent=`Rank: ${r} • ${save.stars} ⭐`;
+}
+const app=document.getElementById("app");
+let cur=null, progress=[], wrong=0;
+
+function home(){
+  app.innerHTML=`<div class="card"><h2>Welcome to the station, Officer Cam! 👮</h2>
+  <p>Crimes are happening all over Huntertown. Each case has <b>3 clues</b>. Solve the math and reading puzzles to unlock evidence, then make your arrest. Get it right on the first try for ⭐⭐⭐!</p></div>
+  <div class="grid">${CASES.map((c,i)=>`
+   <div class="card file"><h2>${c.title}</h2>
+   <p>${save.solved[c.id]?`<span class="stamp">SOLVED</span>`:"Status: OPEN"}</p>
+   <button onclick="openCase(${i})">${save.solved[c.id]?"Replay case":"Open case file"}</button></div>`).join("")}
+  </div>
+  <p style="text-align:center"><button class="alt" onclick="if(confirm('Reset all progress?')){localStorage.removeItem('ocam');location.reload()}">Reset progress</button></p>`;
+}
+function openCase(i){cur=CASES[i];progress=[];wrong=0;render();}
+function render(){
+  const c=cur;
+  const next=progress.length;
+  app.innerHTML=`<div class="card file"><h2>${c.title}</h2><p>${c.intro}</p></div>
+  <div class="card"><h2>Suspects</h2><div class="grid">${c.suspects.map(s=>`<div class="suspect"><div class="face">${s.face}</div><b>${s.name}</b><p>${s.note}</p></div>`).join("")}</div></div>
+  <div class="card"><h2>Evidence board (${next}/3)</h2><ul class="evidence">${progress.map(p=>`<li>${p}</li>`).join("")||"<li class='hint'>No evidence yet. Solve a clue!</li>"}</ul></div>
+  ${next<3?puzzleHTML(c.puzzles[next],next):accuseHTML()}
+  <p><button class="alt" onclick="home()">⬅ Back to station</button></p>`;
+}
+function puzzleHTML(p,n){
+  return `<div class="card"><h2>Clue ${n+1}: ${p.type=="math"?"🔢 Math Lab":"📖 Reading Room"}</h2>
+  <p style="white-space:pre-line">${p.q}</p>
+  <input id="ans" onkeydown="if(event.key==='Enter')check()" autocomplete="off"> <button onclick="check()">Check</button>
+  <button class="alt" onclick="document.getElementById('h').textContent='💡 '+cur.puzzles[${n}].hint">Hint</button>
+  <div class="hint" id="h"></div><div class="msg" id="m"></div></div>`;
+}
+function norm(s){return s.trim().toLowerCase().replace(/[^a-z0-9.]/g,"");}
+function check(){
+  const p=cur.puzzles[progress.length];
+  const v=norm(document.getElementById("ans").value);
+  const m=document.getElementById("m");
+  if(v===norm(p.a)){progress.push(p.evidence);render();}
+  else{wrong++;m.className="msg bad";m.textContent="Not quite, Officer. Look again! (Try the hint.)";}
+}
+function accuseHTML(){
+  return `<div class="card"><h2>🚨 Make your arrest!</h2><p>Look at your evidence board. Who did it?</p>
+  ${cur.suspects.map(s=>`<button class="red" onclick="accuse('${s.name}')">Arrest ${s.name}</button>`).join("")}
+  <div class="msg" id="m"></div></div>`;
+}
+function accuse(name){
+  const m=document.getElementById("m");
+  if(name===cur.culprit){
+    const stars=wrong==0?3:wrong<=2?2:1;
+    if(!save.solved[cur.id]||save.solved[cur.id]<stars){save.stars+=stars-(save.solved[cur.id]||0);save.solved[cur.id]=stars;}
+    persist();
+    app.innerHTML=`<div class="card" style="text-align:center"><span class="stamp">CASE CLOSED</span>
+    <h2>Great work, Officer Cam! ${"⭐".repeat(stars)}</h2>
+    <p>${cur.culprit} has been arrested. The evidence never lies!</p>
+    <button onclick="home()">Back to station</button></div>`;
+  } else {wrong++;m.className="msg bad";m.textContent=`${name} has an alibi! Check the evidence again.`;}
+}
+rank();home();
+</script>
+</body>
+</html>
