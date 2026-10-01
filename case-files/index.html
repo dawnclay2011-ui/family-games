@@ -164,7 +164,7 @@ function accuse(name){
   } else {wrong++;wrongArrests++;m.className="msg bad";m.textContent=`${name} has an alibi! Check the evidence again.`;}
 }
 /* ---- Report to Mom (FormSubmit AJAX) ---- */
-const MOM_EMAIL="dawnclay2011@gmail.com"; // TODO: swap for FormSubmit's random alias from the activation email to hide the address
+const MOM_EMAIL="8caedc1e9653325b52b367e2e172d2a3"; // FormSubmit alias (hides Mom's address)
 const REPORT_URL="https://formsubmit.co/ajax/"+MOM_EMAIL;
 function nowStr(){try{return new Date().toLocaleString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short"});}catch(e){return new Date().toString();}}
 function postReport(fields){
