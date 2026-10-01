@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache">
 <title>Officer Cam's Case Files</title>
 <style>
   *{box-sizing:border-box}
@@ -29,6 +30,9 @@
   .locked{opacity:.55}
   .hint{font-size:.9rem;color:#555;font-style:italic}
   .stamp{display:inline-block;border:4px solid #c0392b;color:#c0392b;padding:6px 14px;font-size:1.6rem;transform:rotate(-8deg);font-weight:900;margin:10px 0}
+  .report{margin:8px 0}.rstat{display:block;margin-top:4px;font-weight:bold;font-size:.95rem}.rstat.good{color:#2a9d8f}.rstat.bad{color:#c0392b}
+  button.rep{background:#8e44ad}button.rep.small{font-size:.85rem;padding:7px 12px}button.rep.sent{background:#2a9d8f}button:disabled{cursor:default;filter:none;opacity:.9}
+  button{max-width:100%;white-space:normal}
   table{border-collapse:collapse;margin:8px 0}td,th{border:1px solid #999;padding:6px 10px;background:#fff}
 </style>
 </head>
@@ -87,14 +91,17 @@ const CASES = [
 const save = JSON.parse(localStorage.getItem("ocam")||"{}");
 save.solved = save.solved||{};
 save.stars = save.stars||0;
+save.clues = save.clues||{}; // {caseId:{c:correct,a:attempted}} — added for Mom's reports
 function persist(){localStorage.setItem("ocam",JSON.stringify(save));rank();}
-function rank(){
+function rankName(){
   const n=Object.keys(save.solved).length;
-  const r=n>=3?"Detective Chief":n==2?"Sergeant":n==1?"Officer":"Rookie";
-  document.getElementById("rank").textContent=`Rank: ${r} • ${save.stars} ⭐`;
+  return n>=3?"Detective Chief":n==2?"Sergeant":n==1?"Officer":"Rookie";
+}
+function rank(){
+  document.getElementById("rank").textContent=`Rank: ${rankName()} • ${save.stars} ⭐`;
 }
 const app=document.getElementById("app");
-let cur=null, progress=[], wrong=0;
+let cur=null, progress=[], wrong=0, tries=0, wrongArrests=0, lastCase=null;
 
 function home(){
   app.innerHTML=`<div class="card"><h2>Welcome to the station, Officer Cam! 👮</h2>
@@ -104,9 +111,10 @@ function home(){
    <p>${save.solved[c.id]?`<span class="stamp">SOLVED</span>`:"Status: OPEN"}</p>
    <button onclick="openCase(${i})">${save.solved[c.id]?"Replay case":"Open case file"}</button></div>`).join("")}
   </div>
+  <div class="card" style="text-align:center">${reportBtn("progressReport","📨 Send progress report to Mom",true)}</div>
   <p style="text-align:center"><button class="alt" onclick="if(confirm('Reset all progress?')){localStorage.removeItem('ocam');location.reload()}">Reset progress</button></p>`;
 }
-function openCase(i){cur=CASES[i];progress=[];wrong=0;render();}
+function openCase(i){cur=CASES[i];progress=[];wrong=0;tries=0;wrongArrests=0;render();}
 function render(){
   const c=cur;
   const next=progress.length;
@@ -128,7 +136,12 @@ function check(){
   const p=cur.puzzles[progress.length];
   const v=norm(document.getElementById("ans").value);
   const m=document.getElementById("m");
-  if(v===norm(p.a)){progress.push(p.evidence);render();}
+  if(!v)return;
+  const ok=v===norm(p.a);
+  tries++;
+  const cs=save.clues[cur.id]=save.clues[cur.id]||{c:0,a:0};cs.a++;if(ok)cs.c++;
+  try{localStorage.setItem("ocam",JSON.stringify(save));}catch(e){}
+  if(ok){progress.push(p.evidence);render();}
   else{wrong++;m.className="msg bad";m.textContent="Not quite, Officer. Look again! (Try the hint.)";}
 }
 function accuseHTML(){
@@ -142,11 +155,68 @@ function accuse(name){
     const stars=wrong==0?3:wrong<=2?2:1;
     if(!save.solved[cur.id]||save.solved[cur.id]<stars){save.stars+=stars-(save.solved[cur.id]||0);save.solved[cur.id]=stars;}
     persist();
+    lastCase={title:cur.title,culprit:cur.culprit,stars,best:save.solved[cur.id],correct:progress.length,tries,wrongArrests};
     app.innerHTML=`<div class="card" style="text-align:center"><span class="stamp">CASE CLOSED</span>
     <h2>Great work, Officer Cam! ${"⭐".repeat(stars)}</h2>
     <p>${cur.culprit} has been arrested. The evidence never lies!</p>
+    ${reportBtn("caseReport","📨 Report to Mom")}
     <button onclick="home()">Back to station</button></div>`;
-  } else {wrong++;m.className="msg bad";m.textContent=`${name} has an alibi! Check the evidence again.`;}
+  } else {wrong++;wrongArrests++;m.className="msg bad";m.textContent=`${name} has an alibi! Check the evidence again.`;}
+}
+/* ---- Report to Mom (FormSubmit AJAX) ---- */
+const MOM_EMAIL="dawnclay2011@gmail.com"; // TODO: swap for FormSubmit's random alias from the activation email to hide the address
+const REPORT_URL="https://formsubmit.co/ajax/"+MOM_EMAIL;
+function nowStr(){try{return new Date().toLocaleString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short"});}catch(e){return new Date().toString();}}
+function postReport(fields){
+ const ctl=typeof AbortController!=="undefined"?new AbortController():null;
+ const t=ctl?setTimeout(()=>ctl.abort(),15000):null;
+ return fetch(REPORT_URL,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(fields),signal:ctl?ctl.signal:undefined})
+  .then(r=>r.json().catch(()=>({success:r.ok?"true":"false",message:"HTTP "+r.status})).then(j=>{j._status=r.status;return j;}))
+  .finally(()=>{if(t)clearTimeout(t);});
+}
+function reportBtn(builder,label,small){
+ return `<div class="report"><button type="button" class="rep${small?" small":""}" onclick="reportToMom(this,${builder})">${label}</button><span class="rstat" role="status" aria-live="polite"></span></div>`;
+}
+function reportToMom(btn,build){
+ const st=btn.nextElementSibling;
+ if(btn.dataset.sent||btn.disabled)return;
+ if(navigator.onLine===false){st.className="rstat bad";st.textContent="No internet — try again later.";btn.textContent="🔁 Try again";return;}
+ let fields;
+ try{fields=Object.assign({_subject:REPORT_SUBJECT,_template:"box",_captcha:"false",Date:nowStr(),Player:REPORT_PLAYER,Game:REPORT_GAME},build());}
+ catch(e){st.className="rstat bad";st.textContent="Oops — couldn't build the report.";return;}
+ btn.disabled=true;btn.textContent="Sending… 📤";st.className="rstat";st.textContent="";
+ postReport(fields).then(j=>{
+  if(String(j.success)!=="true")throw new Error(j.message||"Send failed");
+  btn.dataset.sent="1";btn.textContent="Sent! ✅";btn.classList.add("sent");st.className="rstat good";st.textContent="Mom got your report!";
+ }).catch(e=>{
+  btn.disabled=false;btn.textContent="🔁 Try again";st.className="rstat bad";
+  st.textContent=navigator.onLine===false?"No internet — try again later.":/activat/i.test(e&&e.message||"")?"Almost! Mom needs to switch on reports first. Try again later.":"Oops — that didn't send. Tap to try again!";
+ });
+}
+const REPORT_SUBJECT="Game Report: Cam – Officer Cam's Case Files", REPORT_PLAYER="Cam (age 11)", REPORT_GAME="Officer Cam's Case Files";
+function starText(n){return n?`${"⭐".repeat(n)} (${n} of 3)`:"none yet";}
+function solvedCount(){return Object.keys(save.solved).length;}
+function caseReport(){
+  const L=lastCase;
+  return {
+    "Case":L.title,
+    "Solved":`Yes ✅ — arrested ${L.culprit}`,
+    "Stars for this case (this time)":starText(L.stars),
+    "Best stars ever on this case":starText(L.best),
+    "Total stars":`${save.stars} of ${CASES.length*3}`,
+    "Current rank":rankName(),
+    "Clues (this case)":`${L.correct} correct out of ${L.tries} tries`,
+    "Wrong arrests (this case)":String(L.wrongArrests),
+    "Cases solved overall":`${solvedCount()} of ${CASES.length}`
+  };
+}
+function progressReport(){
+  const f={"Report type":"Overall saved progress","Current rank":rankName(),"Total stars":`${save.stars} of ${CASES.length*3}`,"Cases solved":`${solvedCount()} of ${CASES.length}`};
+  let c=0,a=0;
+  CASES.forEach(k=>{const st=save.solved[k.id];const cs=save.clues[k.id];if(cs){c+=cs.c;a+=cs.a;}
+    f[k.title]=(st?`Solved ✅ — ${starText(st)}`:"Not solved yet")+(cs?` • clues: ${cs.c} correct / ${cs.a} tries`:"");});
+  f["Clues overall"]=a?`${c} correct out of ${a} tries (tracking started Oct 2026)`:"No clue tries recorded yet";
+  return f;
 }
 rank();home();
 </script>
