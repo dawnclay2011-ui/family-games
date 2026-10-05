@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta name="robots" content="noindex">
+<title>Daily Case #5: The Knotted Code — Officer Cam's Case Files</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Trebuchet MS",Arial,sans-serif;background:#1c2541;color:#1c1c1c;min-height:100vh}
+  header{background:#0b132b;color:#ffd166;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+  header h1{margin:0;font-size:1.3rem;letter-spacing:1px}
+  .badge{background:#ffd166;color:#0b132b;border-radius:20px;padding:4px 12px;font-weight:bold;font-size:.9rem}
+  main{max-width:860px;margin:18px auto;padding:0 12px}
+  .card{background:#fdf6e3;border-radius:12px;padding:18px;margin-bottom:16px;box-shadow:0 4px 0 #0b132b}
+  .file{background:#f4e1b0;border-left:8px solid #c0392b}
+  h2{margin-top:0;color:#0b132b}
+  button{font:inherit;font-weight:bold;border:none;border-radius:8px;padding:10px 16px;margin:4px;cursor:pointer;background:#3a86ff;color:#fff}
+  button:hover{filter:brightness(1.1)}
+  button.alt{background:#6c757d}
+  button.red{background:#c0392b}
+  button.done{background:#2a9d8f}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  .suspect{background:#fff;border-radius:10px;padding:12px;border:2px solid #ddd}
+  .suspect .face{font-size:2.4rem}
+  .suspect .role{font-size:.85rem;color:#666;font-style:italic}
+  input{font:inherit;padding:9px;border-radius:8px;border:2px solid #aaa;width:160px}
+  .msg{margin-top:10px;font-weight:bold}
+  .ok{color:#2a9d8f}.bad{color:#c0392b}
+  .evidence li{margin:6px 0}
+  .hint{font-size:.9rem;color:#555;font-style:italic}
+  .stamp{display:inline-block;border:4px solid #c0392b;color:#c0392b;padding:6px 14px;font-size:1.6rem;transform:rotate(-8deg);font-weight:900;margin:10px 0}
+  .report{margin:8px 0}.rstat{display:block;margin-top:4px;font-weight:bold;font-size:.95rem}.rstat.good{color:#2a9d8f}.rstat.bad{color:#c0392b}
+  button.rep{background:#8e44ad}button.rep.small{font-size:.85rem;padding:7px 12px}button.rep.sent{background:#2a9d8f}button:disabled{cursor:default;filter:none;opacity:.9}
+  button{max-width:100%;white-space:normal}
+  .opt{display:block;width:100%;text-align:left;background:#fff;color:#0b132b;border:2px solid #3a86ff;margin:8px 0;padding:12px 14px}
+  .opt.wrong{background:#fde2e1;border-color:#c0392b;color:#8a1c12;text-decoration:line-through}
+  .opt.right{background:#d8f3ee;border-color:#2a9d8f;color:#14532d}
+  .factfile{background:#e8f1ff;border-left:5px solid #3a86ff;padding:10px 12px;border-radius:8px;margin:10px 0}
+  .era{display:inline-block;background:#0b132b;color:#ffd166;border-radius:14px;padding:3px 10px;font-size:.85rem;font-weight:bold}
+  textarea{font:inherit;width:100%;min-height:190px;padding:10px;border-radius:8px;border:2px solid #aaa;resize:vertical;font-size:1rem}
+  .chip{background:#ffd166;color:#0b132b;font-size:.9rem;padding:7px 11px;border-radius:16px}
+  .counter{font-size:.9rem;font-weight:bold;margin:6px 0}
+  .glyph{display:inline-flex;flex-direction:column;align-items:center;gap:6px;background:#fff;border:3px solid #8a6d3b;border-radius:10px;padding:14px 22px;margin:8px 0}
+  .glyph .dots{font-size:1.6rem;letter-spacing:10px;color:#0b132b;line-height:1}
+  .glyph .bar{width:96px;height:14px;background:#0b132b;border-radius:7px}
+  .nextcase{background:#0b132b;color:#ffd166;border-radius:12px;padding:16px;margin-top:12px;text-align:center}
+  .nextcase a{color:#fff;font-weight:bold;font-size:1.1rem;word-break:break-all}
+  blockquote{background:#fff;border-left:5px solid #8e44ad;margin:10px 0;padding:10px 12px;white-space:pre-wrap;text-align:left}
+  table.sc{border-collapse:collapse;margin:8px auto}table.sc td{border:1px solid #bbb;padding:6px 10px;background:#fff;text-align:left}
+  summary{cursor:pointer;padding:4px 0}
+</style>
+</head>
+<body>
+<header><h1>🚔 OFFICER CAM'S CASE FILES</h1><span class="badge" id="rank"></span></header>
+<main id="app"></main>
+<script>
+const DAY = {"day": 5, "date": "Wednesday, Oct 21", "topic": "The Inca — roads, chasquis, terraces & quipu", "title": "Daily Case #5: The Knotted Code", "era": "🏔️ The Inca", "intro": "Final case of the week, Officer! A replica quipu — a bundle of knotted strings the Inca used to keep records — has been stolen from the Inca Hall. One of its cords was left behind near the empty case. Three people were in the hall. Find the one whose story doesn't match real Inca history.", "item": "the replica quipu", "suspects": [{"name": "Professor Ana Quispe", "face": "👩‍🏫", "role": "Andes historian", "note": "\"I was in the farming room. The Inca carved terraces like giant steps into the mountainsides and grew many kinds of potatoes.\""}, {"name": "Jordan Lee", "face": "🏃", "role": "Relay-race volunteer", "note": "\"I was setting up the roads display. Relay runners called chasquis carried messages on Inca roads through the Andes, from Cusco all the way to Quito.\""}, {"name": "Duke Morrow", "face": "🧥", "role": "Antique dealer", "note": "\"I was in the quipu room. A quipu is a kind of Inca drum. The Inca hauled their goods in big wagons pulled by horses.\""}], "culprit": "Duke Morrow", "clues": [{"kind": "archive", "q": "Check Duke Morrow's story. What was a quipu?", "options": ["Knotted strings used to record numbers and information", "A drum for festivals", "A gold crown", "A boat made of reeds"], "a": 0, "explain": "A quipu (also spelled khipu) was a main cord with many hanging strings. The kind, number, and position of knots recorded numbers — like taxes, harvests, and how many people lived in a village. Trained record-keepers could 'read' them.", "evidence": "🪢 A quipu is knotted string for keeping records — NOT a drum. Duke Morrow was never really in the quipu room."}, {"kind": "archive", "q": "Check Professor Quispe's story. Why did the Inca build terraces on steep mountainsides?", "options": ["To block ocean waves", "As stairs for the emperor's parade", "To make flat land for farming and stop soil washing away", "To race llamas"], "a": 2, "explain": "Terraces turned steep slopes into flat farm fields and kept rain from washing the soil away. Andean farmers grew many kinds of potatoes, plus corn and quinoa.", "evidence": "🥔 Professor Quispe is right about terraces. She was leading a school group the whole time. She's cleared."}, {"kind": "quipu", "q": "Decode the cord left by the case! On a quipu, the knots closest to the top stand for HUNDREDS, the middle group for TENS, and the bottom group for ONES. This cord has 2 knots in the hundreds spot, 4 in the tens spot, and 7 in the ones spot. What number is it?", "knots": [2, 4, 7], "options": ["13", "2,047", "247", "742"], "a": 2, "explain": "2 hundreds + 4 tens + 7 ones = 200 + 40 + 7 = 247. Quipus used place value in base 10 — just like we do!", "evidence": "🎟️ The cord reads 247 — the exact number on Duke Morrow's coat-check ticket. The quipu is hidden in his coat!"}, {"kind": "map", "q": "Check Jordan's road display. The great Inca road ran north and south through the Andes Mountains. Use the compass: in which direction would a chasqui run from Cusco to reach Quito?", "options": ["South", "South-east", "North-west", "Due east"], "a": 2, "map": "inca", "explain": "Cusco, the Inca capital, is in the mountains of Peru. Quito (in today's Ecuador) is far to the north-west. The Inca road network stretched more than 18,000 miles (about 30,000 km) — but with no horses or wagons. Runners called chasquis passed messages in relays, and llamas carried loads.", "evidence": "🗺️ Jordan's display is right — Quito is north-west of Cusco along the Andes. And the Inca had no horses or wagons, so Duke's story falls apart again. Jordan is cleared."}], "bonus": {"q": "A team of chasquis ran five relay legs of 4, 6, 5, 7, and 3 miles. What is the MEAN (average) leg in miles?", "a": 5, "hint": "Add the five legs, then divide by 5.", "label": "Mean"}, "fact": "Machu Picchu, the famous Inca mountain site in Peru, was built around the mid-1400s for the emperor Pachacuti."};
+const TOTAL_DAYS = 5;
+const KEY = "ocamDaily";            // new namespaced key — the main game's "ocam" save is never touched
+const DK = "d" + DAY.day;
+const MIN_WORDS = 35, MIN_SENTENCES = 3;
+const PTS = {clueFirst:10, clueSecond:6, clueLater:3, arrestFirst:10, report:20};
+const MAX_SCORE = DAY.clues.length*PTS.clueFirst + PTS.arrestFirst + PTS.report;
+
+let all; try{all=JSON.parse(localStorage.getItem(KEY)||"{}")||{};}catch(e){all={};}
+let st = all[DK] || null;
+function fresh(keep){
+  return {stage:"intro", clue:0, results:DAY.clues.map(()=>({tries:0,ok:false,picked:[]})), revealed:false,
+          wrongArrests:0, report:"", bonus:null, activeSec:0, startedAt:null, finishedAt:null,
+          score:0, stars:0, best:keep?keep.best:0, plays:keep?keep.plays:0, autoSent:keep?keep.autoSent:false, lastDone:keep?keep.lastDone:null};
+}
+if(!st) st = fresh();
+function persist(){ all[DK]=st; try{localStorage.setItem(KEY,JSON.stringify(all));}catch(e){} badge(); }
+function badge(){ document.getElementById("rank").textContent = `Day ${DAY.day} of ${TOTAL_DAYS} • ${DAY.date.split(",")[0].slice(0,3)} ${DAY.date.split(", ")[1]}` + (st.best?` • Best ${st.best}`:""); }
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+const app = document.getElementById("app");
+const toTop = ()=>{ try{window.scrollTo(0,0);}catch(e){} };
+
+// active-time clock (only counts while the page is visible and the case is open)
+setInterval(()=>{ if(document.visibilityState==="visible" && st.stage!=="intro" && st.stage!=="done"){ st.activeSec+=5; persist(); } },5000);
+
+function caseHeader(compact){
+  if(compact) return `<div class="card file"><span class="era">${DAY.era}</span><h2 style="margin:8px 0 0">${DAY.title}</h2><details><summary class="hint">Re-read the case story</summary><p>${DAY.intro}</p></details></div>`;
+  return `<div class="card file"><span class="era">${DAY.era}</span><h2 style="margin-top:8px">${DAY.title}</h2><p>${DAY.intro}</p></div>`;
+}
+function suspectsHTML(collapsed){
+  const inner=`<div class="grid">${DAY.suspects.map(s=>`<div class="suspect"><div class="face">${s.face}</div><b>${s.name}</b><div class="role">${s.role}</div><p>${s.note}</p></div>`).join("")}</div>`;
+  if(collapsed) return `<div class="card"><details><summary><b>🕵️ Suspects &amp; their stories</b> <span class="hint">(tap to re-read)</span></summary>${inner}</details></div>`;
+  return `<div class="card"><h2>Suspects &amp; their stories</h2>${inner}</div>`;
+}
+function evidenceHTML(){
+  const ev = DAY.clues.filter((c,i)=>st.results[i].ok).map(c=>c.evidence);
+  return `<div class="card"><h2>Evidence board (${ev.length}/${DAY.clues.length})</h2><ul class="evidence">${ev.map(e=>`<li>${e}</li>`).join("")||"<li class='hint'>No evidence yet. Check the first story!</li>"}</ul></div>`;
+}
+
+function intro(){
+  app.innerHTML = `${caseHeader()}
+  <div class="card"><h2>Today's assignment, Officer Cam 👮</h2>
+  <p>📅 <b>${DAY.date}</b> — <b>${DAY.topic}</b></p>
+  <ol><li>Read the suspects' stories.</li><li>Check <b>${DAY.clues.length} clues</b> against real history (one uses a map 🗺️).</li><li>Make your arrest.</li><li>Write your <b>case report</b> for the Chief (that's Mom).</li></ol>
+  <p>Get clues right on the first try for ⭐⭐⭐!</p>
+  <button onclick="startCase()">🔎 Open the case file</button></div>`;
+}
+function startCase(){ if(!st.startedAt) st.startedAt=new Date().toISOString(); st.stage="clues"; persist(); render(); toTop(); }
+
+function render(){
+  if(st.stage==="intro") return intro();
+  if(st.stage==="clues") return clueScreen();
+  if(st.stage==="arrest") return arrestScreen();
+  if(st.stage==="report") return reportScreen();
+  if(st.stage==="bonus") return bonusScreen();
+  if(st.stage==="done") return doneScreen();
+}
+
+const KIND = {archive:"📚 History Archive", map:"🗺️ Map Room", glyph:"🔢 Code Lab", quipu:"🪢 Code Lab", artifact:"🏺 Artifact Lab"};
+function visual(c){
+  if(c.kind==="map") return `<div style="margin:10px 0">${MAPS[c.map]}</div>`;
+  if(c.kind==="glyph"){ const [dots,bars]=c.glyph; return `<div class="glyph" aria-label="${dots} dots above ${bars} bars"><div class="dots">${"●".repeat(dots)}</div>${'<div class="bar"></div>'.repeat(bars)}</div>`; }
+  if(c.kind==="quipu") return quipuSVG(c.knots);
+  return "";
+}
+function quipuSVG(k){
+  const labels=["hundreds","tens","ones"], ys=[62,145,252];
+  let s=`<svg viewBox="0 0 260 315" style="width:220px;max-width:100%;background:#fff;border:3px solid #8a6d3b;border-radius:10px;margin:8px 0" role="img" aria-label="Quipu cord with ${k.join(", ")} knots">`;
+  s+=`<line x1="20" y1="14" x2="240" y2="14" stroke="#8a6d3b" stroke-width="8" stroke-linecap="round"/><line x1="90" y1="14" x2="90" y2="308" stroke="#c0392b" stroke-width="5"/>`;
+  k.forEach((n,g)=>{ for(let i=0;i<n;i++){ const y=ys[g]-((n-1)*7)+i*14; s+=`<circle cx="90" cy="${y}" r="6" fill="#7a1f12"/>`; }
+    s+=`<text x="118" y="${ys[g]+5}" font-size="16" font-family="Trebuchet MS,Arial" fill="#0b132b">${labels[g]}</text>`; });
+  return s+`</svg>`;
+}
+function clueScreen(){
+  const i=st.clue, c=DAY.clues[i], r=st.results[i];
+  const solved=r.ok;
+  app.innerHTML = `${caseHeader(true)}${suspectsHTML(i>0)}${evidenceHTML()}
+  <div class="card" id="cluecard"><h2>Clue ${i+1} of ${DAY.clues.length}: ${KIND[c.kind]||"🔎 Clue"}</h2>
+   <p>${c.q}</p>${visual(c)}
+   ${c.options.map((o,j)=>{
+     const cls = solved && j===c.a ? "right" : (r.picked.includes(j)?"wrong":"");
+     return `<button class="opt ${cls}" ${solved||r.picked.includes(j)?"disabled":""} onclick="pick(${j})">${String.fromCharCode(65+j)}. ${o}</button>`; }).join("")}
+   <div class="msg" id="m">${!solved&&r.picked.length?`<span class="bad">Not quite, Officer. Re-read the stories and look again!</span>`:""}</div>
+   ${solved?`<div class="factfile">📁 <b>Fact file:</b> ${c.explain}</div><p class="ok"><b>New evidence added to the board!</b></p>
+   <button onclick="nextClue()">${i+1<DAY.clues.length?"Next clue ▶":"🚨 Ready to make an arrest"}</button>`:""}
+  </div>
+  <p><button class="alt" onclick="st.stage='intro';persist();render();toTop()">⬅ Back to case cover</button></p>`;
+  if(i>0||solved||r.picked.length){ const el=document.getElementById("cluecard"); if(el&&el.scrollIntoView) el.scrollIntoView({block:"start"}); }
+}
+function pick(j){
+  const i=st.clue, c=DAY.clues[i], r=st.results[i];
+  if(r.ok||r.picked.includes(j)) return;
+  r.tries++; r.picked.push(j);
+  if(j===c.a) r.ok=true;
+  persist(); clueScreen();
+}
+function nextClue(){ if(st.clue+1<DAY.clues.length){st.clue++;} else {st.stage="arrest";} persist(); render(); }
+
+function arrestScreen(){
+  app.innerHTML = `${caseHeader(true)}${suspectsHTML(false)}${evidenceHTML()}
+  <div class="card" id="arrest"><h2>🚨 Make your arrest!</h2><p>Look at your evidence board. Whose story didn't match real history? Who took ${DAY.item}?</p>
+  ${DAY.suspects.map((s,j)=>`<button class="red" onclick="accuse(${j})">Arrest ${s.name}</button>`).join("")}
+  <div class="msg" id="m"></div></div>`;
+  const el=document.getElementById("arrest"); if(el&&el.scrollIntoView) el.scrollIntoView({block:"start"});
+}
+function accuse(j){
+  const s=DAY.suspects[j], m=document.getElementById("m");
+  if(s.name===DAY.culprit){ st.stage="report"; persist(); render(); toTop(); }
+  else { st.wrongArrests++; persist(); m.className="msg bad"; m.textContent=`${s.name} has an alibi! Check the evidence board again.`; }
+}
+
+const STARTERS = ["The culprit was ", "The evidence that proved it was ", "I knew their story was false because ", "Another suspect was cleared because ", "One true fact I learned about this civilization is "];
+function words(t){ return (t.trim().match(/[A-Za-z0-9'’-]+/g)||[]).length; }
+function sentences(t){ return t.split(/[.!?]+/).filter(x=>words(x)>=3).length; }
+function reportScreen(){
+  app.innerHTML = `<div class="card file"><span class="stamp">ARREST MADE</span><h2>${DAY.culprit} is in custody!</h2>
+  <p>One last step before the case is closed: the Chief needs your <b>written case report</b>.</p></div>
+  ${evidenceHTML()}
+  <div class="card"><h2>📝 Case report for the Chief</h2>
+  <p>Write at least <b>${MIN_SENTENCES} complete sentences</b> (${MIN_WORDS}+ words). Explain <b>who</b> did it, <b>what evidence</b> proved it, and <b>one real history fact</b> you learned. Tap a sentence starter to use it:</p>
+  <div>${STARTERS.map((s,k)=>`<button class="chip" onclick="addStarter(${k})">${s.trim()}…</button>`).join("")}</div>
+  <textarea id="rep" placeholder="The culprit was…" oninput="onRep()">${esc(st.report)}</textarea>
+  <div class="counter" id="cnt"></div>
+  <button class="done" onclick="fileReport()">📁 File my case report</button>
+  <div class="msg" id="m"></div></div>`;
+  onRep();
+}
+function addStarter(k){ const ta=document.getElementById("rep"); let t=ta.value.replace(/\s+$/,""); t += (t && !/[.!?]$/.test(t) ? ". " : (t?" ":"")) + STARTERS[k]; ta.value=t; ta.focus(); try{ta.setSelectionRange(t.length,t.length);}catch(e){} onRep(); }
+function onRep(){
+  const t=document.getElementById("rep").value; st.report=t; persist();
+  const w=words(t), s=sentences(t);
+  document.getElementById("cnt").innerHTML = `<span class="${w>=MIN_WORDS?"ok":"bad"}">Words: ${w} / ${MIN_WORDS}</span> &nbsp;•&nbsp; <span class="${s>=MIN_SENTENCES?"ok":"bad"}">Sentences: ${s} / ${MIN_SENTENCES}</span>`;
+}
+function fileReport(){
+  const t=document.getElementById("rep").value.trim(), m=document.getElementById("m");
+  const w=words(t), s=sentences(t);
+  if(s<MIN_SENTENCES||w<MIN_WORDS){ m.className="msg bad"; m.textContent=`The Chief needs more detail: at least ${MIN_SENTENCES} sentences and ${MIN_WORDS} words. End each sentence with a period.`; return; }
+  const last=DAY.culprit.split(" ").pop().toLowerCase();
+  if(t.toLowerCase().indexOf(last)<0 && !st._nameWarned){ st._nameWarned=true; m.className="msg bad"; m.textContent=`Good start! Make sure your report names the culprit (${DAY.culprit}). Tap File again if you already did.`; return; }
+  st.report=t; st.stage = DAY.bonus ? "bonus" : "done"; if(st.stage==="done") finish(); persist(); render(); toTop();
+}
+
+function bonusScreen(){
+  const b=DAY.bonus, r=st.bonus||{tries:0,ok:false};
+  app.innerHTML = `<div class="card"><h2>⭐ Bonus: Detective Math (optional)</h2><p>${b.q}</p>
+  <input id="ans" inputmode="decimal" autocomplete="off" onkeydown="if(event.key==='Enter')checkBonus()"> <button onclick="checkBonus()">Check</button>
+  <button class="alt" onclick="document.getElementById('h').textContent='💡 '+DAY.bonus.hint">Hint</button>
+  <div class="hint" id="h"></div><div class="msg" id="m"></div>
+  <p><button class="alt" onclick="skipBonus()">Skip bonus — close the case ▶</button></p></div>`;
+}
+function checkBonus(){
+  const v=parseFloat(document.getElementById("ans").value.replace(/[^0-9.\-]/g,"")), m=document.getElementById("m");
+  if(isNaN(v)) return;
+  st.bonus=st.bonus||{tries:0,ok:false,answer:null}; st.bonus.tries++; st.bonus.answer=v;
+  if(Math.abs(v-DAY.bonus.a)<0.01){ st.bonus.ok=true; st.stage="done"; finish(); persist(); render(); toTop(); }
+  else { persist(); m.className="msg bad"; m.textContent = st.bonus.tries>=2 ? `Not quite — the ${DAY.bonus.label.toLowerCase()} is ${DAY.bonus.a}. Tap Skip to close the case.` : "Not quite. Try the hint!"; }
+}
+function skipBonus(){ st.bonus=st.bonus||{tries:0,ok:false,skipped:true}; st.stage="done"; finish(); persist(); render(); toTop(); }
+
+function scoreNow(){
+  let s=0; st.results.forEach(r=>{ s += r.tries<=1?PTS.clueFirst : r.tries===2?PTS.clueSecond : PTS.clueLater; });
+  s += Math.max(2, PTS.arrestFirst - 4*st.wrongArrests);
+  s += PTS.report; return s;
+}
+function finish(){
+  st.finishedAt=new Date().toISOString(); st.score=scoreNow();
+  st.stars = st.score>=Math.round(MAX_SCORE*0.9)?3 : st.score>=Math.round(MAX_SCORE*0.7)?2 : 1;
+  st.plays=(st.plays||0)+1; if(st.score>st.best) st.best=st.score;
+  st.lastDone={score:st.score,stars:st.stars,report:st.report,firstTry:st.results.filter(r=>r.tries===1).length,wrongArrests:st.wrongArrests,bonus:st.bonus,activeSec:st.activeSec,startedAt:st.startedAt,finishedAt:st.finishedAt,play:st.plays};
+}
+function mins(sec){ const m=Math.max(1,Math.round(sec/60)); return `about ${m} min`; }
+function nextLinkHTML(){
+  if(!DAY.next) return `<div class="nextcase">🏅 <b>That's all five history cases for this week, Detective!</b><br>The Chief will have new cases for you next time.<br><br><a href="../">Back to the station (main Case Files)</a></div>`;
+  return `<div class="nextcase">🔒 <b>Next case unlocks: Day ${DAY.next.day} (${DAY.next.date})</b><br>${DAY.next.teaser}<br><br>➡️ <a href="../day${DAY.next.day}/">${DAY.next.url}</a><br><span style="font-size:.85rem;color:#ccc">Save it for that school day — Mom will send it too.</span></div>`;
+}
+function doneScreen(){
+  const L=st.lastDone; if(!L){ st.stage="intro"; return render(); }
+  const firstPlayAuto = !st.autoSent;
+  app.innerHTML = `<div class="card" style="text-align:center"><span class="stamp">CASE CLOSED</span>
+  <h2>Outstanding work, Officer Cam! ${"⭐".repeat(L.stars)}</h2>
+  <p>${DAY.culprit} has been arrested and ${DAY.item} is back in the museum.</p>
+  <table class="sc"><tr><td>Score</td><td><b>${L.score} / ${MAX_SCORE}</b>${st.best>L.score?` (best: ${st.best})`:""}</td></tr>
+  <tr><td>Clues right on first try</td><td>${L.firstTry} of ${DAY.clues.length}</td></tr>
+  <tr><td>Wrong arrests</td><td>${L.wrongArrests}</td></tr>
+  <tr><td>Bonus math</td><td>${L.bonus&&L.bonus.ok?"⭐ Solved!":L.bonus&&L.bonus.tries?"Tried":"Skipped"}</td></tr>
+  <tr><td>Time on case</td><td>${mins(L.activeSec)}</td></tr></table>
+  <p class="hint">📁 Did you know? ${DAY.fact}</p>
+  <h3 style="text-align:left">Your case report</h3><blockquote>${esc(L.report)}</blockquote>
+  ${reportBtn("caseReport","📨 Send my case report to Mom")}
+  ${nextLinkHTML()}
+  <p><button class="alt" onclick="replay()">🔁 Replay this case</button></p></div>`;
+  if(firstPlayAuto){ st.autoSent=true; persist(); const b=document.querySelector("button.rep"); if(b) reportToMom(b,caseReport); }
+}
+function replay(){ if(!confirm("Replay this case? Your best score is kept.")) return; st=fresh(st); persist(); render(); toTop(); }
+
+/* ---- Report to Mom (FormSubmit AJAX) — same mechanism as the main games ---- */
+const MOM_EMAIL="8caedc1e9653325b52b367e2e172d2a3"; // FormSubmit alias (hides Mom's address)
+const REPORT_URL="https://formsubmit.co/ajax/"+MOM_EMAIL;
+function nowStr(){try{return new Date().toLocaleString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short"});}catch(e){return new Date().toString();}}
+function fmtTime(iso){ if(!iso) return "—"; try{return new Date(iso).toLocaleString("en-US",{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short"});}catch(e){return iso;} }
+function postReport(fields){
+ const ctl=typeof AbortController!=="undefined"?new AbortController():null;
+ const t=ctl?setTimeout(()=>ctl.abort(),15000):null;
+ return fetch(REPORT_URL,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(fields),signal:ctl?ctl.signal:undefined})
+  .then(r=>r.json().catch(()=>({success:r.ok?"true":"false",message:"HTTP "+r.status})).then(j=>{j._status=r.status;return j;}))
+  .finally(()=>{if(t)clearTimeout(t);});
+}
+function reportBtn(builder,label,small){
+ return `<div class="report"><button type="button" class="rep${small?" small":""}" onclick="reportToMom(this,${builder})">${label}</button><span class="rstat" role="status" aria-live="polite"></span></div>`;
+}
+function reportToMom(btn,build){
+ const st=btn.nextElementSibling;
+ if(btn.dataset.sent||btn.disabled)return;
+ if(navigator.onLine===false){st.className="rstat bad";st.textContent="No internet — try again later.";btn.textContent="🔁 Try again";return;}
+ let fields;
+ try{fields=Object.assign({_subject:REPORT_SUBJECT,_template:"box",_captcha:"false",Date:nowStr(),Player:REPORT_PLAYER,Game:REPORT_GAME},build());}
+ catch(e){st.className="rstat bad";st.textContent="Oops — couldn't build the report.";return;}
+ btn.disabled=true;btn.textContent="Sending… 📤";st.className="rstat";st.textContent="";
+ postReport(fields).then(j=>{
+  if(String(j.success)!=="true")throw new Error(j.message||"Send failed");
+  btn.dataset.sent="1";btn.textContent="Sent! ✅";btn.classList.add("sent");st.className="rstat good";st.textContent="Mom got your report!";
+ }).catch(e=>{
+  btn.disabled=false;btn.textContent="🔁 Try again";st.className="rstat bad";
+  st.textContent=navigator.onLine===false?"No internet — try again later.":/activat/i.test(e&&e.message||"")?"Almost! Mom needs to switch on reports first. Try again later.":"Oops — that didn't send. Tap to try again!";
+ });
+}
+const REPORT_SUBJECT=`Game Report: Cam – Daily History Case Day ${DAY.day} (${DAY.era.replace(/^\S+\s/,"")})`, REPORT_PLAYER="Cam (age 11)", REPORT_GAME="Officer Cam's Case Files — Daily History Cases";
+function caseReport(){
+  const L=st.lastDone, b=L.bonus;
+  return {
+    "Report type":`Daily history case — Day ${DAY.day} of ${TOTAL_DAYS}`,
+    "Day & topic":`Day ${DAY.day} (${DAY.date}) — ${DAY.topic}`,
+    "Case":DAY.title,
+    "Solved":`Yes ✅ — arrested ${DAY.culprit}`,
+    "Score":`${L.score} of ${MAX_SCORE} (${"⭐".repeat(L.stars)} ${L.stars} of 3)`+(st.best>L.score?` — best ever on this case: ${st.best}`:""),
+    "Clues right on first try":`${L.firstTry} of ${DAY.clues.length}`,
+    "Wrong arrests":String(L.wrongArrests),
+    "Bonus math (optional)":b&&b.ok?`${DAY.bonus.label}: solved ✅ (${b.answer})`:b&&b.tries?`${DAY.bonus.label}: tried, not solved (answered ${b.answer}; correct ${DAY.bonus.a})`:"Skipped",
+    "Time on case":`${mins(L.activeSec)} of active time (started ${fmtTime(L.startedAt)}, finished ${fmtTime(L.finishedAt)})`,
+    "Play":L.play>1?`Replay #${L.play}`:"First play",
+    "Cam's written case report":L.report,
+    "Report length":`${words(L.report)} words, ${sentences(L.report)} sentences`
+  };
+}
+const MAPS = {"inca": "<svg viewBox=\"0 0 520 580\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"Map of the Inca road\" style=\"width:100%;height:auto;background:#a9d6e5;border-radius:10px;border:3px solid #0b132b\"><line x1=\"82.1\" y1=\"0\" x2=\"82.1\" y2=\"580\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"218.9\" y1=\"0\" x2=\"218.9\" y2=\"580\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"355.8\" y1=\"0\" x2=\"355.8\" y2=\"580\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"492.6\" y1=\"0\" x2=\"492.6\" y2=\"580\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"0\" y1=\"483.7\" x2=\"520\" y2=\"483.7\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"0\" y1=\"345.5\" x2=\"520\" y2=\"345.5\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"0\" y1=\"207.3\" x2=\"520\" y2=\"207.3\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"0\" y1=\"69.1\" x2=\"520\" y2=\"69.1\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><path d=\"M78.0,152.3L74.6,151.9L76.0,145.2L79.9,142.9L84.6,144.4L79.5,147.7L78.0,152.3ZM112.0,34.5L109.7,33.4L112.2,31.5L112.0,34.5ZM345.9,577.6L330.0,564.7L319.2,557.8L317.5,550.6L313.9,547.1L298.0,539.0L288.3,530.9L279.3,528.3L262.7,519.7L253.8,516.9L242.3,508.9L236.1,506.7L216.1,495.0L204.3,480.9L193.4,473.5L186.8,462.3L183.7,459.7L183.4,454.6L181.3,452.2L184.5,450.6L186.5,442.6L185.5,438.6L177.8,427.9L168.8,410.4L160.0,402.4L158.2,391.4L155.7,387.8L146.9,381.1L144.1,368.6L131.8,347.9L124.6,328.1L118.7,317.0L116.0,307.2L109.1,296.0L99.1,285.6L92.6,270.7L82.2,256.2L79.1,252.9L50.8,236.5L50.2,231.5L52.2,229.7L56.6,230.5L58.0,224.8L50.1,211.9L51.8,208.0L45.5,198.1L47.0,188.5L60.2,172.2L83.1,156.4L89.5,140.4L87.0,134.2L86.4,126.2L85.0,128.4L85.4,136.1L84.1,139.5L81.3,139.8L81.9,134.1L74.3,143.9L69.8,141.7L63.4,135.3L56.6,131.8L55.8,129.6L61.0,126.5L61.3,122.6L59.3,114.2L60.2,107.3L57.4,98.9L59.1,96.0L66.9,92.5L69.6,85.3L74.4,86.2L71.6,85.2L68.9,79.3L78.5,69.3L80.8,64.8L81.4,57.8L79.7,47.4L89.2,42.0L92.7,42.3L96.7,39.8L112.2,35.8L114.2,33.3L113.3,28.9L108.8,24.2L110.6,20.7L115.1,18.0L121.1,20.1L121.8,15.9L119.6,12.3L120.0,5.3L124.2,0.8L520.0,0.0L520.0,580.4L346.3,580.4L345.9,577.6Z\" fill=\"#f4e1b0\" stroke=\"#8a6d3b\" stroke-width=\"1.2\" fill-rule=\"evenodd\"/><text x=\"95.8\" y=\"400.7\" font-size=\"18\" font-style=\"italic\" fill=\"#1d5c7a\" text-anchor=\"middle\" font-family=\"Trebuchet MS,Arial\">Pacific Ocean<\/text><text x=\"218.9\" y=\"290.2\" font-size=\"18\" font-style=\"italic\" fill=\"#1d5c7a\" text-anchor=\"middle\" font-family=\"Trebuchet MS,Arial\">ANDES<\/text><polyline points=\"124.0,74.1 112.2,149.2 123.2,267.0 164.2,345.5 240.8,432.8 301.9,443.0 383.2,525.1 399.6,580.4\" fill=\"none\" stroke=\"#c0392b\" stroke-width=\"3\" stroke-dasharray=\"7 5\"/><circle cx=\"124.0\" cy=\"74.1\" r=\"7\" fill=\"#c0392b\" stroke=\"#fff\" stroke-width=\"2\"/><text x=\"134.0\" y=\"79.1\" font-size=\"21\" font-weight=\"bold\" fill=\"#0b132b\" stroke=\"#fdf6e3\" stroke-width=\"4\" paint-order=\"stroke\" text-anchor=\"start\" font-family=\"Trebuchet MS,Arial\">Quito<\/text><circle cx=\"301.9\" cy=\"443.0\" r=\"7\" fill=\"#c0392b\" stroke=\"#fff\" stroke-width=\"2\"/><text x=\"311.9\" y=\"448.0\" font-size=\"21\" font-weight=\"bold\" fill=\"#0b132b\" stroke=\"#fdf6e3\" stroke-width=\"4\" paint-order=\"stroke\" text-anchor=\"start\" font-family=\"Trebuchet MS,Arial\">Cusco<\/text><g font-family=\"Trebuchet MS,Arial\" font-weight=\"bold\" font-size=\"13\" fill=\"#0b132b\" text-anchor=\"middle\"><circle cx=\"470\" cy=\"48\" r=\"26\" fill=\"#fdf6e3\" stroke=\"#0b132b\" stroke-width=\"2\"/><polygon points=\"470,28 464,48 476,48\" fill=\"#c0392b\"/><polygon points=\"470,68 464,48 476,48\" fill=\"#0b132b\"/><text x=\"470\" y=\"19\">N<\/text><text x=\"470\" y=\"88\">S<\/text><text x=\"435\" y=\"53\">W<\/text><text x=\"505\" y=\"53\">E<\/text><\/g><text x=\"10\" y=\"568\" font-size=\"17\" fill=\"#c0392b\" font-weight=\"bold\" font-family=\"Trebuchet MS,Arial\">- - - Main Inca road (approximate)<\/text><\/svg>"};
+badge(); render();
+</script>
+</body>
+</html>

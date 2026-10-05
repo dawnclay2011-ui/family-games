@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta name="robots" content="noindex">
+<title>Daily Case #2: The Aqueduct Saboteur — Officer Cam's Case Files</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Trebuchet MS",Arial,sans-serif;background:#1c2541;color:#1c1c1c;min-height:100vh}
+  header{background:#0b132b;color:#ffd166;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+  header h1{margin:0;font-size:1.3rem;letter-spacing:1px}
+  .badge{background:#ffd166;color:#0b132b;border-radius:20px;padding:4px 12px;font-weight:bold;font-size:.9rem}
+  main{max-width:860px;margin:18px auto;padding:0 12px}
+  .card{background:#fdf6e3;border-radius:12px;padding:18px;margin-bottom:16px;box-shadow:0 4px 0 #0b132b}
+  .file{background:#f4e1b0;border-left:8px solid #c0392b}
+  h2{margin-top:0;color:#0b132b}
+  button{font:inherit;font-weight:bold;border:none;border-radius:8px;padding:10px 16px;margin:4px;cursor:pointer;background:#3a86ff;color:#fff}
+  button:hover{filter:brightness(1.1)}
+  button.alt{background:#6c757d}
+  button.red{background:#c0392b}
+  button.done{background:#2a9d8f}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  .suspect{background:#fff;border-radius:10px;padding:12px;border:2px solid #ddd}
+  .suspect .face{font-size:2.4rem}
+  .suspect .role{font-size:.85rem;color:#666;font-style:italic}
+  input{font:inherit;padding:9px;border-radius:8px;border:2px solid #aaa;width:160px}
+  .msg{margin-top:10px;font-weight:bold}
+  .ok{color:#2a9d8f}.bad{color:#c0392b}
+  .evidence li{margin:6px 0}
+  .hint{font-size:.9rem;color:#555;font-style:italic}
+  .stamp{display:inline-block;border:4px solid #c0392b;color:#c0392b;padding:6px 14px;font-size:1.6rem;transform:rotate(-8deg);font-weight:900;margin:10px 0}
+  .report{margin:8px 0}.rstat{display:block;margin-top:4px;font-weight:bold;font-size:.95rem}.rstat.good{color:#2a9d8f}.rstat.bad{color:#c0392b}
+  button.rep{background:#8e44ad}button.rep.small{font-size:.85rem;padding:7px 12px}button.rep.sent{background:#2a9d8f}button:disabled{cursor:default;filter:none;opacity:.9}
+  button{max-width:100%;white-space:normal}
+  .opt{display:block;width:100%;text-align:left;background:#fff;color:#0b132b;border:2px solid #3a86ff;margin:8px 0;padding:12px 14px}
+  .opt.wrong{background:#fde2e1;border-color:#c0392b;color:#8a1c12;text-decoration:line-through}
+  .opt.right{background:#d8f3ee;border-color:#2a9d8f;color:#14532d}
+  .factfile{background:#e8f1ff;border-left:5px solid #3a86ff;padding:10px 12px;border-radius:8px;margin:10px 0}
+  .era{display:inline-block;background:#0b132b;color:#ffd166;border-radius:14px;padding:3px 10px;font-size:.85rem;font-weight:bold}
+  textarea{font:inherit;width:100%;min-height:190px;padding:10px;border-radius:8px;border:2px solid #aaa;resize:vertical;font-size:1rem}
+  .chip{background:#ffd166;color:#0b132b;font-size:.9rem;padding:7px 11px;border-radius:16px}
+  .counter{font-size:.9rem;font-weight:bold;margin:6px 0}
+  .glyph{display:inline-flex;flex-direction:column;align-items:center;gap:6px;background:#fff;border:3px solid #8a6d3b;border-radius:10px;padding:14px 22px;margin:8px 0}
+  .glyph .dots{font-size:1.6rem;letter-spacing:10px;color:#0b132b;line-height:1}
+  .glyph .bar{width:96px;height:14px;background:#0b132b;border-radius:7px}
+  .nextcase{background:#0b132b;color:#ffd166;border-radius:12px;padding:16px;margin-top:12px;text-align:center}
+  .nextcase a{color:#fff;font-weight:bold;font-size:1.1rem;word-break:break-all}
+  blockquote{background:#fff;border-left:5px solid #8e44ad;margin:10px 0;padding:10px 12px;white-space:pre-wrap;text-align:left}
+  table.sc{border-collapse:collapse;margin:8px auto}table.sc td{border:1px solid #bbb;padding:6px 10px;background:#fff;text-align:left}
+  summary{cursor:pointer;padding:4px 0}
+</style>
+</head>
+<body>
+<header><h1>🚔 OFFICER CAM'S CASE FILES</h1><span class="badge" id="rank"></span></header>
+<main id="app"></main>
+<script>
+const DAY = {"day": 2, "date": "Friday, Oct 16", "topic": "Ancient Rome — the Republic, roads & aqueducts", "title": "Daily Case #2: The Aqueduct Saboteur", "era": "🏟️ Ancient Rome", "intro": "Trouble in the Roman Hall! Someone shut off the water in the working model aqueduct. While everyone ran to look, a replica gold Roman coin (an aureus) disappeared from its case. Three people were in the hall. Check their stories against real Roman history — the one who gets the facts wrong is hiding something.", "item": "the replica gold aureus coin", "suspects": [{"name": "Marcus Bell", "face": "🧔", "role": "Toga-wearing reenactor", "note": "\"I was in the Republic room. In the Roman Republic, citizens elected leaders. Two consuls led the government together, and each one served for one year.\""}, {"name": "Gina Russo", "face": "👷‍♀️", "role": "Model-builder", "note": "\"I was fixing the road model. Roman roads were built in layers of stone and gravel. The Appian Way starts in Rome and eventually reached Brundisium, on the east side of Italy.\""}, {"name": "Lucius Crane", "face": "🤵", "role": "Self-proclaimed 'Rome expert'", "note": "\"I was in the aqueduct room. Aqueducts used steam-engine pumps to push water uphill into Rome. Julius Caesar was the first emperor, and he built them all.\""}], "culprit": "Lucius Crane", "clues": [{"kind": "archive", "q": "Check Lucius Crane's aqueduct story. How did Roman aqueducts move water into the city?", "options": ["Steam-engine pumps pushed it uphill", "Workers carried it in buckets", "Windmills blew it through pipes", "Gravity — the channels sloped gently downhill"], "a": 3, "explain": "Roman engineers built aqueduct channels with a very gentle downhill slope, so gravity pulled the water all the way to the city. Steam engines weren't invented until many centuries later.", "evidence": "💧 Aqueducts used GRAVITY, not steam pumps. Lucius Crane's 'aqueduct room' story is wrong."}, {"kind": "archive", "q": "Crane says Julius Caesar was Rome's first emperor. Who was the FIRST Roman emperor?", "options": ["Augustus", "Nero", "Romulus", "Julius Caesar"], "a": 0, "explain": "Julius Caesar was made dictator, but he was killed in 44 BCE and never became emperor. His adopted heir Octavian became Augustus, the first Roman emperor, in 27 BCE. Rome's first aqueduct, the Aqua Appia, was built in 312 BCE — long before either of them.", "evidence": "👑 Augustus was the first emperor (27 BCE) — not Julius Caesar. And the first aqueduct (312 BCE) came long before Caesar. Crane is wrong again!"}, {"kind": "archive", "q": "Check Marcus Bell's story. In the Roman Republic, who led the government?", "options": ["One king who ruled for life", "Two consuls, elected every year", "A pharaoh", "An emperor chosen by the army"], "a": 1, "explain": "After the Romans threw out their last king (traditionally in 509 BCE), they set up a republic. Each year citizens elected two consuls to lead together, and the Senate advised them. Having two leaders for just one year kept anyone from becoming too powerful.", "evidence": "🏛️ Marcus Bell got the Republic right — two consuls, elected yearly. His alibi checks out."}, {"kind": "map", "q": "Check Gina's road model. The Appian Way (Via Appia) was one of Rome's first great roads. It was started in 312 BCE and eventually reached the port of Brundisium. Use the compass: in which general direction is Brundisium from Rome?", "options": ["South", "West", "North", "East"], "a": 3, "map": "italy", "explain": "Brundisium (today's Brindisi) is a port on the 'heel' of Italy's boot, east of Rome (and a little south). The road first ran south-east to Capua, then crossed Italy. Roman roads let armies, messengers, and traders move quickly across the empire.", "evidence": "🗺️ Gina's model is right — Brundisium is east of Rome, across Italy. She was gluing road stones the whole time. Gina is cleared."}], "bonus": {"q": "A Roman messenger's travel log shows 30, 25, 40, 35, and 45 Roman miles on five days. What is the MEDIAN distance?", "a": 35, "hint": "Put the numbers in order from smallest to largest. The median is the one in the middle.", "label": "Median"}, "fact": "Some Roman aqueducts and bridges are still standing today — and a few still carry water!", "next": {"day": 3, "date": "Monday, Oct 19", "teaser": "🌿 The Maya — The Scrambled Glyphs", "url": "https://dawnclay2011-ui.github.io/family-games/case-files/day3/"}};
+const TOTAL_DAYS = 5;
+const KEY = "ocamDaily";            // new namespaced key — the main game's "ocam" save is never touched
+const DK = "d" + DAY.day;
+const MIN_WORDS = 35, MIN_SENTENCES = 3;
+const PTS = {clueFirst:10, clueSecond:6, clueLater:3, arrestFirst:10, report:20};
+const MAX_SCORE = DAY.clues.length*PTS.clueFirst + PTS.arrestFirst + PTS.report;
+
+let all; try{all=JSON.parse(localStorage.getItem(KEY)||"{}")||{};}catch(e){all={};}
+let st = all[DK] || null;
+function fresh(keep){
+  return {stage:"intro", clue:0, results:DAY.clues.map(()=>({tries:0,ok:false,picked:[]})), revealed:false,
+          wrongArrests:0, report:"", bonus:null, activeSec:0, startedAt:null, finishedAt:null,
+          score:0, stars:0, best:keep?keep.best:0, plays:keep?keep.plays:0, autoSent:keep?keep.autoSent:false, lastDone:keep?keep.lastDone:null};
+}
+if(!st) st = fresh();
+function persist(){ all[DK]=st; try{localStorage.setItem(KEY,JSON.stringify(all));}catch(e){} badge(); }
+function badge(){ document.getElementById("rank").textContent = `Day ${DAY.day} of ${TOTAL_DAYS} • ${DAY.date.split(",")[0].slice(0,3)} ${DAY.date.split(", ")[1]}` + (st.best?` • Best ${st.best}`:""); }
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+const app = document.getElementById("app");
+const toTop = ()=>{ try{window.scrollTo(0,0);}catch(e){} };
+
+// active-time clock (only counts while the page is visible and the case is open)
+setInterval(()=>{ if(document.visibilityState==="visible" && st.stage!=="intro" && st.stage!=="done"){ st.activeSec+=5; persist(); } },5000);
+
+function caseHeader(compact){
+  if(compact) return `<div class="card file"><span class="era">${DAY.era}</span><h2 style="margin:8px 0 0">${DAY.title}</h2><details><summary class="hint">Re-read the case story</summary><p>${DAY.intro}</p></details></div>`;
+  return `<div class="card file"><span class="era">${DAY.era}</span><h2 style="margin-top:8px">${DAY.title}</h2><p>${DAY.intro}</p></div>`;
+}
+function suspectsHTML(collapsed){
+  const inner=`<div class="grid">${DAY.suspects.map(s=>`<div class="suspect"><div class="face">${s.face}</div><b>${s.name}</b><div class="role">${s.role}</div><p>${s.note}</p></div>`).join("")}</div>`;
+  if(collapsed) return `<div class="card"><details><summary><b>🕵️ Suspects &amp; their stories</b> <span class="hint">(tap to re-read)</span></summary>${inner}</details></div>`;
+  return `<div class="card"><h2>Suspects &amp; their stories</h2>${inner}</div>`;
+}
+function evidenceHTML(){
+  const ev = DAY.clues.filter((c,i)=>st.results[i].ok).map(c=>c.evidence);
+  return `<div class="card"><h2>Evidence board (${ev.length}/${DAY.clues.length})</h2><ul class="evidence">${ev.map(e=>`<li>${e}</li>`).join("")||"<li class='hint'>No evidence yet. Check the first story!</li>"}</ul></div>`;
+}
+
+function intro(){
+  app.innerHTML = `${caseHeader()}
+  <div class="card"><h2>Today's assignment, Officer Cam 👮</h2>
+  <p>📅 <b>${DAY.date}</b> — <b>${DAY.topic}</b></p>
+  <ol><li>Read the suspects' stories.</li><li>Check <b>${DAY.clues.length} clues</b> against real history (one uses a map 🗺️).</li><li>Make your arrest.</li><li>Write your <b>case report</b> for the Chief (that's Mom).</li></ol>
+  <p>Get clues right on the first try for ⭐⭐⭐!</p>
+  <button onclick="startCase()">🔎 Open the case file</button></div>`;
+}
+function startCase(){ if(!st.startedAt) st.startedAt=new Date().toISOString(); st.stage="clues"; persist(); render(); toTop(); }
+
+function render(){
+  if(st.stage==="intro") return intro();
+  if(st.stage==="clues") return clueScreen();
+  if(st.stage==="arrest") return arrestScreen();
+  if(st.stage==="report") return reportScreen();
+  if(st.stage==="bonus") return bonusScreen();
+  if(st.stage==="done") return doneScreen();
+}
+
+const KIND = {archive:"📚 History Archive", map:"🗺️ Map Room", glyph:"🔢 Code Lab", quipu:"🪢 Code Lab", artifact:"🏺 Artifact Lab"};
+function visual(c){
+  if(c.kind==="map") return `<div style="margin:10px 0">${MAPS[c.map]}</div>`;
+  if(c.kind==="glyph"){ const [dots,bars]=c.glyph; return `<div class="glyph" aria-label="${dots} dots above ${bars} bars"><div class="dots">${"●".repeat(dots)}</div>${'<div class="bar"></div>'.repeat(bars)}</div>`; }
+  if(c.kind==="quipu") return quipuSVG(c.knots);
+  return "";
+}
+function quipuSVG(k){
+  const labels=["hundreds","tens","ones"], ys=[62,145,252];
+  let s=`<svg viewBox="0 0 260 315" style="width:220px;max-width:100%;background:#fff;border:3px solid #8a6d3b;border-radius:10px;margin:8px 0" role="img" aria-label="Quipu cord with ${k.join(", ")} knots">`;
+  s+=`<line x1="20" y1="14" x2="240" y2="14" stroke="#8a6d3b" stroke-width="8" stroke-linecap="round"/><line x1="90" y1="14" x2="90" y2="308" stroke="#c0392b" stroke-width="5"/>`;
+  k.forEach((n,g)=>{ for(let i=0;i<n;i++){ const y=ys[g]-((n-1)*7)+i*14; s+=`<circle cx="90" cy="${y}" r="6" fill="#7a1f12"/>`; }
+    s+=`<text x="118" y="${ys[g]+5}" font-size="16" font-family="Trebuchet MS,Arial" fill="#0b132b">${labels[g]}</text>`; });
+  return s+`</svg>`;
+}
+function clueScreen(){
+  const i=st.clue, c=DAY.clues[i], r=st.results[i];
+  const solved=r.ok;
+  app.innerHTML = `${caseHeader(true)}${suspectsHTML(i>0)}${evidenceHTML()}
+  <div class="card" id="cluecard"><h2>Clue ${i+1} of ${DAY.clues.length}: ${KIND[c.kind]||"🔎 Clue"}</h2>
+   <p>${c.q}</p>${visual(c)}
+   ${c.options.map((o,j)=>{
+     const cls = solved && j===c.a ? "right" : (r.picked.includes(j)?"wrong":"");
+     return `<button class="opt ${cls}" ${solved||r.picked.includes(j)?"disabled":""} onclick="pick(${j})">${String.fromCharCode(65+j)}. ${o}</button>`; }).join("")}
+   <div class="msg" id="m">${!solved&&r.picked.length?`<span class="bad">Not quite, Officer. Re-read the stories and look again!</span>`:""}</div>
+   ${solved?`<div class="factfile">📁 <b>Fact file:</b> ${c.explain}</div><p class="ok"><b>New evidence added to the board!</b></p>
+   <button onclick="nextClue()">${i+1<DAY.clues.length?"Next clue ▶":"🚨 Ready to make an arrest"}</button>`:""}
+  </div>
+  <p><button class="alt" onclick="st.stage='intro';persist();render();toTop()">⬅ Back to case cover</button></p>`;
+  if(i>0||solved||r.picked.length){ const el=document.getElementById("cluecard"); if(el&&el.scrollIntoView) el.scrollIntoView({block:"start"}); }
+}
+function pick(j){
+  const i=st.clue, c=DAY.clues[i], r=st.results[i];
+  if(r.ok||r.picked.includes(j)) return;
+  r.tries++; r.picked.push(j);
+  if(j===c.a) r.ok=true;
+  persist(); clueScreen();
+}
+function nextClue(){ if(st.clue+1<DAY.clues.length){st.clue++;} else {st.stage="arrest";} persist(); render(); }
+
+function arrestScreen(){
+  app.innerHTML = `${caseHeader(true)}${suspectsHTML(false)}${evidenceHTML()}
+  <div class="card" id="arrest"><h2>🚨 Make your arrest!</h2><p>Look at your evidence board. Whose story didn't match real history? Who took ${DAY.item}?</p>
+  ${DAY.suspects.map((s,j)=>`<button class="red" onclick="accuse(${j})">Arrest ${s.name}</button>`).join("")}
+  <div class="msg" id="m"></div></div>`;
+  const el=document.getElementById("arrest"); if(el&&el.scrollIntoView) el.scrollIntoView({block:"start"});
+}
+function accuse(j){
+  const s=DAY.suspects[j], m=document.getElementById("m");
+  if(s.name===DAY.culprit){ st.stage="report"; persist(); render(); toTop(); }
+  else { st.wrongArrests++; persist(); m.className="msg bad"; m.textContent=`${s.name} has an alibi! Check the evidence board again.`; }
+}
+
+const STARTERS = ["The culprit was ", "The evidence that proved it was ", "I knew their story was false because ", "Another suspect was cleared because ", "One true fact I learned about this civilization is "];
+function words(t){ return (t.trim().match(/[A-Za-z0-9'’-]+/g)||[]).length; }
+function sentences(t){ return t.split(/[.!?]+/).filter(x=>words(x)>=3).length; }
+function reportScreen(){
+  app.innerHTML = `<div class="card file"><span class="stamp">ARREST MADE</span><h2>${DAY.culprit} is in custody!</h2>
+  <p>One last step before the case is closed: the Chief needs your <b>written case report</b>.</p></div>
+  ${evidenceHTML()}
+  <div class="card"><h2>📝 Case report for the Chief</h2>
+  <p>Write at least <b>${MIN_SENTENCES} complete sentences</b> (${MIN_WORDS}+ words). Explain <b>who</b> did it, <b>what evidence</b> proved it, and <b>one real history fact</b> you learned. Tap a sentence starter to use it:</p>
+  <div>${STARTERS.map((s,k)=>`<button class="chip" onclick="addStarter(${k})">${s.trim()}…</button>`).join("")}</div>
+  <textarea id="rep" placeholder="The culprit was…" oninput="onRep()">${esc(st.report)}</textarea>
+  <div class="counter" id="cnt"></div>
+  <button class="done" onclick="fileReport()">📁 File my case report</button>
+  <div class="msg" id="m"></div></div>`;
+  onRep();
+}
+function addStarter(k){ const ta=document.getElementById("rep"); let t=ta.value.replace(/\s+$/,""); t += (t && !/[.!?]$/.test(t) ? ". " : (t?" ":"")) + STARTERS[k]; ta.value=t; ta.focus(); try{ta.setSelectionRange(t.length,t.length);}catch(e){} onRep(); }
+function onRep(){
+  const t=document.getElementById("rep").value; st.report=t; persist();
+  const w=words(t), s=sentences(t);
+  document.getElementById("cnt").innerHTML = `<span class="${w>=MIN_WORDS?"ok":"bad"}">Words: ${w} / ${MIN_WORDS}</span> &nbsp;•&nbsp; <span class="${s>=MIN_SENTENCES?"ok":"bad"}">Sentences: ${s} / ${MIN_SENTENCES}</span>`;
+}
+function fileReport(){
+  const t=document.getElementById("rep").value.trim(), m=document.getElementById("m");
+  const w=words(t), s=sentences(t);
+  if(s<MIN_SENTENCES||w<MIN_WORDS){ m.className="msg bad"; m.textContent=`The Chief needs more detail: at least ${MIN_SENTENCES} sentences and ${MIN_WORDS} words. End each sentence with a period.`; return; }
+  const last=DAY.culprit.split(" ").pop().toLowerCase();
+  if(t.toLowerCase().indexOf(last)<0 && !st._nameWarned){ st._nameWarned=true; m.className="msg bad"; m.textContent=`Good start! Make sure your report names the culprit (${DAY.culprit}). Tap File again if you already did.`; return; }
+  st.report=t; st.stage = DAY.bonus ? "bonus" : "done"; if(st.stage==="done") finish(); persist(); render(); toTop();
+}
+
+function bonusScreen(){
+  const b=DAY.bonus, r=st.bonus||{tries:0,ok:false};
+  app.innerHTML = `<div class="card"><h2>⭐ Bonus: Detective Math (optional)</h2><p>${b.q}</p>
+  <input id="ans" inputmode="decimal" autocomplete="off" onkeydown="if(event.key==='Enter')checkBonus()"> <button onclick="checkBonus()">Check</button>
+  <button class="alt" onclick="document.getElementById('h').textContent='💡 '+DAY.bonus.hint">Hint</button>
+  <div class="hint" id="h"></div><div class="msg" id="m"></div>
+  <p><button class="alt" onclick="skipBonus()">Skip bonus — close the case ▶</button></p></div>`;
+}
+function checkBonus(){
+  const v=parseFloat(document.getElementById("ans").value.replace(/[^0-9.\-]/g,"")), m=document.getElementById("m");
+  if(isNaN(v)) return;
+  st.bonus=st.bonus||{tries:0,ok:false,answer:null}; st.bonus.tries++; st.bonus.answer=v;
+  if(Math.abs(v-DAY.bonus.a)<0.01){ st.bonus.ok=true; st.stage="done"; finish(); persist(); render(); toTop(); }
+  else { persist(); m.className="msg bad"; m.textContent = st.bonus.tries>=2 ? `Not quite — the ${DAY.bonus.label.toLowerCase()} is ${DAY.bonus.a}. Tap Skip to close the case.` : "Not quite. Try the hint!"; }
+}
+function skipBonus(){ st.bonus=st.bonus||{tries:0,ok:false,skipped:true}; st.stage="done"; finish(); persist(); render(); toTop(); }
+
+function scoreNow(){
+  let s=0; st.results.forEach(r=>{ s += r.tries<=1?PTS.clueFirst : r.tries===2?PTS.clueSecond : PTS.clueLater; });
+  s += Math.max(2, PTS.arrestFirst - 4*st.wrongArrests);
+  s += PTS.report; return s;
+}
+function finish(){
+  st.finishedAt=new Date().toISOString(); st.score=scoreNow();
+  st.stars = st.score>=Math.round(MAX_SCORE*0.9)?3 : st.score>=Math.round(MAX_SCORE*0.7)?2 : 1;
+  st.plays=(st.plays||0)+1; if(st.score>st.best) st.best=st.score;
+  st.lastDone={score:st.score,stars:st.stars,report:st.report,firstTry:st.results.filter(r=>r.tries===1).length,wrongArrests:st.wrongArrests,bonus:st.bonus,activeSec:st.activeSec,startedAt:st.startedAt,finishedAt:st.finishedAt,play:st.plays};
+}
+function mins(sec){ const m=Math.max(1,Math.round(sec/60)); return `about ${m} min`; }
+function nextLinkHTML(){
+  if(!DAY.next) return `<div class="nextcase">🏅 <b>That's all five history cases for this week, Detective!</b><br>The Chief will have new cases for you next time.<br><br><a href="../">Back to the station (main Case Files)</a></div>`;
+  return `<div class="nextcase">🔒 <b>Next case unlocks: Day ${DAY.next.day} (${DAY.next.date})</b><br>${DAY.next.teaser}<br><br>➡️ <a href="../day${DAY.next.day}/">${DAY.next.url}</a><br><span style="font-size:.85rem;color:#ccc">Save it for that school day — Mom will send it too.</span></div>`;
+}
+function doneScreen(){
+  const L=st.lastDone; if(!L){ st.stage="intro"; return render(); }
+  const firstPlayAuto = !st.autoSent;
+  app.innerHTML = `<div class="card" style="text-align:center"><span class="stamp">CASE CLOSED</span>
+  <h2>Outstanding work, Officer Cam! ${"⭐".repeat(L.stars)}</h2>
+  <p>${DAY.culprit} has been arrested and ${DAY.item} is back in the museum.</p>
+  <table class="sc"><tr><td>Score</td><td><b>${L.score} / ${MAX_SCORE}</b>${st.best>L.score?` (best: ${st.best})`:""}</td></tr>
+  <tr><td>Clues right on first try</td><td>${L.firstTry} of ${DAY.clues.length}</td></tr>
+  <tr><td>Wrong arrests</td><td>${L.wrongArrests}</td></tr>
+  <tr><td>Bonus math</td><td>${L.bonus&&L.bonus.ok?"⭐ Solved!":L.bonus&&L.bonus.tries?"Tried":"Skipped"}</td></tr>
+  <tr><td>Time on case</td><td>${mins(L.activeSec)}</td></tr></table>
+  <p class="hint">📁 Did you know? ${DAY.fact}</p>
+  <h3 style="text-align:left">Your case report</h3><blockquote>${esc(L.report)}</blockquote>
+  ${reportBtn("caseReport","📨 Send my case report to Mom")}
+  ${nextLinkHTML()}
+  <p><button class="alt" onclick="replay()">🔁 Replay this case</button></p></div>`;
+  if(firstPlayAuto){ st.autoSent=true; persist(); const b=document.querySelector("button.rep"); if(b) reportToMom(b,caseReport); }
+}
+function replay(){ if(!confirm("Replay this case? Your best score is kept.")) return; st=fresh(st); persist(); render(); toTop(); }
+
+/* ---- Report to Mom (FormSubmit AJAX) — same mechanism as the main games ---- */
+const MOM_EMAIL="8caedc1e9653325b52b367e2e172d2a3"; // FormSubmit alias (hides Mom's address)
+const REPORT_URL="https://formsubmit.co/ajax/"+MOM_EMAIL;
+function nowStr(){try{return new Date().toLocaleString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short"});}catch(e){return new Date().toString();}}
+function fmtTime(iso){ if(!iso) return "—"; try{return new Date(iso).toLocaleString("en-US",{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short"});}catch(e){return iso;} }
+function postReport(fields){
+ const ctl=typeof AbortController!=="undefined"?new AbortController():null;
+ const t=ctl?setTimeout(()=>ctl.abort(),15000):null;
+ return fetch(REPORT_URL,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(fields),signal:ctl?ctl.signal:undefined})
+  .then(r=>r.json().catch(()=>({success:r.ok?"true":"false",message:"HTTP "+r.status})).then(j=>{j._status=r.status;return j;}))
+  .finally(()=>{if(t)clearTimeout(t);});
+}
+function reportBtn(builder,label,small){
+ return `<div class="report"><button type="button" class="rep${small?" small":""}" onclick="reportToMom(this,${builder})">${label}</button><span class="rstat" role="status" aria-live="polite"></span></div>`;
+}
+function reportToMom(btn,build){
+ const st=btn.nextElementSibling;
+ if(btn.dataset.sent||btn.disabled)return;
+ if(navigator.onLine===false){st.className="rstat bad";st.textContent="No internet — try again later.";btn.textContent="🔁 Try again";return;}
+ let fields;
+ try{fields=Object.assign({_subject:REPORT_SUBJECT,_template:"box",_captcha:"false",Date:nowStr(),Player:REPORT_PLAYER,Game:REPORT_GAME},build());}
+ catch(e){st.className="rstat bad";st.textContent="Oops — couldn't build the report.";return;}
+ btn.disabled=true;btn.textContent="Sending… 📤";st.className="rstat";st.textContent="";
+ postReport(fields).then(j=>{
+  if(String(j.success)!=="true")throw new Error(j.message||"Send failed");
+  btn.dataset.sent="1";btn.textContent="Sent! ✅";btn.classList.add("sent");st.className="rstat good";st.textContent="Mom got your report!";
+ }).catch(e=>{
+  btn.disabled=false;btn.textContent="🔁 Try again";st.className="rstat bad";
+  st.textContent=navigator.onLine===false?"No internet — try again later.":/activat/i.test(e&&e.message||"")?"Almost! Mom needs to switch on reports first. Try again later.":"Oops — that didn't send. Tap to try again!";
+ });
+}
+const REPORT_SUBJECT=`Game Report: Cam – Daily History Case Day ${DAY.day} (${DAY.era.replace(/^\S+\s/,"")})`, REPORT_PLAYER="Cam (age 11)", REPORT_GAME="Officer Cam's Case Files — Daily History Cases";
+function caseReport(){
+  const L=st.lastDone, b=L.bonus;
+  return {
+    "Report type":`Daily history case — Day ${DAY.day} of ${TOTAL_DAYS}`,
+    "Day & topic":`Day ${DAY.day} (${DAY.date}) — ${DAY.topic}`,
+    "Case":DAY.title,
+    "Solved":`Yes ✅ — arrested ${DAY.culprit}`,
+    "Score":`${L.score} of ${MAX_SCORE} (${"⭐".repeat(L.stars)} ${L.stars} of 3)`+(st.best>L.score?` — best ever on this case: ${st.best}`:""),
+    "Clues right on first try":`${L.firstTry} of ${DAY.clues.length}`,
+    "Wrong arrests":String(L.wrongArrests),
+    "Bonus math (optional)":b&&b.ok?`${DAY.bonus.label}: solved ✅ (${b.answer})`:b&&b.tries?`${DAY.bonus.label}: tried, not solved (answered ${b.answer}; correct ${DAY.bonus.a})`:"Skipped",
+    "Time on case":`${mins(L.activeSec)} of active time (started ${fmtTime(L.startedAt)}, finished ${fmtTime(L.finishedAt)})`,
+    "Play":L.play>1?`Replay #${L.play}`:"First play",
+    "Cam's written case report":L.report,
+    "Report length":`${words(L.report)} words, ${sentences(L.report)} sentences`
+  };
+}
+const MAPS = {"italy": "<svg viewBox=\"0 0 520 506\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"Map of Italy\" style=\"width:100%;height:auto;background:#a9d6e5;border-radius:10px;border:3px solid #0b132b\"><line x1=\"21.7\" y1=\"0\" x2=\"21.7\" y2=\"506\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"65.0\" y1=\"0\" x2=\"65.0\" y2=\"506\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"108.3\" y1=\"0\" x2=\"108.3\" y2=\"506\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"151.7\" y1=\"0\" x2=\"151.7\" y2=\"506\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"195.0\" y1=\"0\" x2=\"195.0\" y2=\"506\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"238.3\" y1=\"0\" x2=\"238.3\" y2=\"506\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"281.7\" y1=\"0\" x2=\"281.7\" y2=\"506\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"325.0\" y1=\"0\" x2=\"325.0\" y2=\"506\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"368.3\" y1=\"0\" x2=\"368.3\" y2=\"506\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"411.7\" y1=\"0\" x2=\"411.7\" y2=\"506\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"455.0\" y1=\"0\" x2=\"455.0\" y2=\"506\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"498.3\" y1=\"0\" x2=\"498.3\" y2=\"506\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"0\" y1=\"477.0\" x2=\"520\" y2=\"477.0\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"0\" y1=\"418.9\" x2=\"520\" y2=\"418.9\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"0\" y1=\"360.7\" x2=\"520\" y2=\"360.7\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"0\" y1=\"302.5\" x2=\"520\" y2=\"302.5\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"0\" y1=\"244.3\" x2=\"520\" y2=\"244.3\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"0\" y1=\"186.2\" x2=\"520\" y2=\"186.2\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"0\" y1=\"128.0\" x2=\"520\" y2=\"128.0\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"0\" y1=\"69.8\" x2=\"520\" y2=\"69.8\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"0\" y1=\"11.6\" x2=\"520\" y2=\"11.6\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><path d=\"M94.6,313.1L99.9,331.6L92.9,345.1L95.6,359.7L91.7,398.2L89.4,409.2L86.1,410.7L76.4,406.2L71.5,407.4L67.4,404.9L66.0,416.3L63.6,421.0L59.9,423.9L49.8,423.1L39.8,406.9L39.0,390.8L41.0,386.1L41.2,376.9L42.1,375.3L45.1,376.3L45.4,370.0L43.2,366.6L39.3,365.5L39.4,358.5L42.1,353.1L42.1,343.7L39.4,340.2L37.0,331.6L29.9,322.8L29.5,315.8L31.4,307.5L37.4,311.4L46.4,311.2L57.3,305.4L64.9,296.1L69.6,294.2L72.9,288.4L74.9,287.5L77.3,290.8L84.7,293.8L88.3,299.4L91.7,301.5L89.0,306.5L94.6,313.1ZM84.7,206.0L87.8,212.2L88.9,236.8L82.4,248.6L81.2,263.0L73.1,280.1L60.5,272.5L56.7,268.3L60.1,261.7L52.8,258.2L54.5,251.9L53.8,248.7L48.6,248.4L48.3,246.7L52.1,241.8L52.0,238.8L47.1,235.0L46.2,231.6L50.9,227.8L48.8,224.4L46.2,223.5L52.6,212.3L57.0,209.0L66.9,205.8L71.0,201.7L77.5,203.9L78.6,202.8L80.7,185.1L83.0,184.9L85.1,187.3L85.8,197.5L84.7,206.0ZM352.5,461.5L335.2,489.5L330.1,506.1L241.4,506.1L235.0,502.0L222.7,500.6L217.8,496.2L213.9,487.5L218.7,473.9L223.8,470.7L226.8,466.4L234.1,475.0L240.5,472.1L240.8,469.4L245.3,466.0L250.9,465.9L267.9,477.0L272.5,478.1L283.8,474.7L294.1,476.0L303.6,474.4L315.9,467.3L330.1,468.1L346.6,460.1L352.5,461.5ZM277.1,320.1L275.3,318.6L276.1,316.4L280.0,317.7L277.1,320.1ZM396.5,186.4L415.7,188.2L419.8,191.0L410.7,190.4L405.2,192.2L398.5,190.0L396.5,186.4ZM420.1,178.8L397.8,179.0L384.6,173.7L390.9,172.8L396.8,173.7L398.5,176.0L420.1,178.8ZM395.5,170.6L386.7,167.7L387.8,163.6L404.5,165.7L407.0,167.9L402.4,170.4L395.5,170.6ZM126.9,196.7L126.5,202.8L122.9,200.1L114.0,201.2L113.1,198.7L113.9,197.2L123.9,196.5L125.5,194.4L126.9,196.7ZM39.9,420.7L37.3,416.6L37.6,412.1L42.4,414.9L39.9,420.7ZM32.6,302.8L30.6,302.7L33.3,296.7L35.5,295.4L36.6,296.6L32.6,302.8ZM335.7,126.4L330.3,122.6L327.9,118.8L335.0,124.4L335.7,126.4ZM311.4,72.4L308.2,68.3L303.8,67.7L300.6,64.1L304.4,61.3L306.4,56.7L316.8,71.1L311.4,72.4ZM318.8,86.4L311.1,83.2L310.8,80.0L314.3,78.8L318.8,86.4ZM332.0,110.0L321.2,99.7L313.8,87.4L335.4,107.6L332.0,110.0ZM333.8,133.4L330.9,133.4L319.2,118.2L322.9,121.2L333.8,133.4ZM343.9,133.8L341.2,132.9L336.7,127.4L341.1,129.5L343.9,133.8ZM302.5,91.8L299.8,89.0L295.2,75.6L296.4,68.6L294.1,61.4L296.0,60.2L297.2,60.1L298.7,68.0L301.9,71.5L302.5,91.8ZM443.9,203.6L426.6,198.4L438.0,199.6L443.9,203.6ZM519.3,348.5L512.3,337.0L517.4,338.8L518.2,337.1L513.0,322.1L518.3,306.4L519.1,288.8L517.4,277.8L520.0,269.7L519.3,348.5ZM520.0,253.9L513.2,251.9L506.4,247.3L503.6,240.8L493.8,229.8L482.4,222.3L483.0,218.6L477.4,219.1L447.4,197.9L437.0,195.6L422.9,188.0L413.6,185.3L421.2,184.7L443.0,194.8L426.0,179.5L417.3,173.9L407.5,163.3L385.4,154.5L374.0,156.7L367.7,155.9L365.8,153.1L365.8,148.0L346.6,133.3L333.1,118.0L330.3,113.0L337.3,111.2L345.4,112.2L336.7,105.7L324.2,92.9L320.5,86.9L321.0,71.5L318.7,65.1L305.5,52.5L295.2,50.2L291.9,60.5L280.2,79.4L275.6,79.3L265.6,63.5L260.7,41.8L272.3,33.3L265.6,25.0L262.5,25.0L258.5,28.5L247.3,24.9L239.6,32.7L216.6,43.0L213.7,42.6L218.2,38.1L216.3,38.0L206.9,43.9L204.8,55.8L207.4,57.7L212.0,67.5L217.7,71.7L215.1,78.8L211.7,81.5L207.1,79.6L205.8,86.0L208.2,103.0L212.2,115.0L224.9,128.3L234.3,132.6L251.1,146.2L262.8,152.9L273.2,175.7L282.1,204.2L289.6,214.9L305.1,230.1L319.2,241.3L332.3,248.2L342.5,249.4L366.8,247.9L375.5,250.4L376.5,255.1L374.9,258.4L364.6,266.4L364.0,272.7L368.9,277.2L392.2,289.0L416.1,298.9L432.2,311.8L453.0,322.6L456.6,327.8L469.2,339.1L475.0,347.8L476.1,354.6L469.9,371.1L464.5,369.3L458.4,364.3L449.2,344.4L428.8,340.9L422.8,337.5L419.5,331.4L413.0,330.8L408.6,334.0L397.4,352.7L391.3,368.8L390.9,375.4L394.2,381.7L404.1,385.2L416.6,396.7L417.0,410.9L419.2,419.0L415.9,423.5L409.6,422.4L401.1,425.3L395.1,430.5L392.6,435.4L393.2,448.3L392.0,453.2L380.6,462.5L370.8,480.4L356.4,480.6L353.0,475.0L352.9,466.8L355.3,461.8L360.6,459.4L364.2,448.9L363.1,441.3L365.2,437.9L367.1,435.6L376.9,432.9L377.4,422.3L373.0,417.5L369.4,398.3L362.0,382.4L355.0,361.2L350.4,357.6L337.8,356.6L322.9,346.8L321.9,342.7L324.4,338.7L322.7,333.4L318.0,324.0L314.8,321.8L296.4,325.8L301.6,318.3L295.1,313.4L283.6,313.4L283.7,310.0L275.6,294.9L270.1,288.8L267.4,287.7L262.4,289.0L249.0,285.7L242.2,288.3L231.8,278.7L222.3,275.2L198.3,247.8L186.6,239.6L179.3,227.6L164.5,219.7L157.8,221.6L156.1,220.1L159.7,217.8L158.9,213.2L149.0,201.4L143.1,197.5L139.0,189.9L130.6,188.0L130.9,174.3L127.7,164.6L122.2,156.3L119.0,136.6L116.5,131.0L110.4,126.8L96.7,122.1L77.5,109.4L54.9,103.4L45.6,107.8L21.9,135.2L0.0,141.5L0.0,0.0L520.0,0.0L520.0,253.9Z\" fill=\"#f4e1b0\" stroke=\"#8a6d3b\" stroke-width=\"1.2\" fill-rule=\"evenodd\"/><text x=\"177.7\" y=\"360.7\" font-size=\"18\" font-style=\"italic\" fill=\"#1d5c7a\" text-anchor=\"middle\" font-family=\"Trebuchet MS,Arial\">Tyrrhenian Sea<\/text><text x=\"342.3\" y=\"174.5\" font-size=\"18\" font-style=\"italic\" fill=\"#1d5c7a\" text-anchor=\"middle\" font-family=\"Trebuchet MS,Arial\">Adriatic Sea<\/text><polyline points=\"216.7,250.1 249.2,286.2 292.5,298.4 315.5,294.9 368.3,307.2 422.1,333.3 452.4,324.0\" fill=\"none\" stroke=\"#c0392b\" stroke-width=\"3\" stroke-dasharray=\"7 5\"/><circle cx=\"216.7\" cy=\"250.1\" r=\"7\" fill=\"#c0392b\" stroke=\"#fff\" stroke-width=\"2\"/><text x=\"206.7\" y=\"255.1\" font-size=\"21\" font-weight=\"bold\" fill=\"#0b132b\" stroke=\"#fdf6e3\" stroke-width=\"4\" paint-order=\"stroke\" text-anchor=\"end\" font-family=\"Trebuchet MS,Arial\">Rome<\/text><circle cx=\"452.4\" cy=\"324.0\" r=\"7\" fill=\"#c0392b\" stroke=\"#fff\" stroke-width=\"2\"/><text x=\"442.4\" y=\"329.0\" font-size=\"21\" font-weight=\"bold\" fill=\"#0b132b\" stroke=\"#fdf6e3\" stroke-width=\"4\" paint-order=\"stroke\" text-anchor=\"end\" font-family=\"Trebuchet MS,Arial\">Brundisium<\/text><g font-family=\"Trebuchet MS,Arial\" font-weight=\"bold\" font-size=\"13\" fill=\"#0b132b\" text-anchor=\"middle\"><circle cx=\"470\" cy=\"48\" r=\"26\" fill=\"#fdf6e3\" stroke=\"#0b132b\" stroke-width=\"2\"/><polygon points=\"470,28 464,48 476,48\" fill=\"#c0392b\"/><polygon points=\"470,68 464,48 476,48\" fill=\"#0b132b\"/><text x=\"470\" y=\"19\">N<\/text><text x=\"470\" y=\"88\">S<\/text><text x=\"435\" y=\"53\">W<\/text><text x=\"505\" y=\"53\">E<\/text><\/g><text x=\"10\" y=\"494\" font-size=\"17\" fill=\"#c0392b\" font-weight=\"bold\" font-family=\"Trebuchet MS,Arial\">- - - Appian Way (approximate)<\/text><\/svg>"};
+badge(); render();
+</script>
+</body>
+</html>

@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta name="robots" content="noindex">
+<title>Daily Case #3: The Scrambled Glyphs — Officer Cam's Case Files</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Trebuchet MS",Arial,sans-serif;background:#1c2541;color:#1c1c1c;min-height:100vh}
+  header{background:#0b132b;color:#ffd166;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+  header h1{margin:0;font-size:1.3rem;letter-spacing:1px}
+  .badge{background:#ffd166;color:#0b132b;border-radius:20px;padding:4px 12px;font-weight:bold;font-size:.9rem}
+  main{max-width:860px;margin:18px auto;padding:0 12px}
+  .card{background:#fdf6e3;border-radius:12px;padding:18px;margin-bottom:16px;box-shadow:0 4px 0 #0b132b}
+  .file{background:#f4e1b0;border-left:8px solid #c0392b}
+  h2{margin-top:0;color:#0b132b}
+  button{font:inherit;font-weight:bold;border:none;border-radius:8px;padding:10px 16px;margin:4px;cursor:pointer;background:#3a86ff;color:#fff}
+  button:hover{filter:brightness(1.1)}
+  button.alt{background:#6c757d}
+  button.red{background:#c0392b}
+  button.done{background:#2a9d8f}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  .suspect{background:#fff;border-radius:10px;padding:12px;border:2px solid #ddd}
+  .suspect .face{font-size:2.4rem}
+  .suspect .role{font-size:.85rem;color:#666;font-style:italic}
+  input{font:inherit;padding:9px;border-radius:8px;border:2px solid #aaa;width:160px}
+  .msg{margin-top:10px;font-weight:bold}
+  .ok{color:#2a9d8f}.bad{color:#c0392b}
+  .evidence li{margin:6px 0}
+  .hint{font-size:.9rem;color:#555;font-style:italic}
+  .stamp{display:inline-block;border:4px solid #c0392b;color:#c0392b;padding:6px 14px;font-size:1.6rem;transform:rotate(-8deg);font-weight:900;margin:10px 0}
+  .report{margin:8px 0}.rstat{display:block;margin-top:4px;font-weight:bold;font-size:.95rem}.rstat.good{color:#2a9d8f}.rstat.bad{color:#c0392b}
+  button.rep{background:#8e44ad}button.rep.small{font-size:.85rem;padding:7px 12px}button.rep.sent{background:#2a9d8f}button:disabled{cursor:default;filter:none;opacity:.9}
+  button{max-width:100%;white-space:normal}
+  .opt{display:block;width:100%;text-align:left;background:#fff;color:#0b132b;border:2px solid #3a86ff;margin:8px 0;padding:12px 14px}
+  .opt.wrong{background:#fde2e1;border-color:#c0392b;color:#8a1c12;text-decoration:line-through}
+  .opt.right{background:#d8f3ee;border-color:#2a9d8f;color:#14532d}
+  .factfile{background:#e8f1ff;border-left:5px solid #3a86ff;padding:10px 12px;border-radius:8px;margin:10px 0}
+  .era{display:inline-block;background:#0b132b;color:#ffd166;border-radius:14px;padding:3px 10px;font-size:.85rem;font-weight:bold}
+  textarea{font:inherit;width:100%;min-height:190px;padding:10px;border-radius:8px;border:2px solid #aaa;resize:vertical;font-size:1rem}
+  .chip{background:#ffd166;color:#0b132b;font-size:.9rem;padding:7px 11px;border-radius:16px}
+  .counter{font-size:.9rem;font-weight:bold;margin:6px 0}
+  .glyph{display:inline-flex;flex-direction:column;align-items:center;gap:6px;background:#fff;border:3px solid #8a6d3b;border-radius:10px;padding:14px 22px;margin:8px 0}
+  .glyph .dots{font-size:1.6rem;letter-spacing:10px;color:#0b132b;line-height:1}
+  .glyph .bar{width:96px;height:14px;background:#0b132b;border-radius:7px}
+  .nextcase{background:#0b132b;color:#ffd166;border-radius:12px;padding:16px;margin-top:12px;text-align:center}
+  .nextcase a{color:#fff;font-weight:bold;font-size:1.1rem;word-break:break-all}
+  blockquote{background:#fff;border-left:5px solid #8e44ad;margin:10px 0;padding:10px 12px;white-space:pre-wrap;text-align:left}
+  table.sc{border-collapse:collapse;margin:8px auto}table.sc td{border:1px solid #bbb;padding:6px 10px;background:#fff;text-align:left}
+  summary{cursor:pointer;padding:4px 0}
+</style>
+</head>
+<body>
+<header><h1>🚔 OFFICER CAM'S CASE FILES</h1><span class="badge" id="rank"></span></header>
+<main id="app"></main>
+<script>
+const DAY = {"day": 3, "date": "Monday, Oct 19", "topic": "The Maya — calendars, math (base 20 & zero) & glyphs", "title": "Daily Case #3: The Scrambled Glyphs", "era": "🌿 The Maya", "intro": "A replica page from a Maya codex — a folding book made of bark paper — has vanished from the Maya Hall! The thief left behind a note written in Maya numbers. Three people were in the hall. Two of them really know the Maya. One of them is faking it.", "item": "the replica Maya codex page", "suspects": [{"name": "Dr. Rosa Itzel", "face": "👩‍🔬", "role": "Archaeologist", "note": "\"I was in the calendar room. The Maya used a 260-day calendar and a 365-day calendar together, like two gears turning.\""}, {"name": "Theo Park", "face": "🧑‍💻", "role": "Exhibit tech", "note": "\"I was fixing the city map screen. Chichén Itzá is on the Yucatán Peninsula, north of Tikal.\""}, {"name": "Brock Haley", "face": "🧢", "role": "Podcast host", "note": "\"I was in the number room. The Maya counted in tens like us and never had a zero. Anyway, the Maya all disappeared, and they said the world would end in 2012.\""}], "culprit": "Brock Haley", "clues": [{"kind": "archive", "q": "Check Brock Haley's story about Maya math. What did the Maya use for ZERO?", "options": ["A shell-shaped symbol", "Nothing — they had no zero", "A picture of the Sun", "The letter O"], "a": 0, "explain": "The Maya wrote numbers with dots (1), bars (5), and a shell-shaped symbol for zero. They counted in groups of 20, not 10, and were one of the first peoples in the world to use zero.", "evidence": "🐚 The Maya DID have zero (a shell symbol), and they counted by 20s. Brock Haley's 'number room' story is wrong."}, {"kind": "glyph", "q": "The thief's dropped note has a Maya number on it. In Maya numbers a dot = 1 and a bar = 5. What number is this?", "glyph": [2, 2], "options": ["22", "7", "4", "12"], "a": 3, "explain": "Two bars are 5 + 5 = 10, and two dots are 1 + 1 = 2. Total: 12.", "evidence": "📝 The note says 12 — that's the number on the staff locker where Brock Haley stored his podcast gear. The guard found an empty display tag inside!"}, {"kind": "archive", "q": "Check Dr. Itzel's story. How many days were in the Maya sacred calendar, the Tzolk'in?", "options": ["365", "100", "260", "52"], "a": 2, "explain": "The Tzolk'in had 260 days. The Haab' had 365. Turning together like gears, they lined up again every 52 years. Their Long Count calendar finished a big cycle on Dec 21, 2012 — like a car's odometer rolling over. The Maya never said the world would end, and millions of Maya people still live in Mexico and Central America today.", "evidence": "📅 Dr. Itzel is right — 260 days in the Tzolk'in. Her alibi checks out. (And Brock was wrong twice more: the Maya didn't disappear, and they never predicted the end of the world.)"}, {"kind": "map", "q": "Check Theo's map screen. Use the compass. Which direction is Chichén Itzá from Tikal?", "options": ["West", "East", "North", "South"], "a": 2, "map": "maya", "explain": "Tikal is in the rainforest of what is now northern Guatemala. Chichén Itzá is on the Yucatán Peninsula in Mexico, to the north. Maya cities stretched across southern Mexico, Guatemala, Belize, Honduras, and El Salvador.", "evidence": "🗺️ Theo's map is right — Chichén Itzá is north of Tikal. The screen's repair log shows him working 10:30–11:30. Theo is cleared."}], "bonus": {"q": "Visitors climbed the replica pyramid stairs in 18, 22, 20, 25, and 15 seconds. What is the MEAN (average) time in seconds?", "a": 20, "hint": "Add the five times, then divide by 5.", "label": "Mean"}, "fact": "Only four Maya codices (books) are known to survive today. Most were destroyed in the 1500s.", "next": {"day": 4, "date": "Tuesday, Oct 20", "teaser": "🦅 The Aztecs — The Floating Garden Heist", "url": "https://dawnclay2011-ui.github.io/family-games/case-files/day4/"}};
+const TOTAL_DAYS = 5;
+const KEY = "ocamDaily";            // new namespaced key — the main game's "ocam" save is never touched
+const DK = "d" + DAY.day;
+const MIN_WORDS = 35, MIN_SENTENCES = 3;
+const PTS = {clueFirst:10, clueSecond:6, clueLater:3, arrestFirst:10, report:20};
+const MAX_SCORE = DAY.clues.length*PTS.clueFirst + PTS.arrestFirst + PTS.report;
+
+let all; try{all=JSON.parse(localStorage.getItem(KEY)||"{}")||{};}catch(e){all={};}
+let st = all[DK] || null;
+function fresh(keep){
+  return {stage:"intro", clue:0, results:DAY.clues.map(()=>({tries:0,ok:false,picked:[]})), revealed:false,
+          wrongArrests:0, report:"", bonus:null, activeSec:0, startedAt:null, finishedAt:null,
+          score:0, stars:0, best:keep?keep.best:0, plays:keep?keep.plays:0, autoSent:keep?keep.autoSent:false, lastDone:keep?keep.lastDone:null};
+}
+if(!st) st = fresh();
+function persist(){ all[DK]=st; try{localStorage.setItem(KEY,JSON.stringify(all));}catch(e){} badge(); }
+function badge(){ document.getElementById("rank").textContent = `Day ${DAY.day} of ${TOTAL_DAYS} • ${DAY.date.split(",")[0].slice(0,3)} ${DAY.date.split(", ")[1]}` + (st.best?` • Best ${st.best}`:""); }
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+const app = document.getElementById("app");
+const toTop = ()=>{ try{window.scrollTo(0,0);}catch(e){} };
+
+// active-time clock (only counts while the page is visible and the case is open)
+setInterval(()=>{ if(document.visibilityState==="visible" && st.stage!=="intro" && st.stage!=="done"){ st.activeSec+=5; persist(); } },5000);
+
+function caseHeader(compact){
+  if(compact) return `<div class="card file"><span class="era">${DAY.era}</span><h2 style="margin:8px 0 0">${DAY.title}</h2><details><summary class="hint">Re-read the case story</summary><p>${DAY.intro}</p></details></div>`;
+  return `<div class="card file"><span class="era">${DAY.era}</span><h2 style="margin-top:8px">${DAY.title}</h2><p>${DAY.intro}</p></div>`;
+}
+function suspectsHTML(collapsed){
+  const inner=`<div class="grid">${DAY.suspects.map(s=>`<div class="suspect"><div class="face">${s.face}</div><b>${s.name}</b><div class="role">${s.role}</div><p>${s.note}</p></div>`).join("")}</div>`;
+  if(collapsed) return `<div class="card"><details><summary><b>🕵️ Suspects &amp; their stories</b> <span class="hint">(tap to re-read)</span></summary>${inner}</details></div>`;
+  return `<div class="card"><h2>Suspects &amp; their stories</h2>${inner}</div>`;
+}
+function evidenceHTML(){
+  const ev = DAY.clues.filter((c,i)=>st.results[i].ok).map(c=>c.evidence);
+  return `<div class="card"><h2>Evidence board (${ev.length}/${DAY.clues.length})</h2><ul class="evidence">${ev.map(e=>`<li>${e}</li>`).join("")||"<li class='hint'>No evidence yet. Check the first story!</li>"}</ul></div>`;
+}
+
+function intro(){
+  app.innerHTML = `${caseHeader()}
+  <div class="card"><h2>Today's assignment, Officer Cam 👮</h2>
+  <p>📅 <b>${DAY.date}</b> — <b>${DAY.topic}</b></p>
+  <ol><li>Read the suspects' stories.</li><li>Check <b>${DAY.clues.length} clues</b> against real history (one uses a map 🗺️).</li><li>Make your arrest.</li><li>Write your <b>case report</b> for the Chief (that's Mom).</li></ol>
+  <p>Get clues right on the first try for ⭐⭐⭐!</p>
+  <button onclick="startCase()">🔎 Open the case file</button></div>`;
+}
+function startCase(){ if(!st.startedAt) st.startedAt=new Date().toISOString(); st.stage="clues"; persist(); render(); toTop(); }
+
+function render(){
+  if(st.stage==="intro") return intro();
+  if(st.stage==="clues") return clueScreen();
+  if(st.stage==="arrest") return arrestScreen();
+  if(st.stage==="report") return reportScreen();
+  if(st.stage==="bonus") return bonusScreen();
+  if(st.stage==="done") return doneScreen();
+}
+
+const KIND = {archive:"📚 History Archive", map:"🗺️ Map Room", glyph:"🔢 Code Lab", quipu:"🪢 Code Lab", artifact:"🏺 Artifact Lab"};
+function visual(c){
+  if(c.kind==="map") return `<div style="margin:10px 0">${MAPS[c.map]}</div>`;
+  if(c.kind==="glyph"){ const [dots,bars]=c.glyph; return `<div class="glyph" aria-label="${dots} dots above ${bars} bars"><div class="dots">${"●".repeat(dots)}</div>${'<div class="bar"></div>'.repeat(bars)}</div>`; }
+  if(c.kind==="quipu") return quipuSVG(c.knots);
+  return "";
+}
+function quipuSVG(k){
+  const labels=["hundreds","tens","ones"], ys=[62,145,252];
+  let s=`<svg viewBox="0 0 260 315" style="width:220px;max-width:100%;background:#fff;border:3px solid #8a6d3b;border-radius:10px;margin:8px 0" role="img" aria-label="Quipu cord with ${k.join(", ")} knots">`;
+  s+=`<line x1="20" y1="14" x2="240" y2="14" stroke="#8a6d3b" stroke-width="8" stroke-linecap="round"/><line x1="90" y1="14" x2="90" y2="308" stroke="#c0392b" stroke-width="5"/>`;
+  k.forEach((n,g)=>{ for(let i=0;i<n;i++){ const y=ys[g]-((n-1)*7)+i*14; s+=`<circle cx="90" cy="${y}" r="6" fill="#7a1f12"/>`; }
+    s+=`<text x="118" y="${ys[g]+5}" font-size="16" font-family="Trebuchet MS,Arial" fill="#0b132b">${labels[g]}</text>`; });
+  return s+`</svg>`;
+}
+function clueScreen(){
+  const i=st.clue, c=DAY.clues[i], r=st.results[i];
+  const solved=r.ok;
+  app.innerHTML = `${caseHeader(true)}${suspectsHTML(i>0)}${evidenceHTML()}
+  <div class="card" id="cluecard"><h2>Clue ${i+1} of ${DAY.clues.length}: ${KIND[c.kind]||"🔎 Clue"}</h2>
+   <p>${c.q}</p>${visual(c)}
+   ${c.options.map((o,j)=>{
+     const cls = solved && j===c.a ? "right" : (r.picked.includes(j)?"wrong":"");
+     return `<button class="opt ${cls}" ${solved||r.picked.includes(j)?"disabled":""} onclick="pick(${j})">${String.fromCharCode(65+j)}. ${o}</button>`; }).join("")}
+   <div class="msg" id="m">${!solved&&r.picked.length?`<span class="bad">Not quite, Officer. Re-read the stories and look again!</span>`:""}</div>
+   ${solved?`<div class="factfile">📁 <b>Fact file:</b> ${c.explain}</div><p class="ok"><b>New evidence added to the board!</b></p>
+   <button onclick="nextClue()">${i+1<DAY.clues.length?"Next clue ▶":"🚨 Ready to make an arrest"}</button>`:""}
+  </div>
+  <p><button class="alt" onclick="st.stage='intro';persist();render();toTop()">⬅ Back to case cover</button></p>`;
+  if(i>0||solved||r.picked.length){ const el=document.getElementById("cluecard"); if(el&&el.scrollIntoView) el.scrollIntoView({block:"start"}); }
+}
+function pick(j){
+  const i=st.clue, c=DAY.clues[i], r=st.results[i];
+  if(r.ok||r.picked.includes(j)) return;
+  r.tries++; r.picked.push(j);
+  if(j===c.a) r.ok=true;
+  persist(); clueScreen();
+}
+function nextClue(){ if(st.clue+1<DAY.clues.length){st.clue++;} else {st.stage="arrest";} persist(); render(); }
+
+function arrestScreen(){
+  app.innerHTML = `${caseHeader(true)}${suspectsHTML(false)}${evidenceHTML()}
+  <div class="card" id="arrest"><h2>🚨 Make your arrest!</h2><p>Look at your evidence board. Whose story didn't match real history? Who took ${DAY.item}?</p>
+  ${DAY.suspects.map((s,j)=>`<button class="red" onclick="accuse(${j})">Arrest ${s.name}</button>`).join("")}
+  <div class="msg" id="m"></div></div>`;
+  const el=document.getElementById("arrest"); if(el&&el.scrollIntoView) el.scrollIntoView({block:"start"});
+}
+function accuse(j){
+  const s=DAY.suspects[j], m=document.getElementById("m");
+  if(s.name===DAY.culprit){ st.stage="report"; persist(); render(); toTop(); }
+  else { st.wrongArrests++; persist(); m.className="msg bad"; m.textContent=`${s.name} has an alibi! Check the evidence board again.`; }
+}
+
+const STARTERS = ["The culprit was ", "The evidence that proved it was ", "I knew their story was false because ", "Another suspect was cleared because ", "One true fact I learned about this civilization is "];
+function words(t){ return (t.trim().match(/[A-Za-z0-9'’-]+/g)||[]).length; }
+function sentences(t){ return t.split(/[.!?]+/).filter(x=>words(x)>=3).length; }
+function reportScreen(){
+  app.innerHTML = `<div class="card file"><span class="stamp">ARREST MADE</span><h2>${DAY.culprit} is in custody!</h2>
+  <p>One last step before the case is closed: the Chief needs your <b>written case report</b>.</p></div>
+  ${evidenceHTML()}
+  <div class="card"><h2>📝 Case report for the Chief</h2>
+  <p>Write at least <b>${MIN_SENTENCES} complete sentences</b> (${MIN_WORDS}+ words). Explain <b>who</b> did it, <b>what evidence</b> proved it, and <b>one real history fact</b> you learned. Tap a sentence starter to use it:</p>
+  <div>${STARTERS.map((s,k)=>`<button class="chip" onclick="addStarter(${k})">${s.trim()}…</button>`).join("")}</div>
+  <textarea id="rep" placeholder="The culprit was…" oninput="onRep()">${esc(st.report)}</textarea>
+  <div class="counter" id="cnt"></div>
+  <button class="done" onclick="fileReport()">📁 File my case report</button>
+  <div class="msg" id="m"></div></div>`;
+  onRep();
+}
+function addStarter(k){ const ta=document.getElementById("rep"); let t=ta.value.replace(/\s+$/,""); t += (t && !/[.!?]$/.test(t) ? ". " : (t?" ":"")) + STARTERS[k]; ta.value=t; ta.focus(); try{ta.setSelectionRange(t.length,t.length);}catch(e){} onRep(); }
+function onRep(){
+  const t=document.getElementById("rep").value; st.report=t; persist();
+  const w=words(t), s=sentences(t);
+  document.getElementById("cnt").innerHTML = `<span class="${w>=MIN_WORDS?"ok":"bad"}">Words: ${w} / ${MIN_WORDS}</span> &nbsp;•&nbsp; <span class="${s>=MIN_SENTENCES?"ok":"bad"}">Sentences: ${s} / ${MIN_SENTENCES}</span>`;
+}
+function fileReport(){
+  const t=document.getElementById("rep").value.trim(), m=document.getElementById("m");
+  const w=words(t), s=sentences(t);
+  if(s<MIN_SENTENCES||w<MIN_WORDS){ m.className="msg bad"; m.textContent=`The Chief needs more detail: at least ${MIN_SENTENCES} sentences and ${MIN_WORDS} words. End each sentence with a period.`; return; }
+  const last=DAY.culprit.split(" ").pop().toLowerCase();
+  if(t.toLowerCase().indexOf(last)<0 && !st._nameWarned){ st._nameWarned=true; m.className="msg bad"; m.textContent=`Good start! Make sure your report names the culprit (${DAY.culprit}). Tap File again if you already did.`; return; }
+  st.report=t; st.stage = DAY.bonus ? "bonus" : "done"; if(st.stage==="done") finish(); persist(); render(); toTop();
+}
+
+function bonusScreen(){
+  const b=DAY.bonus, r=st.bonus||{tries:0,ok:false};
+  app.innerHTML = `<div class="card"><h2>⭐ Bonus: Detective Math (optional)</h2><p>${b.q}</p>
+  <input id="ans" inputmode="decimal" autocomplete="off" onkeydown="if(event.key==='Enter')checkBonus()"> <button onclick="checkBonus()">Check</button>
+  <button class="alt" onclick="document.getElementById('h').textContent='💡 '+DAY.bonus.hint">Hint</button>
+  <div class="hint" id="h"></div><div class="msg" id="m"></div>
+  <p><button class="alt" onclick="skipBonus()">Skip bonus — close the case ▶</button></p></div>`;
+}
+function checkBonus(){
+  const v=parseFloat(document.getElementById("ans").value.replace(/[^0-9.\-]/g,"")), m=document.getElementById("m");
+  if(isNaN(v)) return;
+  st.bonus=st.bonus||{tries:0,ok:false,answer:null}; st.bonus.tries++; st.bonus.answer=v;
+  if(Math.abs(v-DAY.bonus.a)<0.01){ st.bonus.ok=true; st.stage="done"; finish(); persist(); render(); toTop(); }
+  else { persist(); m.className="msg bad"; m.textContent = st.bonus.tries>=2 ? `Not quite — the ${DAY.bonus.label.toLowerCase()} is ${DAY.bonus.a}. Tap Skip to close the case.` : "Not quite. Try the hint!"; }
+}
+function skipBonus(){ st.bonus=st.bonus||{tries:0,ok:false,skipped:true}; st.stage="done"; finish(); persist(); render(); toTop(); }
+
+function scoreNow(){
+  let s=0; st.results.forEach(r=>{ s += r.tries<=1?PTS.clueFirst : r.tries===2?PTS.clueSecond : PTS.clueLater; });
+  s += Math.max(2, PTS.arrestFirst - 4*st.wrongArrests);
+  s += PTS.report; return s;
+}
+function finish(){
+  st.finishedAt=new Date().toISOString(); st.score=scoreNow();
+  st.stars = st.score>=Math.round(MAX_SCORE*0.9)?3 : st.score>=Math.round(MAX_SCORE*0.7)?2 : 1;
+  st.plays=(st.plays||0)+1; if(st.score>st.best) st.best=st.score;
+  st.lastDone={score:st.score,stars:st.stars,report:st.report,firstTry:st.results.filter(r=>r.tries===1).length,wrongArrests:st.wrongArrests,bonus:st.bonus,activeSec:st.activeSec,startedAt:st.startedAt,finishedAt:st.finishedAt,play:st.plays};
+}
+function mins(sec){ const m=Math.max(1,Math.round(sec/60)); return `about ${m} min`; }
+function nextLinkHTML(){
+  if(!DAY.next) return `<div class="nextcase">🏅 <b>That's all five history cases for this week, Detective!</b><br>The Chief will have new cases for you next time.<br><br><a href="../">Back to the station (main Case Files)</a></div>`;
+  return `<div class="nextcase">🔒 <b>Next case unlocks: Day ${DAY.next.day} (${DAY.next.date})</b><br>${DAY.next.teaser}<br><br>➡️ <a href="../day${DAY.next.day}/">${DAY.next.url}</a><br><span style="font-size:.85rem;color:#ccc">Save it for that school day — Mom will send it too.</span></div>`;
+}
+function doneScreen(){
+  const L=st.lastDone; if(!L){ st.stage="intro"; return render(); }
+  const firstPlayAuto = !st.autoSent;
+  app.innerHTML = `<div class="card" style="text-align:center"><span class="stamp">CASE CLOSED</span>
+  <h2>Outstanding work, Officer Cam! ${"⭐".repeat(L.stars)}</h2>
+  <p>${DAY.culprit} has been arrested and ${DAY.item} is back in the museum.</p>
+  <table class="sc"><tr><td>Score</td><td><b>${L.score} / ${MAX_SCORE}</b>${st.best>L.score?` (best: ${st.best})`:""}</td></tr>
+  <tr><td>Clues right on first try</td><td>${L.firstTry} of ${DAY.clues.length}</td></tr>
+  <tr><td>Wrong arrests</td><td>${L.wrongArrests}</td></tr>
+  <tr><td>Bonus math</td><td>${L.bonus&&L.bonus.ok?"⭐ Solved!":L.bonus&&L.bonus.tries?"Tried":"Skipped"}</td></tr>
+  <tr><td>Time on case</td><td>${mins(L.activeSec)}</td></tr></table>
+  <p class="hint">📁 Did you know? ${DAY.fact}</p>
+  <h3 style="text-align:left">Your case report</h3><blockquote>${esc(L.report)}</blockquote>
+  ${reportBtn("caseReport","📨 Send my case report to Mom")}
+  ${nextLinkHTML()}
+  <p><button class="alt" onclick="replay()">🔁 Replay this case</button></p></div>`;
+  if(firstPlayAuto){ st.autoSent=true; persist(); const b=document.querySelector("button.rep"); if(b) reportToMom(b,caseReport); }
+}
+function replay(){ if(!confirm("Replay this case? Your best score is kept.")) return; st=fresh(st); persist(); render(); toTop(); }
+
+/* ---- Report to Mom (FormSubmit AJAX) — same mechanism as the main games ---- */
+const MOM_EMAIL="8caedc1e9653325b52b367e2e172d2a3"; // FormSubmit alias (hides Mom's address)
+const REPORT_URL="https://formsubmit.co/ajax/"+MOM_EMAIL;
+function nowStr(){try{return new Date().toLocaleString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short"});}catch(e){return new Date().toString();}}
+function fmtTime(iso){ if(!iso) return "—"; try{return new Date(iso).toLocaleString("en-US",{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short"});}catch(e){return iso;} }
+function postReport(fields){
+ const ctl=typeof AbortController!=="undefined"?new AbortController():null;
+ const t=ctl?setTimeout(()=>ctl.abort(),15000):null;
+ return fetch(REPORT_URL,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(fields),signal:ctl?ctl.signal:undefined})
+  .then(r=>r.json().catch(()=>({success:r.ok?"true":"false",message:"HTTP "+r.status})).then(j=>{j._status=r.status;return j;}))
+  .finally(()=>{if(t)clearTimeout(t);});
+}
+function reportBtn(builder,label,small){
+ return `<div class="report"><button type="button" class="rep${small?" small":""}" onclick="reportToMom(this,${builder})">${label}</button><span class="rstat" role="status" aria-live="polite"></span></div>`;
+}
+function reportToMom(btn,build){
+ const st=btn.nextElementSibling;
+ if(btn.dataset.sent||btn.disabled)return;
+ if(navigator.onLine===false){st.className="rstat bad";st.textContent="No internet — try again later.";btn.textContent="🔁 Try again";return;}
+ let fields;
+ try{fields=Object.assign({_subject:REPORT_SUBJECT,_template:"box",_captcha:"false",Date:nowStr(),Player:REPORT_PLAYER,Game:REPORT_GAME},build());}
+ catch(e){st.className="rstat bad";st.textContent="Oops — couldn't build the report.";return;}
+ btn.disabled=true;btn.textContent="Sending… 📤";st.className="rstat";st.textContent="";
+ postReport(fields).then(j=>{
+  if(String(j.success)!=="true")throw new Error(j.message||"Send failed");
+  btn.dataset.sent="1";btn.textContent="Sent! ✅";btn.classList.add("sent");st.className="rstat good";st.textContent="Mom got your report!";
+ }).catch(e=>{
+  btn.disabled=false;btn.textContent="🔁 Try again";st.className="rstat bad";
+  st.textContent=navigator.onLine===false?"No internet — try again later.":/activat/i.test(e&&e.message||"")?"Almost! Mom needs to switch on reports first. Try again later.":"Oops — that didn't send. Tap to try again!";
+ });
+}
+const REPORT_SUBJECT=`Game Report: Cam – Daily History Case Day ${DAY.day} (${DAY.era.replace(/^\S+\s/,"")})`, REPORT_PLAYER="Cam (age 11)", REPORT_GAME="Officer Cam's Case Files — Daily History Cases";
+function caseReport(){
+  const L=st.lastDone, b=L.bonus;
+  return {
+    "Report type":`Daily history case — Day ${DAY.day} of ${TOTAL_DAYS}`,
+    "Day & topic":`Day ${DAY.day} (${DAY.date}) — ${DAY.topic}`,
+    "Case":DAY.title,
+    "Solved":`Yes ✅ — arrested ${DAY.culprit}`,
+    "Score":`${L.score} of ${MAX_SCORE} (${"⭐".repeat(L.stars)} ${L.stars} of 3)`+(st.best>L.score?` — best ever on this case: ${st.best}`:""),
+    "Clues right on first try":`${L.firstTry} of ${DAY.clues.length}`,
+    "Wrong arrests":String(L.wrongArrests),
+    "Bonus math (optional)":b&&b.ok?`${DAY.bonus.label}: solved ✅ (${b.answer})`:b&&b.tries?`${DAY.bonus.label}: tried, not solved (answered ${b.answer}; correct ${DAY.bonus.a})`:"Skipped",
+    "Time on case":`${mins(L.activeSec)} of active time (started ${fmtTime(L.startedAt)}, finished ${fmtTime(L.finishedAt)})`,
+    "Play":L.play>1?`Replay #${L.play}`:"First play",
+    "Cam's written case report":L.report,
+    "Report length":`${words(L.report)} words, ${sentences(L.report)} sentences`
+  };
+}
+const MAPS = {"maya": "<svg viewBox=\"0 0 520 612\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"Map of Maya cities\" style=\"width:100%;height:auto;background:#a9d6e5;border-radius:10px;border:3px solid #0b132b\"><line x1=\"34.7\" y1=\"0\" x2=\"34.7\" y2=\"612\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"104.0\" y1=\"0\" x2=\"104.0\" y2=\"612\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"173.3\" y1=\"0\" x2=\"173.3\" y2=\"612\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"242.7\" y1=\"0\" x2=\"242.7\" y2=\"612\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"312.0\" y1=\"0\" x2=\"312.0\" y2=\"612\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"381.3\" y1=\"0\" x2=\"381.3\" y2=\"612\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"450.7\" y1=\"0\" x2=\"450.7\" y2=\"612\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"520.0\" y1=\"0\" x2=\"520.0\" y2=\"612\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"0\" y1=\"582.6\" x2=\"520\" y2=\"582.6\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"0\" y1=\"509.7\" x2=\"520\" y2=\"509.7\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"0\" y1=\"436.9\" x2=\"520\" y2=\"436.9\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"0\" y1=\"364.1\" x2=\"520\" y2=\"364.1\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"0\" y1=\"291.3\" x2=\"520\" y2=\"291.3\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"0\" y1=\"218.5\" x2=\"520\" y2=\"218.5\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"0\" y1=\"145.6\" x2=\"520\" y2=\"145.6\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"0\" y1=\"72.8\" x2=\"520\" y2=\"72.8\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0.0\" x2=\"520\" y2=\"0.0\" stroke=\"#7fb3c8\" stroke-width=\"1\"/><path d=\"M479.8,415.1L476.3,414.9L481.4,410.5L489.6,406.8L496.6,404.9L502.3,405.7L490.9,409.4L479.8,415.1ZM381.5,298.1L384.2,293.9L388.4,280.0L391.1,280.1L391.8,281.1L384.8,296.7L381.5,298.1ZM386.2,343.5L388.1,333.0L392.9,327.6L393.4,324.3L396.0,325.9L395.3,329.2L391.5,333.3L386.2,343.5ZM118.1,243.6L116.7,242.1L132.5,234.6L136.1,235.9L128.0,239.5L125.9,242.0L118.1,243.6ZM451.3,125.8L449.3,117.8L452.2,110.0L455.7,105.5L467.1,103.5L467.7,105.5L463.9,111.5L454.9,123.6L451.3,125.8ZM18.9,259.0L25.8,260.4L42.7,257.2L50.7,253.1L54.8,246.7L73.4,242.1L105.8,239.1L112.3,244.8L112.3,247.6L108.0,250.2L110.0,252.8L117.7,257.0L131.8,258.7L136.3,258.0L142.8,251.8L154.2,245.8L154.0,238.8L152.0,235.0L148.6,234.7L147.8,232.6L150.2,227.4L149.5,225.7L142.4,230.6L140.8,230.6L141.6,228.3L176.5,207.4L191.4,192.8L194.6,165.3L197.6,160.5L207.5,152.1L208.6,149.5L209.1,105.1L210.9,93.7L218.2,72.1L230.0,64.0L255.2,52.8L320.4,42.7L329.6,40.2L340.8,33.6L349.0,31.4L363.9,31.5L368.5,30.7L369.5,28.9L372.2,28.0L380.9,28.8L417.4,38.4L433.3,40.3L437.7,38.1L439.3,35.4L437.6,33.0L430.2,34.6L423.9,32.7L425.1,31.0L435.7,30.4L441.8,27.6L448.3,29.7L456.8,39.1L462.9,42.1L463.3,55.8L466.5,61.9L463.5,72.4L455.8,88.4L446.5,99.7L435.3,108.7L421.5,128.8L418.3,138.2L418.4,145.7L420.7,153.0L420.0,155.7L418.3,158.4L415.5,158.2L410.1,161.7L403.0,172.1L402.8,175.2L405.9,178.1L421.2,176.0L420.5,181.9L417.2,186.1L411.4,188.2L405.0,192.8L405.2,199.7L407.5,200.2L412.5,195.1L415.3,195.3L415.9,197.5L409.5,215.1L405.4,233.1L399.8,243.6L397.8,258.8L391.5,271.7L389.5,271.3L384.1,259.2L378.6,256.0L377.4,253.1L380.6,238.3L379.1,230.2L376.2,230.5L367.7,238.9L367.8,244.5L357.1,265.1L360.8,266.2L372.3,265.7L375.4,274.8L374.6,282.4L366.9,302.5L362.5,319.7L367.2,326.5L361.3,341.3L360.9,350.1L363.2,366.8L359.6,390.8L342.3,415.8L333.1,418.9L318.1,440.1L319.3,444.9L339.5,454.1L344.2,447.9L339.9,442.2L340.2,440.5L365.5,456.6L372.2,458.7L390.0,445.7L402.0,443.4L407.8,443.5L416.9,452.2L430.8,449.0L457.1,454.2L467.5,451.9L486.7,451.4L495.3,452.7L507.4,445.3L520.0,442.0L520.0,611.7L252.5,611.7L244.7,605.6L209.4,589.8L200.6,587.7L163.2,588.0L147.2,583.3L128.9,574.2L116.5,565.9L85.7,541.2L47.9,499.6L0.0,457.5L0.0,259.8L18.9,259.0ZM471.7,58.9L470.5,58.5L467.8,52.5L469.6,53.6L471.7,58.9Z\" fill=\"#f4e1b0\" stroke=\"#8a6d3b\" stroke-width=\"1.2\" fill-rule=\"evenodd\"/><text x=\"131.7\" y=\"43.7\" font-size=\"18\" font-style=\"italic\" fill=\"#1d5c7a\" text-anchor=\"middle\" font-family=\"Trebuchet MS,Arial\">Gulf of Mexico<\/text><text x=\"457.6\" y=\"320.4\" font-size=\"18\" font-style=\"italic\" fill=\"#1d5c7a\" text-anchor=\"middle\" font-family=\"Trebuchet MS,Arial\">Caribbean<\/text><text x=\"131.7\" y=\"582.6\" font-size=\"18\" font-style=\"italic\" fill=\"#1d5c7a\" text-anchor=\"middle\" font-family=\"Trebuchet MS,Arial\">Pacific Ocean<\/text><circle cx=\"341.8\" cy=\"96.1\" r=\"7\" fill=\"#c0392b\" stroke=\"#fff\" stroke-width=\"2\"/><text x=\"351.8\" y=\"101.1\" font-size=\"21\" font-weight=\"bold\" fill=\"#0b132b\" stroke=\"#fdf6e3\" stroke-width=\"4\" paint-order=\"stroke\" text-anchor=\"start\" font-family=\"Trebuchet MS,Arial\">Chichén Itzá<\/text><circle cx=\"269.0\" cy=\"348.1\" r=\"7\" fill=\"#c0392b\" stroke=\"#fff\" stroke-width=\"2\"/><text x=\"259.0\" y=\"353.1\" font-size=\"21\" font-weight=\"bold\" fill=\"#0b132b\" stroke=\"#fdf6e3\" stroke-width=\"4\" paint-order=\"stroke\" text-anchor=\"end\" font-family=\"Trebuchet MS,Arial\">Tikal<\/text><circle cx=\"100.5\" cy=\"329.1\" r=\"7\" fill=\"#c0392b\" stroke=\"#fff\" stroke-width=\"2\"/><text x=\"110.5\" y=\"334.1\" font-size=\"21\" font-weight=\"bold\" fill=\"#0b132b\" stroke=\"#fdf6e3\" stroke-width=\"4\" paint-order=\"stroke\" text-anchor=\"start\" font-family=\"Trebuchet MS,Arial\">Palenque<\/text><circle cx=\"302.3\" cy=\"521.4\" r=\"7\" fill=\"#c0392b\" stroke=\"#fff\" stroke-width=\"2\"/><text x=\"312.3\" y=\"526.4\" font-size=\"21\" font-weight=\"bold\" fill=\"#0b132b\" stroke=\"#fdf6e3\" stroke-width=\"4\" paint-order=\"stroke\" text-anchor=\"start\" font-family=\"Trebuchet MS,Arial\">Copán<\/text><g font-family=\"Trebuchet MS,Arial\" font-weight=\"bold\" font-size=\"13\" fill=\"#0b132b\" text-anchor=\"middle\"><circle cx=\"470\" cy=\"48\" r=\"26\" fill=\"#fdf6e3\" stroke=\"#0b132b\" stroke-width=\"2\"/><polygon points=\"470,28 464,48 476,48\" fill=\"#c0392b\"/><polygon points=\"470,68 464,48 476,48\" fill=\"#0b132b\"/><text x=\"470\" y=\"19\">N<\/text><text x=\"470\" y=\"88\">S<\/text><text x=\"435\" y=\"53\">W<\/text><text x=\"505\" y=\"53\">E<\/text><\/g><\/svg>"};
+badge(); render();
+</script>
+</body>
+</html>
