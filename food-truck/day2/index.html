@@ -40,10 +40,10 @@
 <body>
 <header><h1>🚚 STARTUP TYCOON — Food Truck Season</h1><span class="muted" id="best"></span></header>
 <main id="app"></main>
-<script>
-const DAY = {"day": 2, "date": "Friday, Oct 16", "topic": "Break-even analysis (solve P = 0)", "title": "Shift 2: Friday Night Lights", "client": "High school football — concessions contract", "brief": "You've been offered the food-truck spot at Friday night football. Event fee: $350. Crew: $150. Your loaded tacos cost $2.75 each to make and sell for $7.75. The athletic director wants to know you won't bail if the crowd is small. Know your break-even point cold.", "tasks": [{"id": "pmodel", "title": "Profit model", "type": "expr", "vars": ["x"], "key": "5*x-500", "prefix": "P =", "ph": "simplified", "q": "Write the simplified profit model for the game, where x = tacos sold.", "stake": "Everything tonight runs on this equation.", "value": 100, "miss": "Your model was off, so you prepped the wrong amount of food. Wasted ingredients.", "hint": "P = 7.75x − (350 + 150 + 2.75x).", "show": "P = 5x − 500"}, {"id": "be", "title": "Break-even point", "type": "num", "a": 100, "q": "How many tacos do you have to sell to break even (profit = $0)?", "stake": "The athletic director signs the contract only if you know this number.", "value": 200, "miss": "The athletic director asked for your break-even and you got it wrong. He signs — but at a higher fee.", "hint": "Set 5x − 500 = 0 and solve for x.", "show": "100 tacos"}, {"id": "berev", "title": "Break-even revenue", "type": "num", "a": 775, "q": "How much revenue (in dollars) will you have brought in at the exact break-even point?", "stake": "Your cash-box target for the night.", "value": 100, "miss": "Wrong cash target. Your crew closed the window early, thinking you were in the green.", "hint": "Revenue = price × break-even quantity.", "show": "$775"}, {"id": "playoff", "title": "Playoff fee jump", "type": "num", "a": 150, "q": "It's a playoff game, so the event fee jumps to $600 (crew still $150, same taco price and cost). What's the new break-even number of tacos?", "stake": "If you can't cover the bigger fee, don't take the gig.", "value": 150, "miss": "You took the playoff gig without knowing your real break-even. It cost you.", "hint": "Fixed costs are now 600 + 150 = 750. Profit per taco is still $5.", "show": "150 tacos"}, {"id": "price", "title": "Set the playoff price", "type": "num", "a": 9, "q": "Rain is forecast, so you expect only 120 customers at the playoff game. Fixed costs are $750 and each taco costs $2.75. What price per taco makes you break even at exactly 120 tacos? (dollars)", "stake": "Price too low and you lose money in the rain. Too high and nobody buys.", "value": 250, "miss": "Your price was wrong for a 120-customer night. You ate the difference.", "hint": "Set 120(p − 2.75) − 750 = 0. Solve for p.", "show": "$9.00"}, {"id": "churro", "title": "Churro cart add-on", "type": "num", "a": 34, "q": "You add a churro cart: $90 fixed for the night, churros cost $0.80 each, sell for $3.50. What's the minimum WHOLE number of churros you must sell to not lose money?", "stake": "Real customers don't buy 0.33 of a churro.", "value": 100, "miss": "You stopped selling one churro short and lost money on the cart.", "hint": "90 ÷ (3.50 − 0.80) isn't a whole number. Selling fewer than that loses money — so round which way?", "show": "34 churros (33.3 rounded UP)"}], "next": {"day": 3, "date": "Monday, Oct 19", "teaser": "The Register Crashed — Systems of equations (two menu items, two plans)", "url": "https://dawnclay2011-ui.github.io/family-games/food-truck/day3/"}};
+<script type="text/plain" id="game">
+/* game code — injected by the boot script below once the day is open */
 const TOTAL_DAYS = 5;
-const KEY = "tycoonDaily";          // new namespaced key — "tycoonBest"/"tycoonLast" from the main game are never touched
+const KEY = PREVIEW ? "tycoonDailyPreview" : "tycoonDaily";   // new namespaced keys — "tycoonBest"/"tycoonLast" are never touched
 const DK = "d" + DAY.day;
 const MAX_PROFIT = DAY.tasks.reduce((a,t)=>a+t.value,0);
 let all; try{all=JSON.parse(localStorage.getItem(KEY)||"{}")||{};}catch(e){all={};}
@@ -182,7 +182,8 @@ function ledger(L){
 }
 function nextHTML(){
   if(!DAY.next) return `<div class="nextshift">🏁 <b>Season block complete.</b> That's all five shifts this week. New shifts drop when you're back at Mom's.<br><br><a href="../">Back to the main game (Food Truck Season)</a></div>`;
-  return `<div class="nextshift">🔒 <b>Next shift unlocks: Shift ${DAY.next.day} — ${DAY.next.date}</b><br><span class="muted">${esc(DAY.next.teaser)}</span><br><br>➡️ <a href="../day${DAY.next.day}/">${DAY.next.url}</a><br><span class="muted">Save it for that school day — Mom will send it too.</span></div>`;
+  const open=Date.now()>=DAY.next.unlock;
+  return `<div class="nextshift">${open?"🔓":"🔒"} <b>${open?`Next shift (opened ${DAY.next.dateShort})`:`Next shift opens ${DAY.next.dateShort}`} → </b><a href="../day${DAY.next.day}/${PREVIEW_QS}">${DAY.next.url}</a><br><span class="muted">Shift ${DAY.next.day}: ${esc(DAY.next.teaser)}</span><br><span class="muted">${open?"It's open now.":"Save it for that school day — Mom will send it too."}</span></div>`;
 }
 function done(){
   const L=st.lastDone; if(!L){ st.stage="brief"; return render(); }
@@ -195,7 +196,7 @@ function done(){
   ${reportBtn("shiftReport","📨 Send shift report to Mom")}
   ${nextHTML()}
   <p><button class="sec" onclick="replay()">Run this shift again (beat your best)</button></p></div>`;
-  if(!st.autoSent){ st.autoSent=true; persist(); const b=document.querySelector("button.rep"); if(b) reportToMom(b,shiftReport); }
+  if(!PREVIEW && !st.autoSent){ st.autoSent=true; persist(); const b=document.querySelector("button.rep"); if(b) reportToMom(b,shiftReport); }
 }
 function replay(){ if(!confirm("Run this shift again? Your shift best is kept.")) return; st=fresh(st); persist(); render(); toTop(); }
 
@@ -212,10 +213,12 @@ function postReport(fields){
   .finally(()=>{if(t)clearTimeout(t);});
 }
 function reportBtn(builder,label,small){
+ if(PREVIEW) return `<div class="report"><button type="button" class="rep${small?" small":""}" disabled>📨 Reports off (preview)</button><span class="rstat">Preview – reports off</span></div>`;
  return `<div class="report"><button type="button" class="rep${small?" small":""}" onclick="reportToMom(this,${builder})">${label}</button><span class="rstat" role="status" aria-live="polite"></span></div>`;
 }
 function reportToMom(btn,build){
  const st=btn.nextElementSibling;
+ if(PREVIEW){btn.disabled=true;st.textContent="Preview – reports off";return;}
  if(btn.dataset.sent||btn.disabled)return;
  if(navigator.onLine===false){st.className="rstat bad";st.textContent="No internet — try again later.";btn.textContent="🔁 Try again";return;}
  let fields;
@@ -251,5 +254,44 @@ function shiftReport(){
 }
 showBest(); render();
 </script>
+<script>
+/* ---- Date lock + hidden preview. Unlock = midnight America/New_York, stored as an absolute UTC instant. ---- */
+var META = {"game": "truck", "day": 2, "date": "Friday, Oct 16", "dateShort": "Fri, Oct 16", "unlock": 1792123200000, "era": ""};
+var PAYLOAD = "eyJkYXkiOiB7ImRheSI6IDIsICJkYXRlIjogIkZyaWRheSwgT2N0IDE2IiwgInRvcGljIjogIkJyZWFrLWV2ZW4gYW5hbHlzaXMgKHNvbHZlIFAgPSAwKSIsICJ0aXRsZSI6ICJTaGlmdCAyOiBGcmlkYXkgTmlnaHQgTGlnaHRzIiwgImNsaWVudCI6ICJIaWdoIHNjaG9vbCBmb290YmFsbCDigJQgY29uY2Vzc2lvbnMgY29udHJhY3QiLCAiYnJpZWYiOiAiWW91J3ZlIGJlZW4gb2ZmZXJlZCB0aGUgZm9vZC10cnVjayBzcG90IGF0IEZyaWRheSBuaWdodCBmb290YmFsbC4gRXZlbnQgZmVlOiAkMzUwLiBDcmV3OiAkMTUwLiBZb3VyIGxvYWRlZCB0YWNvcyBjb3N0ICQyLjc1IGVhY2ggdG8gbWFrZSBhbmQgc2VsbCBmb3IgJDcuNzUuIFRoZSBhdGhsZXRpYyBkaXJlY3RvciB3YW50cyB0byBrbm93IHlvdSB3b24ndCBiYWlsIGlmIHRoZSBjcm93ZCBpcyBzbWFsbC4gS25vdyB5b3VyIGJyZWFrLWV2ZW4gcG9pbnQgY29sZC4iLCAidGFza3MiOiBbeyJpZCI6ICJwbW9kZWwiLCAidGl0bGUiOiAiUHJvZml0IG1vZGVsIiwgInR5cGUiOiAiZXhwciIsICJ2YXJzIjogWyJ4Il0sICJrZXkiOiAiNSp4LTUwMCIsICJwcmVmaXgiOiAiUCA9IiwgInBoIjogInNpbXBsaWZpZWQiLCAicSI6ICJXcml0ZSB0aGUgc2ltcGxpZmllZCBwcm9maXQgbW9kZWwgZm9yIHRoZSBnYW1lLCB3aGVyZSB4ID0gdGFjb3Mgc29sZC4iLCAic3Rha2UiOiAiRXZlcnl0aGluZyB0b25pZ2h0IHJ1bnMgb24gdGhpcyBlcXVhdGlvbi4iLCAidmFsdWUiOiAxMDAsICJtaXNzIjogIllvdXIgbW9kZWwgd2FzIG9mZiwgc28geW91IHByZXBwZWQgdGhlIHdyb25nIGFtb3VudCBvZiBmb29kLiBXYXN0ZWQgaW5ncmVkaWVudHMuIiwgImhpbnQiOiAiUCA9IDcuNzV4IOKIkiAoMzUwICsgMTUwICsgMi43NXgpLiIsICJzaG93IjogIlAgPSA1eCDiiJIgNTAwIn0sIHsiaWQiOiAiYmUiLCAidGl0bGUiOiAiQnJlYWstZXZlbiBwb2ludCIsICJ0eXBlIjogIm51bSIsICJhIjogMTAwLCAicSI6ICJIb3cgbWFueSB0YWNvcyBkbyB5b3UgaGF2ZSB0byBzZWxsIHRvIGJyZWFrIGV2ZW4gKHByb2ZpdCA9ICQwKT8iLCAic3Rha2UiOiAiVGhlIGF0aGxldGljIGRpcmVjdG9yIHNpZ25zIHRoZSBjb250cmFjdCBvbmx5IGlmIHlvdSBrbm93IHRoaXMgbnVtYmVyLiIsICJ2YWx1ZSI6IDIwMCwgIm1pc3MiOiAiVGhlIGF0aGxldGljIGRpcmVjdG9yIGFza2VkIGZvciB5b3VyIGJyZWFrLWV2ZW4gYW5kIHlvdSBnb3QgaXQgd3JvbmcuIEhlIHNpZ25zIOKAlCBidXQgYXQgYSBoaWdoZXIgZmVlLiIsICJoaW50IjogIlNldCA1eCDiiJIgNTAwID0gMCBhbmQgc29sdmUgZm9yIHguIiwgInNob3ciOiAiMTAwIHRhY29zIn0sIHsiaWQiOiAiYmVyZXYiLCAidGl0bGUiOiAiQnJlYWstZXZlbiByZXZlbnVlIiwgInR5cGUiOiAibnVtIiwgImEiOiA3NzUsICJxIjogIkhvdyBtdWNoIHJldmVudWUgKGluIGRvbGxhcnMpIHdpbGwgeW91IGhhdmUgYnJvdWdodCBpbiBhdCB0aGUgZXhhY3QgYnJlYWstZXZlbiBwb2ludD8iLCAic3Rha2UiOiAiWW91ciBjYXNoLWJveCB0YXJnZXQgZm9yIHRoZSBuaWdodC4iLCAidmFsdWUiOiAxMDAsICJtaXNzIjogIldyb25nIGNhc2ggdGFyZ2V0LiBZb3VyIGNyZXcgY2xvc2VkIHRoZSB3aW5kb3cgZWFybHksIHRoaW5raW5nIHlvdSB3ZXJlIGluIHRoZSBncmVlbi4iLCAiaGludCI6ICJSZXZlbnVlID0gcHJpY2Ugw5cgYnJlYWstZXZlbiBxdWFudGl0eS4iLCAic2hvdyI6ICIkNzc1In0sIHsiaWQiOiAicGxheW9mZiIsICJ0aXRsZSI6ICJQbGF5b2ZmIGZlZSBqdW1wIiwgInR5cGUiOiAibnVtIiwgImEiOiAxNTAsICJxIjogIkl0J3MgYSBwbGF5b2ZmIGdhbWUsIHNvIHRoZSBldmVudCBmZWUganVtcHMgdG8gJDYwMCAoY3JldyBzdGlsbCAkMTUwLCBzYW1lIHRhY28gcHJpY2UgYW5kIGNvc3QpLiBXaGF0J3MgdGhlIG5ldyBicmVhay1ldmVuIG51bWJlciBvZiB0YWNvcz8iLCAic3Rha2UiOiAiSWYgeW91IGNhbid0IGNvdmVyIHRoZSBiaWdnZXIgZmVlLCBkb24ndCB0YWtlIHRoZSBnaWcuIiwgInZhbHVlIjogMTUwLCAibWlzcyI6ICJZb3UgdG9vayB0aGUgcGxheW9mZiBnaWcgd2l0aG91dCBrbm93aW5nIHlvdXIgcmVhbCBicmVhay1ldmVuLiBJdCBjb3N0IHlvdS4iLCAiaGludCI6ICJGaXhlZCBjb3N0cyBhcmUgbm93IDYwMCArIDE1MCA9IDc1MC4gUHJvZml0IHBlciB0YWNvIGlzIHN0aWxsICQ1LiIsICJzaG93IjogIjE1MCB0YWNvcyJ9LCB7ImlkIjogInByaWNlIiwgInRpdGxlIjogIlNldCB0aGUgcGxheW9mZiBwcmljZSIsICJ0eXBlIjogIm51bSIsICJhIjogOSwgInEiOiAiUmFpbiBpcyBmb3JlY2FzdCwgc28geW91IGV4cGVjdCBvbmx5IDEyMCBjdXN0b21lcnMgYXQgdGhlIHBsYXlvZmYgZ2FtZS4gRml4ZWQgY29zdHMgYXJlICQ3NTAgYW5kIGVhY2ggdGFjbyBjb3N0cyAkMi43NS4gV2hhdCBwcmljZSBwZXIgdGFjbyBtYWtlcyB5b3UgYnJlYWsgZXZlbiBhdCBleGFjdGx5IDEyMCB0YWNvcz8gKGRvbGxhcnMpIiwgInN0YWtlIjogIlByaWNlIHRvbyBsb3cgYW5kIHlvdSBsb3NlIG1vbmV5IGluIHRoZSByYWluLiBUb28gaGlnaCBhbmQgbm9ib2R5IGJ1eXMuIiwgInZhbHVlIjogMjUwLCAibWlzcyI6ICJZb3VyIHByaWNlIHdhcyB3cm9uZyBmb3IgYSAxMjAtY3VzdG9tZXIgbmlnaHQuIFlvdSBhdGUgdGhlIGRpZmZlcmVuY2UuIiwgImhpbnQiOiAiU2V0IDEyMChwIOKIkiAyLjc1KSDiiJIgNzUwID0gMC4gU29sdmUgZm9yIHAuIiwgInNob3ciOiAiJDkuMDAifSwgeyJpZCI6ICJjaHVycm8iLCAidGl0bGUiOiAiQ2h1cnJvIGNhcnQgYWRkLW9uIiwgInR5cGUiOiAibnVtIiwgImEiOiAzNCwgInEiOiAiWW91IGFkZCBhIGNodXJybyBjYXJ0OiAkOTAgZml4ZWQgZm9yIHRoZSBuaWdodCwgY2h1cnJvcyBjb3N0ICQwLjgwIGVhY2gsIHNlbGwgZm9yICQzLjUwLiBXaGF0J3MgdGhlIG1pbmltdW0gV0hPTEUgbnVtYmVyIG9mIGNodXJyb3MgeW91IG11c3Qgc2VsbCB0byBub3QgbG9zZSBtb25leT8iLCAic3Rha2UiOiAiUmVhbCBjdXN0b21lcnMgZG9uJ3QgYnV5IDAuMzMgb2YgYSBjaHVycm8uIiwgInZhbHVlIjogMTAwLCAibWlzcyI6ICJZb3Ugc3RvcHBlZCBzZWxsaW5nIG9uZSBjaHVycm8gc2hvcnQgYW5kIGxvc3QgbW9uZXkgb24gdGhlIGNhcnQuIiwgImhpbnQiOiAiOTAgw7cgKDMuNTAg4oiSIDAuODApIGlzbid0IGEgd2hvbGUgbnVtYmVyLiBTZWxsaW5nIGZld2VyIHRoYW4gdGhhdCBsb3NlcyBtb25leSDigJQgc28gcm91bmQgd2hpY2ggd2F5PyIsICJzaG93IjogIjM0IGNodXJyb3MgKDMzLjMgcm91bmRlZCBVUCkifV0sICJuZXh0IjogeyJkYXkiOiAzLCAiZGF0ZSI6ICJNb25kYXksIE9jdCAxOSIsICJkYXRlU2hvcnQiOiAiTW9uLCBPY3QgMTkiLCAidW5sb2NrIjogMTc5MjM4MjQwMDAwMCwgInRlYXNlciI6ICJUaGUgUmVnaXN0ZXIgQ3Jhc2hlZCDigJQgU3lzdGVtcyBvZiBlcXVhdGlvbnMgKHR3byBtZW51IGl0ZW1zLCB0d28gcGxhbnMpIiwgInVybCI6ICJodHRwczovL2Rhd25jbGF5MjAxMS11aS5naXRodWIuaW8vZmFtaWx5LWdhbWVzL2Zvb2QtdHJ1Y2svZGF5My8ifSwgInVubG9jayI6IDE3OTIxMjMyMDAwMDB9fQ==";
+var PH = 3887916057;
+var DAY = null, MAPS = null, PREVIEW = false, PREVIEW_QS = "";
+function fnv1a(s){ var h=0x811c9dc5; for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,0x01000193)>>>0; } return h>>>0; }
+try{ var _t=new URLSearchParams(location.search).get("p"); if(_t && fnv1a(_t)===PH){ PREVIEW=true; PREVIEW_QS="?p="+encodeURIComponent(_t); } }catch(e){}
+function openGame(){
+  var o=JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(PAYLOAD),function(c){return c.charCodeAt(0);})));
+  DAY=o.day; MAPS=o.maps||{};
+  if(PREVIEW){ var b=document.createElement("span"); b.className="badge"; b.id="previewBadge"; b.style.cssText="background:#8e44ad;color:#fff"; b.textContent="Preview – reports off"; document.querySelector("header").appendChild(b); }
+  var s=document.createElement("script"); s.textContent=document.getElementById("game").textContent; document.body.appendChild(s);
+}
+function countdownText(ms){
+  var s=Math.max(0,Math.floor(ms/1000)), d=Math.floor(s/86400), h=Math.floor(s%86400/3600), m=Math.floor(s%3600/60), x=s%60;
+  function p(n){return n<10?"0"+n:""+n;}
+  return (d?d+(d===1?" day ":" days "):"")+p(h)+"h "+p(m)+"m "+p(x)+"s";
+}
+function showLocked(){
+  var app=document.getElementById("app");
+  if(META.game==="cam"){
+    document.getElementById("rank").textContent="Day "+META.day+" of 5 • "+META.dateShort;
+    app.innerHTML='<div class="card file" style="text-align:center"><span class="era">'+META.era+'</span><br><span class="stamp">SEALED</span>'+
+      '<h2>Case sealed until '+META.date+'</h2><p>This case file is locked in the evidence room, Officer Cam. It opens at midnight (Eastern Time).</p>'+
+      '<p style="font-size:1.6rem;font-weight:900;color:#c0392b" id="cd"></p><p class="hint">⏳ Check back on '+META.date+'!</p></div>';
+  } else {
+    document.getElementById("best").textContent="Shift "+META.day+" of 5 · "+META.date;
+    app.innerHTML='<div class="panel" style="text-align:center"><span class="tag">Shift '+META.day+' · Closed</span>'+
+      '<h2 style="margin-top:10px">Shift opens '+META.date+'</h2><p class="muted">The truck is parked. This shift opens at midnight Eastern Time.</p>'+
+      '<p style="font-size:1.6rem;font-weight:700;color:#f4a261" id="cd"></p><p class="muted">Come back on '+META.date+'.</p></div>';
+  }
+  var cd=document.getElementById("cd");
+  function tick(){ var left=META.unlock-Date.now(); if(left<=0){ clearInterval(iv); app.innerHTML=""; openGame(); return; } cd.textContent=countdownText(left); }
+  var iv=setInterval(tick,1000); tick();
+}
+if(PREVIEW || Date.now()>=META.unlock) openGame(); else showLocked();
+</script>
+
 </body>
 </html>

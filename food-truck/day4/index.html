@@ -40,10 +40,10 @@
 <body>
 <header><h1>🚚 STARTUP TYCOON — Food Truck Season</h1><span class="muted" id="best"></span></header>
 <main id="app"></main>
-<script>
-const DAY = {"day": 4, "date": "Tuesday, Oct 20", "topic": "Inequalities (profit targets & budget limits)", "title": "Shift 4: Fall Festival Weekend", "client": "Fall Festival + truck loan payment due", "brief": "Biggest weekend of the fall. Your loan payment is due Monday, your ingredient budget is capped, and the crowd forecast is all over the place. Meals sell for $8 and cost $3 to make. Fixed costs for the weekend are $425. You don't need an exact number today — you need limits: at least this much, at most that much.", "tasks": [{"id": "ineq", "title": "Write the target", "type": "ineq", "vars": ["x"], "key": "x>=205", "tests": [0, 100, 204, 204.5, 204.9, 205, 205.1, 205.5, 206, 300, 1000], "prefix": "", "ph": "e.g. 4x − 100 ≥ 300", "q": "You need AT LEAST $600 profit this weekend to make the loan payment. Write an inequality in x (meals sold) for that goal. Type ≥ as >= (or ≤ as <=).", "stake": "Your lender wants to see you understand what you have to hit.", "value": 150, "miss": "Your inequality didn't describe the target. The lender asked for a co-signer.", "hint": "Profit = 8x − 3x − 425. 'At least' means ≥.", "show": "5x − 425 ≥ 600  (x ≥ 205)"}, {"id": "min", "title": "Minimum meals", "type": "num", "a": 205, "q": "Solve it: what's the minimum number of meals you must sell to hit the $600 target?", "stake": "That's your sales goal posted in the truck.", "value": 150, "miss": "You posted the wrong goal. The crew eased off early and you missed the payment target.", "hint": "5x ≥ 1025.", "show": "205 meals"}, {"id": "budget", "title": "Budget cap", "type": "num", "a": 350, "q": "Your ingredient budget is $1,200. You must buy a $150 propane refill first, then ingredients at $3 per meal. What's the MAXIMUM number of meals you can prep? (150 + 3x ≤ 1200)", "stake": "Over-order and your card gets declined at the supplier.", "value": 150, "miss": "You over-ordered. Your card got declined and you paid a restocking fee.", "hint": "Subtract 150 from both sides, then divide by 3.", "show": "350 meals"}, {"id": "maxp", "title": "Best-case weekend", "type": "num", "a": 1325, "q": "The festival expects between 180 and 400 customers. You can't prep more than your budget cap. If the crowd shows up big, what's the MOST profit you can make this weekend? (dollars)", "stake": "Your lender asked for your best-case number.", "value": 200, "miss": "Your best-case number was off. The lender trusts your projections less now.", "hint": "You can't sell more than you prep (350). Plug that into P = 5x − 425.", "show": "$1,325 (at 350 meals)"}, {"id": "tubs", "title": "Containers", "type": "num", "a": 20, "q": "Take-out containers cost $2.40 per case and you have $50 left. What's the maximum number of WHOLE cases you can buy?", "stake": "Run short and you're serving tacos into people's hands.", "value": 100, "miss": "You tried to buy one case too many and the order bounced.", "hint": "2.40c ≤ 50. You can't buy part of a case — round which way?", "show": "20 cases (20.8 rounded DOWN)"}, {"id": "staff", "title": "Staffing the rush", "type": "num", "a": 4, "q": "Each worker can serve at most 45 customers per hour. The peak hour is expected to bring 160 customers. What's the minimum number of workers you need?", "stake": "Understaffed means long lines, walkaways, and bad reviews.", "value": 150, "miss": "You understaffed the rush. Customers walked away from a 40-minute line.", "hint": "45w ≥ 160. Workers come in whole people.", "show": "4 workers (3.56 rounded UP)"}], "next": {"day": 5, "date": "Wednesday, Oct 21", "teaser": "Read the Data, Set the Price — Slope & rate of change from sales data + capstone", "url": "https://dawnclay2011-ui.github.io/family-games/food-truck/day5/"}};
+<script type="text/plain" id="game">
+/* game code — injected by the boot script below once the day is open */
 const TOTAL_DAYS = 5;
-const KEY = "tycoonDaily";          // new namespaced key — "tycoonBest"/"tycoonLast" from the main game are never touched
+const KEY = PREVIEW ? "tycoonDailyPreview" : "tycoonDaily";   // new namespaced keys — "tycoonBest"/"tycoonLast" are never touched
 const DK = "d" + DAY.day;
 const MAX_PROFIT = DAY.tasks.reduce((a,t)=>a+t.value,0);
 let all; try{all=JSON.parse(localStorage.getItem(KEY)||"{}")||{};}catch(e){all={};}
@@ -182,7 +182,8 @@ function ledger(L){
 }
 function nextHTML(){
   if(!DAY.next) return `<div class="nextshift">🏁 <b>Season block complete.</b> That's all five shifts this week. New shifts drop when you're back at Mom's.<br><br><a href="../">Back to the main game (Food Truck Season)</a></div>`;
-  return `<div class="nextshift">🔒 <b>Next shift unlocks: Shift ${DAY.next.day} — ${DAY.next.date}</b><br><span class="muted">${esc(DAY.next.teaser)}</span><br><br>➡️ <a href="../day${DAY.next.day}/">${DAY.next.url}</a><br><span class="muted">Save it for that school day — Mom will send it too.</span></div>`;
+  const open=Date.now()>=DAY.next.unlock;
+  return `<div class="nextshift">${open?"🔓":"🔒"} <b>${open?`Next shift (opened ${DAY.next.dateShort})`:`Next shift opens ${DAY.next.dateShort}`} → </b><a href="../day${DAY.next.day}/${PREVIEW_QS}">${DAY.next.url}</a><br><span class="muted">Shift ${DAY.next.day}: ${esc(DAY.next.teaser)}</span><br><span class="muted">${open?"It's open now.":"Save it for that school day — Mom will send it too."}</span></div>`;
 }
 function done(){
   const L=st.lastDone; if(!L){ st.stage="brief"; return render(); }
@@ -195,7 +196,7 @@ function done(){
   ${reportBtn("shiftReport","📨 Send shift report to Mom")}
   ${nextHTML()}
   <p><button class="sec" onclick="replay()">Run this shift again (beat your best)</button></p></div>`;
-  if(!st.autoSent){ st.autoSent=true; persist(); const b=document.querySelector("button.rep"); if(b) reportToMom(b,shiftReport); }
+  if(!PREVIEW && !st.autoSent){ st.autoSent=true; persist(); const b=document.querySelector("button.rep"); if(b) reportToMom(b,shiftReport); }
 }
 function replay(){ if(!confirm("Run this shift again? Your shift best is kept.")) return; st=fresh(st); persist(); render(); toTop(); }
 
@@ -212,10 +213,12 @@ function postReport(fields){
   .finally(()=>{if(t)clearTimeout(t);});
 }
 function reportBtn(builder,label,small){
+ if(PREVIEW) return `<div class="report"><button type="button" class="rep${small?" small":""}" disabled>📨 Reports off (preview)</button><span class="rstat">Preview – reports off</span></div>`;
  return `<div class="report"><button type="button" class="rep${small?" small":""}" onclick="reportToMom(this,${builder})">${label}</button><span class="rstat" role="status" aria-live="polite"></span></div>`;
 }
 function reportToMom(btn,build){
  const st=btn.nextElementSibling;
+ if(PREVIEW){btn.disabled=true;st.textContent="Preview – reports off";return;}
  if(btn.dataset.sent||btn.disabled)return;
  if(navigator.onLine===false){st.className="rstat bad";st.textContent="No internet — try again later.";btn.textContent="🔁 Try again";return;}
  let fields;
@@ -251,5 +254,44 @@ function shiftReport(){
 }
 showBest(); render();
 </script>
+<script>
+/* ---- Date lock + hidden preview. Unlock = midnight America/New_York, stored as an absolute UTC instant. ---- */
+var META = {"game": "truck", "day": 4, "date": "Tuesday, Oct 20", "dateShort": "Tue, Oct 20", "unlock": 1792468800000, "era": ""};
+var PAYLOAD = "eyJkYXkiOiB7ImRheSI6IDQsICJkYXRlIjogIlR1ZXNkYXksIE9jdCAyMCIsICJ0b3BpYyI6ICJJbmVxdWFsaXRpZXMgKHByb2ZpdCB0YXJnZXRzICYgYnVkZ2V0IGxpbWl0cykiLCAidGl0bGUiOiAiU2hpZnQgNDogRmFsbCBGZXN0aXZhbCBXZWVrZW5kIiwgImNsaWVudCI6ICJGYWxsIEZlc3RpdmFsICsgdHJ1Y2sgbG9hbiBwYXltZW50IGR1ZSIsICJicmllZiI6ICJCaWdnZXN0IHdlZWtlbmQgb2YgdGhlIGZhbGwuIFlvdXIgbG9hbiBwYXltZW50IGlzIGR1ZSBNb25kYXksIHlvdXIgaW5ncmVkaWVudCBidWRnZXQgaXMgY2FwcGVkLCBhbmQgdGhlIGNyb3dkIGZvcmVjYXN0IGlzIGFsbCBvdmVyIHRoZSBwbGFjZS4gTWVhbHMgc2VsbCBmb3IgJDggYW5kIGNvc3QgJDMgdG8gbWFrZS4gRml4ZWQgY29zdHMgZm9yIHRoZSB3ZWVrZW5kIGFyZSAkNDI1LiBZb3UgZG9uJ3QgbmVlZCBhbiBleGFjdCBudW1iZXIgdG9kYXkg4oCUIHlvdSBuZWVkIGxpbWl0czogYXQgbGVhc3QgdGhpcyBtdWNoLCBhdCBtb3N0IHRoYXQgbXVjaC4iLCAidGFza3MiOiBbeyJpZCI6ICJpbmVxIiwgInRpdGxlIjogIldyaXRlIHRoZSB0YXJnZXQiLCAidHlwZSI6ICJpbmVxIiwgInZhcnMiOiBbIngiXSwgImtleSI6ICJ4Pj0yMDUiLCAidGVzdHMiOiBbMCwgMTAwLCAyMDQsIDIwNC41LCAyMDQuOSwgMjA1LCAyMDUuMSwgMjA1LjUsIDIwNiwgMzAwLCAxMDAwXSwgInByZWZpeCI6ICIiLCAicGgiOiAiZS5nLiA0eCDiiJIgMTAwIOKJpSAzMDAiLCAicSI6ICJZb3UgbmVlZCBBVCBMRUFTVCAkNjAwIHByb2ZpdCB0aGlzIHdlZWtlbmQgdG8gbWFrZSB0aGUgbG9hbiBwYXltZW50LiBXcml0ZSBhbiBpbmVxdWFsaXR5IGluIHggKG1lYWxzIHNvbGQpIGZvciB0aGF0IGdvYWwuIFR5cGUg4omlIGFzID49IChvciDiiaQgYXMgPD0pLiIsICJzdGFrZSI6ICJZb3VyIGxlbmRlciB3YW50cyB0byBzZWUgeW91IHVuZGVyc3RhbmQgd2hhdCB5b3UgaGF2ZSB0byBoaXQuIiwgInZhbHVlIjogMTUwLCAibWlzcyI6ICJZb3VyIGluZXF1YWxpdHkgZGlkbid0IGRlc2NyaWJlIHRoZSB0YXJnZXQuIFRoZSBsZW5kZXIgYXNrZWQgZm9yIGEgY28tc2lnbmVyLiIsICJoaW50IjogIlByb2ZpdCA9IDh4IOKIkiAzeCDiiJIgNDI1LiAnQXQgbGVhc3QnIG1lYW5zIOKJpS4iLCAic2hvdyI6ICI1eCDiiJIgNDI1IOKJpSA2MDAgICh4IOKJpSAyMDUpIn0sIHsiaWQiOiAibWluIiwgInRpdGxlIjogIk1pbmltdW0gbWVhbHMiLCAidHlwZSI6ICJudW0iLCAiYSI6IDIwNSwgInEiOiAiU29sdmUgaXQ6IHdoYXQncyB0aGUgbWluaW11bSBudW1iZXIgb2YgbWVhbHMgeW91IG11c3Qgc2VsbCB0byBoaXQgdGhlICQ2MDAgdGFyZ2V0PyIsICJzdGFrZSI6ICJUaGF0J3MgeW91ciBzYWxlcyBnb2FsIHBvc3RlZCBpbiB0aGUgdHJ1Y2suIiwgInZhbHVlIjogMTUwLCAibWlzcyI6ICJZb3UgcG9zdGVkIHRoZSB3cm9uZyBnb2FsLiBUaGUgY3JldyBlYXNlZCBvZmYgZWFybHkgYW5kIHlvdSBtaXNzZWQgdGhlIHBheW1lbnQgdGFyZ2V0LiIsICJoaW50IjogIjV4IOKJpSAxMDI1LiIsICJzaG93IjogIjIwNSBtZWFscyJ9LCB7ImlkIjogImJ1ZGdldCIsICJ0aXRsZSI6ICJCdWRnZXQgY2FwIiwgInR5cGUiOiAibnVtIiwgImEiOiAzNTAsICJxIjogIllvdXIgaW5ncmVkaWVudCBidWRnZXQgaXMgJDEsMjAwLiBZb3UgbXVzdCBidXkgYSAkMTUwIHByb3BhbmUgcmVmaWxsIGZpcnN0LCB0aGVuIGluZ3JlZGllbnRzIGF0ICQzIHBlciBtZWFsLiBXaGF0J3MgdGhlIE1BWElNVU0gbnVtYmVyIG9mIG1lYWxzIHlvdSBjYW4gcHJlcD8gKDE1MCArIDN4IOKJpCAxMjAwKSIsICJzdGFrZSI6ICJPdmVyLW9yZGVyIGFuZCB5b3VyIGNhcmQgZ2V0cyBkZWNsaW5lZCBhdCB0aGUgc3VwcGxpZXIuIiwgInZhbHVlIjogMTUwLCAibWlzcyI6ICJZb3Ugb3Zlci1vcmRlcmVkLiBZb3VyIGNhcmQgZ290IGRlY2xpbmVkIGFuZCB5b3UgcGFpZCBhIHJlc3RvY2tpbmcgZmVlLiIsICJoaW50IjogIlN1YnRyYWN0IDE1MCBmcm9tIGJvdGggc2lkZXMsIHRoZW4gZGl2aWRlIGJ5IDMuIiwgInNob3ciOiAiMzUwIG1lYWxzIn0sIHsiaWQiOiAibWF4cCIsICJ0aXRsZSI6ICJCZXN0LWNhc2Ugd2Vla2VuZCIsICJ0eXBlIjogIm51bSIsICJhIjogMTMyNSwgInEiOiAiVGhlIGZlc3RpdmFsIGV4cGVjdHMgYmV0d2VlbiAxODAgYW5kIDQwMCBjdXN0b21lcnMuIFlvdSBjYW4ndCBwcmVwIG1vcmUgdGhhbiB5b3VyIGJ1ZGdldCBjYXAuIElmIHRoZSBjcm93ZCBzaG93cyB1cCBiaWcsIHdoYXQncyB0aGUgTU9TVCBwcm9maXQgeW91IGNhbiBtYWtlIHRoaXMgd2Vla2VuZD8gKGRvbGxhcnMpIiwgInN0YWtlIjogIllvdXIgbGVuZGVyIGFza2VkIGZvciB5b3VyIGJlc3QtY2FzZSBudW1iZXIuIiwgInZhbHVlIjogMjAwLCAibWlzcyI6ICJZb3VyIGJlc3QtY2FzZSBudW1iZXIgd2FzIG9mZi4gVGhlIGxlbmRlciB0cnVzdHMgeW91ciBwcm9qZWN0aW9ucyBsZXNzIG5vdy4iLCAiaGludCI6ICJZb3UgY2FuJ3Qgc2VsbCBtb3JlIHRoYW4geW91IHByZXAgKDM1MCkuIFBsdWcgdGhhdCBpbnRvIFAgPSA1eCDiiJIgNDI1LiIsICJzaG93IjogIiQxLDMyNSAoYXQgMzUwIG1lYWxzKSJ9LCB7ImlkIjogInR1YnMiLCAidGl0bGUiOiAiQ29udGFpbmVycyIsICJ0eXBlIjogIm51bSIsICJhIjogMjAsICJxIjogIlRha2Utb3V0IGNvbnRhaW5lcnMgY29zdCAkMi40MCBwZXIgY2FzZSBhbmQgeW91IGhhdmUgJDUwIGxlZnQuIFdoYXQncyB0aGUgbWF4aW11bSBudW1iZXIgb2YgV0hPTEUgY2FzZXMgeW91IGNhbiBidXk/IiwgInN0YWtlIjogIlJ1biBzaG9ydCBhbmQgeW91J3JlIHNlcnZpbmcgdGFjb3MgaW50byBwZW9wbGUncyBoYW5kcy4iLCAidmFsdWUiOiAxMDAsICJtaXNzIjogIllvdSB0cmllZCB0byBidXkgb25lIGNhc2UgdG9vIG1hbnkgYW5kIHRoZSBvcmRlciBib3VuY2VkLiIsICJoaW50IjogIjIuNDBjIOKJpCA1MC4gWW91IGNhbid0IGJ1eSBwYXJ0IG9mIGEgY2FzZSDigJQgcm91bmQgd2hpY2ggd2F5PyIsICJzaG93IjogIjIwIGNhc2VzICgyMC44IHJvdW5kZWQgRE9XTikifSwgeyJpZCI6ICJzdGFmZiIsICJ0aXRsZSI6ICJTdGFmZmluZyB0aGUgcnVzaCIsICJ0eXBlIjogIm51bSIsICJhIjogNCwgInEiOiAiRWFjaCB3b3JrZXIgY2FuIHNlcnZlIGF0IG1vc3QgNDUgY3VzdG9tZXJzIHBlciBob3VyLiBUaGUgcGVhayBob3VyIGlzIGV4cGVjdGVkIHRvIGJyaW5nIDE2MCBjdXN0b21lcnMuIFdoYXQncyB0aGUgbWluaW11bSBudW1iZXIgb2Ygd29ya2VycyB5b3UgbmVlZD8iLCAic3Rha2UiOiAiVW5kZXJzdGFmZmVkIG1lYW5zIGxvbmcgbGluZXMsIHdhbGthd2F5cywgYW5kIGJhZCByZXZpZXdzLiIsICJ2YWx1ZSI6IDE1MCwgIm1pc3MiOiAiWW91IHVuZGVyc3RhZmZlZCB0aGUgcnVzaC4gQ3VzdG9tZXJzIHdhbGtlZCBhd2F5IGZyb20gYSA0MC1taW51dGUgbGluZS4iLCAiaGludCI6ICI0NXcg4omlIDE2MC4gV29ya2VycyBjb21lIGluIHdob2xlIHBlb3BsZS4iLCAic2hvdyI6ICI0IHdvcmtlcnMgKDMuNTYgcm91bmRlZCBVUCkifV0sICJuZXh0IjogeyJkYXkiOiA1LCAiZGF0ZSI6ICJXZWRuZXNkYXksIE9jdCAyMSIsICJkYXRlU2hvcnQiOiAiV2VkLCBPY3QgMjEiLCAidW5sb2NrIjogMTc5MjU1NTIwMDAwMCwgInRlYXNlciI6ICJSZWFkIHRoZSBEYXRhLCBTZXQgdGhlIFByaWNlIOKAlCBTbG9wZSAmIHJhdGUgb2YgY2hhbmdlIGZyb20gc2FsZXMgZGF0YSArIGNhcHN0b25lIiwgInVybCI6ICJodHRwczovL2Rhd25jbGF5MjAxMS11aS5naXRodWIuaW8vZmFtaWx5LWdhbWVzL2Zvb2QtdHJ1Y2svZGF5NS8ifSwgInVubG9jayI6IDE3OTI0Njg4MDAwMDB9fQ==";
+var PH = 3887916057;
+var DAY = null, MAPS = null, PREVIEW = false, PREVIEW_QS = "";
+function fnv1a(s){ var h=0x811c9dc5; for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,0x01000193)>>>0; } return h>>>0; }
+try{ var _t=new URLSearchParams(location.search).get("p"); if(_t && fnv1a(_t)===PH){ PREVIEW=true; PREVIEW_QS="?p="+encodeURIComponent(_t); } }catch(e){}
+function openGame(){
+  var o=JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(PAYLOAD),function(c){return c.charCodeAt(0);})));
+  DAY=o.day; MAPS=o.maps||{};
+  if(PREVIEW){ var b=document.createElement("span"); b.className="badge"; b.id="previewBadge"; b.style.cssText="background:#8e44ad;color:#fff"; b.textContent="Preview – reports off"; document.querySelector("header").appendChild(b); }
+  var s=document.createElement("script"); s.textContent=document.getElementById("game").textContent; document.body.appendChild(s);
+}
+function countdownText(ms){
+  var s=Math.max(0,Math.floor(ms/1000)), d=Math.floor(s/86400), h=Math.floor(s%86400/3600), m=Math.floor(s%3600/60), x=s%60;
+  function p(n){return n<10?"0"+n:""+n;}
+  return (d?d+(d===1?" day ":" days "):"")+p(h)+"h "+p(m)+"m "+p(x)+"s";
+}
+function showLocked(){
+  var app=document.getElementById("app");
+  if(META.game==="cam"){
+    document.getElementById("rank").textContent="Day "+META.day+" of 5 • "+META.dateShort;
+    app.innerHTML='<div class="card file" style="text-align:center"><span class="era">'+META.era+'</span><br><span class="stamp">SEALED</span>'+
+      '<h2>Case sealed until '+META.date+'</h2><p>This case file is locked in the evidence room, Officer Cam. It opens at midnight (Eastern Time).</p>'+
+      '<p style="font-size:1.6rem;font-weight:900;color:#c0392b" id="cd"></p><p class="hint">⏳ Check back on '+META.date+'!</p></div>';
+  } else {
+    document.getElementById("best").textContent="Shift "+META.day+" of 5 · "+META.date;
+    app.innerHTML='<div class="panel" style="text-align:center"><span class="tag">Shift '+META.day+' · Closed</span>'+
+      '<h2 style="margin-top:10px">Shift opens '+META.date+'</h2><p class="muted">The truck is parked. This shift opens at midnight Eastern Time.</p>'+
+      '<p style="font-size:1.6rem;font-weight:700;color:#f4a261" id="cd"></p><p class="muted">Come back on '+META.date+'.</p></div>';
+  }
+  var cd=document.getElementById("cd");
+  function tick(){ var left=META.unlock-Date.now(); if(left<=0){ clearInterval(iv); app.innerHTML=""; openGame(); return; } cd.textContent=countdownText(left); }
+  var iv=setInterval(tick,1000); tick();
+}
+if(PREVIEW || Date.now()>=META.unlock) openGame(); else showLocked();
+</script>
+
 </body>
 </html>
