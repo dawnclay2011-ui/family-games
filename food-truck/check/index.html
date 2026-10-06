@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta name="robots" content="noindex">
+<title>Prove It — Startup Tycoon: Food Truck Season</title>
+<style>
+ *{box-sizing:border-box}
+ body{margin:0;font-family:system-ui,Segoe UI,Arial,sans-serif;background:#0f1115;color:#e8e8e8}
+ header{padding:14px 18px;background:#151922;border-bottom:1px solid #2a2f3a;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center}
+ h1{margin:0;font-size:1.2rem;color:#f4a261;letter-spacing:.5px}
+ h2{margin-top:0}
+ main{max-width:900px;margin:16px auto;padding:0 12px}
+ .panel{background:#171b24;border:1px solid #2a2f3a;border-radius:10px;padding:16px;margin-bottom:14px}
+ .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+ .stat{background:#1e2330;border-radius:8px;padding:10px}
+ .stat .k{font-size:.75rem;color:#9aa3b2;text-transform:uppercase}
+ .stat .v{font-size:1.3rem;font-weight:700}
+ button{font:inherit;font-weight:600;background:#f4a261;color:#111;border:none;border-radius:8px;padding:10px 16px;cursor:pointer;margin:4px 4px 0 0}
+ button.sec{background:#2a2f3a;color:#e8e8e8}
+ .good{color:#7bd389}.bad{color:#ef6f6c}.muted{color:#9aa3b2;font-size:.9rem}
+ table{width:100%;border-collapse:collapse;font-size:.9rem}td,th{padding:6px;border-bottom:1px solid #2a2f3a;text-align:right}td:first-child,th:first-child{text-align:left}
+ .report{margin:10px 0}.rstat{display:block;margin-top:4px;font-weight:600;font-size:.95rem}
+ button.rep{background:#7bd389}button.rep.small{font-size:.85rem;padding:7px 12px}button.rep.sent{background:#2a9d8f;color:#fff}button:disabled{cursor:default;opacity:.9}
+ button{max-width:100%;white-space:normal}
+ .tag{display:inline-block;background:#2a2f3a;color:#f4a261;border-radius:6px;padding:3px 8px;font-size:.8rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+ .stake{border-left:3px solid #f4a261;padding:6px 10px;color:#c9cfd9;background:#1b202b;border-radius:0 6px 6px 0;margin:10px 0}
+ .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}
+ .row .pre{font-weight:700;font-size:1.1rem;color:#f4a261}
+ input.ans{font:inherit;font-size:1.05rem;padding:10px;border-radius:8px;border:1px solid #39404f;background:#0f1115;color:#e8e8e8;flex:1;min-width:150px;max-width:320px}
+ .note{background:#1e2330;border:1px solid #39404f;border-radius:8px;padding:10px 12px;margin-top:10px}
+ .ledger td:nth-child(2),.ledger th:nth-child(2){text-align:left}
+ .nextshift{background:#1e2330;border:1px solid #f4a261;border-radius:10px;padding:14px;margin-top:12px}
+ .nextshift a{color:#f4a261;font-weight:700;word-break:break-all}
+ .datatable td,.datatable th{text-align:center}
+ .choice{background:#1e2330;border:1px solid #39404f;border-radius:8px;padding:12px;margin:8px 0;cursor:pointer}
+ .choice:hover{border-color:#f4a261}
+
+</style>
+</head>
+<body>
+<header><h1>🚚 STARTUP TYCOON — Food Truck Season</h1><span class="muted" id="best"></span></header>
+<main id="app"></main>
+<script type="text/plain" id="game">
+/* Christian's prove-it round — injected by the boot script below once it's open (Thu Oct 15, midnight ET) */
+const KEY = PREVIEW ? "tycoonCheckPreview" : "tycoonCheck";   // own keys: tycoonBest/tycoonLast/tycoonDaily are never touched
+const C = DAY, PR = C.problems, NP = PR.length;
+function fresh(){ return {v:1, stage:"brief", idx:0, res:PR.map(()=>null), para:null, sec:PR.map(()=>0), paraSec:0,
+  activeSec:0, startedAt:null, finishedAt:null, autoSent:false, lastDone:null}; }
+let st; try{ st=JSON.parse(localStorage.getItem(KEY)||"null"); }catch(e){ st=null; }
+if(!st || st.v!==1) st=fresh();
+function persist(){ try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){} showHead(); }
+function mmss(sec){ sec=Math.max(0,Math.round(sec)); const m=Math.floor(sec/60), s=sec%60; return m+":"+(s<10?"0":"")+s; }
+function showHead(){ document.getElementById("best").textContent = "Prove-it round · " + C.date; }
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+const app=document.getElementById("app");
+const toTop=()=>{ try{window.scrollTo(0,0);}catch(e){} };
+const H=(id,s)=>fnv1a("rc26|"+id+"|"+s);
+function canon(v){ return v.toFixed(4).replace(/0+$/,"").replace(/\.$/,""); }
+function KEYS(){ const salt=C.ks, b=Uint8Array.from(atob(CHECK.k),c=>c.charCodeAt(0)).map((x,i)=>x^salt.charCodeAt(i%salt.length)); return JSON.parse(new TextDecoder().decode(b)); }
+
+/* visible clock: counts while the page is visible and the round is running */
+setInterval(()=>{
+  if(document.visibilityState!=="visible" || (st.stage!=="round" && st.stage!=="para")) return;
+  st.activeSec++; if(st.stage==="round") st.sec[st.idx]++; else st.paraSec++;
+  const t=document.getElementById("clock"); if(t) t.textContent=mmss(st.activeSec);
+  if(st.activeSec%5===0) persist();
+},1000);
+
+/* ---------- answer reading ---------- */
+function clean(s){ return String(s).toLowerCase().replace(/[−–—]/g,"-").replace(/[×·]/g,"*").replace(/÷/g,"/").replace(/\$/g,"").replace(/,/g,"").replace(/\s+/g,""); }
+function compile(expr, vars){
+  if(!expr) return null;
+  if(!/^[0-9.+\-*/()a-z]+$/.test(expr)) return null;
+  const letters = expr.match(/[a-z]/g)||[];
+  if(letters.some(l=>!vars.includes(l))) return null;
+  let e = expr.replace(/(\d|\))(?=[a-z(])/g,"$1*").replace(/([a-z])(?=[a-z0-9(])/g,"$1*").replace(/\)(?=[0-9a-z(])/g,")*");
+  try{ const f=new Function(...vars, "return ("+e+");"); const t=f(...vars.map(()=>1.37)); if(typeof t!=="number") return null; return f; }catch(err){ return null; }
+}
+const FORM_MSG={plain:"Give one final number (units are fine, like 12 ft).", power:"Simplify all the way: one number, or one power like 3^2.", sci:"Give one final number, or scientific notation like 3 x 10^4."};
+function readNum(raw, form){
+  const SUP={"⁰":"0","¹":"1","²":"2","³":"3","⁴":"4","⁵":"5","⁶":"6","⁷":"7","⁸":"8","⁹":"9","⁻":"-"};
+  let s=clean(String(raw).replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹⁻]+/g,m=>"^"+[...m].map(c=>SUP[c]).join("")));
+  if(s.includes("=")) s=s.split("=").pop();
+  s=s.replace(/\.$/,"").replace(/(\d)x(?=\d)/g,"$1*");                          // 7x10^3 -> 7*10^3
+  s=s.replace(/(\/|per)?[a-z]+\.?$/,"");                        // trailing units: ft, times, /burger, per burger
+  if(!s || !/^[0-9.+\-*/^()e]+$/.test(s)) return {invalid:FORM_MSG[form]};
+  const ok = /^-?\d+(\.\d+)?$/.test(s) || (form==="power" && /^\d+\^\d+$/.test(s)) ||
+             (form==="sci" && (/^\d+(\.\d+)?\*10\^-?\d+$/.test(s) || /^\d+(\.\d+)?e-?\d+$/.test(s)));
+  if(!ok) return {invalid:FORM_MSG[form]};
+  let v; try{ v=new Function("return ("+s.replace(/\^/g,"**")+");")(); }catch(e){ return {invalid:FORM_MSG[form]}; }
+  if(typeof v!=="number" || !isFinite(v)) return {invalid:FORM_MSG[form]};
+  return {v};
+}
+function readEq(raw){
+  let s=clean(raw);
+  if(s.includes("=")){ const p=s.split("="); if(p.length!==2) return {invalid:"Use one = sign at most."};
+    const lhs=/^p(\([a-z]\))?$/; if(lhs.test(p[0])) s=p[1]; else if(lhs.test(p[1])) s=p[0]; else return {invalid:"Write it as P = (expression in b)."}; }
+  const letters=[...new Set(s.match(/[a-z]/g)||[])];
+  if(letters.length===1 && letters[0]!=="b" && /[xn]/.test(letters[0])) s=s.replace(new RegExp(letters[0],"g"),"b");
+  const f=compile(s,["b"]); if(!f) return {invalid:"I couldn't read that. Use numbers, + − × ÷, parentheses, and b for burgers."};
+  return {sig:[0,1,2.5,7,40].map(x=>canon(f(x))).join("|")};
+}
+
+/* ---------- screens ---------- */
+function statsHTML(){
+  const done=st.res.filter(Boolean).length, sk=st.res.filter(r=>r&&r.skipped).length;
+  return `<div class="stats">
+   <div class="stat"><div class="k">Clock</div><div class="v" id="clock">${mmss(st.activeSec)}</div></div>
+   <div class="stat"><div class="k">Problems</div><div class="v">${Math.min(done+(st.stage==="round"?1:0),NP)} / ${NP}</div></div>
+   <div class="stat"><div class="k">Skipped</div><div class="v">${sk}</div></div></div>`;
+}
+function render(){ if(st.stage==="brief") return brief(); if(st.stage==="round") return problem(); if(st.stage==="para") return paraScreen(); if(st.stage==="done") return done(); }
+function brief(){
+  app.innerHTML=`<div class="panel"><span class="tag">Prove it · ${C.date}</span><h2 style="margin-top:8px">Prove you already know this.</h2>
+  <div class="stake">⏰ <b>Do this round first thing Thursday, before your Day 1 shift.</b></div>
+  <p>${NP} problems off the truck, each one harder than the last, then one short argument paragraph. If you already know this material, show it and move on.</p>
+  <ul><li><b>One answer per problem.</b> Right or wrong shows up at the end, not along the way.</li>
+  <li><b>The clock runs</b> while you work. There's no time limit.</li>
+  <li><b>Can't do one? Skip it.</b> Skips are logged in the report to Mom, so only skip what you really can't do.</li>
+  <li>Type every answer yourself. Scratch paper's fine; you won't need a calculator.</li>
+  <li>P5 is break-even, which Shift 2 covers on Friday. If you can already do it, prove it. If not, this round shows where you're starting from.</li></ul>
+  <button onclick="startRound()">Start the clock ▶</button></div>`;
+}
+function startRound(){ if(!st.startedAt) st.startedAt=new Date().toISOString(); st.stage="round"; st.idx=0; persist(); render(); toTop(); }
+function problem(){
+  const i=st.idx, p=PR[i];
+  let inputs;
+  if(p.form==="multi"){
+    inputs=`<div class="row"><span class="pre">P =</span><input class="ans" id="eq" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="expression in b"></div>
+    <div class="row"><span class="pre" style="min-width:4.5em">c means:</span><input class="ans" id="cm" autocomplete="off" style="max-width:none" placeholder="what c stands for, in words"></div>
+    <div class="row"><span class="pre" style="min-width:4.5em">Break-even:</span><input class="ans" id="be" autocomplete="off" placeholder="number of burgers" onkeydown="if(event.key==='Enter')commit()"></div>`;
+  } else {
+    inputs=`<div class="row"><input class="ans" id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${esc(p.ph||"your answer")}" onkeydown="if(event.key==='Enter')commit()"></div>`;
+  }
+  app.innerHTML=`<div class="panel">${statsHTML()}</div>
+  <div class="panel" id="taskp"><span class="tag">P${i+1} of ${NP} · ${esc(p.skill)}</span>
+   <p style="font-size:1.1rem">${p.q}</p>
+   ${inputs}
+   <div class="muted" id="m" style="margin-top:6px">${p.form==="multi"?"Type b for burgers, like 4b + 20. All three parts go in together.":p.form==="power"||p.form==="sci"?"Type powers with ^, like 10^4.":""}</div>
+   <div class="row"><button onclick="commit()">Lock it in</button><button class="sec" id="skipb" onclick="skip(this)">Skip</button></div>
+  </div>`;
+  const inp=document.getElementById(p.form==="multi"?"eq":"ans"); if(inp) inp.focus();
+}
+function skip(btn){
+  if(!btn.dataset.armed){ btn.dataset.armed="1"; btn.textContent="Tap again to skip (it's logged)"; return; }
+  if(st.stage==="para"){ st.para={skipped:true, draft:(document.getElementById("para").value||"").trim()}; return finish(); }
+  st.res[st.idx]={skipped:true}; advance();
+}
+function commit(){
+  const i=st.idx, p=PR[i], m=document.getElementById("m");
+  const bad=t=>{ m.className="bad"; m.textContent=t; };
+  if(p.form==="multi"){
+    const eq=document.getElementById("eq").value.trim(), cm=document.getElementById("cm").value.trim(), be=document.getElementById("be").value.trim();
+    if(!eq||!cm||!be) return bad("Fill in all three parts (or skip this one).");
+    const e=readEq(eq); if(e.invalid) return bad(e.invalid);
+    const b=readNum(be,"plain"); if(b.invalid) return bad("Break-even: "+b.invalid);
+    const eqOk=H(p.id+"eq",e.sig)===p.heq, beOk=H(p.id+"be",canon(b.v))===p.hbe;
+    st.res[i]={eq, cm, be, eqOk, beOk, beVal:b.v, ok:eqOk&&beOk};
+  } else {
+    const raw=document.getElementById("ans").value.trim(); if(!raw) return;
+    const r=readNum(raw,p.form); if(r.invalid) return bad(r.invalid);
+    st.res[i]={raw, ok:p.h.includes(H(p.id,canon(r.v)))};
+  }
+  advance();
+}
+function advance(){ if(st.idx+1<NP){ st.idx++; } else { st.stage="para"; } persist(); render(); toTop(); }
+function words(t){ return (t.trim().match(/[A-Za-z0-9'’$%.-]+/g)||[]).filter(w=>/[A-Za-z0-9]/.test(w)).length; }
+function sentences(t){ return t.split(/[.!?]+(?=\s|$)/).filter(x=>words(x)>=3).length; }
+const MIN_PARA_SENT=3, MIN_PARA_WORDS=40;
+function paraScreen(){
+  const P=C.paragraph;
+  app.innerHTML=`<div class="panel">${statsHTML()}</div>
+  <div class="panel" id="taskp"><span class="tag">Last one · Argument paragraph</span>
+   <p style="font-size:1.1rem">${esc(P.prompt)}</p>
+   <p class="muted">Aim for ${esc(P.target)}.</p>
+   <textarea id="para" style="width:100%;min-height:200px;font:inherit;font-size:1rem;padding:10px;border-radius:8px;border:1px solid #39404f;background:#0f1115;color:#e8e8e8" oninput="onPara()">${esc(st.paraDraft||"")}</textarea>
+   <div class="muted" id="pc" style="margin-top:6px"></div>
+   <div class="muted" id="m" style="margin-top:6px"></div>
+   <div class="row"><button onclick="submitPara()">Submit paragraph</button><button class="sec" onclick="skip(this)" id="skipb">Skip</button></div>
+  </div>`;
+  onPara();
+}
+function onPara(){ const t=document.getElementById("para").value; st.paraDraft=t; persist(); const w=words(t), s=sentences(t);
+  document.getElementById("pc").innerHTML=`Sentences: <b class="${s>=5&&s<=7?"good":""}">${s}</b> (aim for 5–7) · Words: ${w}`; }
+function submitPara(){
+  const t=document.getElementById("para").value.trim(), m=document.getElementById("m");
+  if(sentences(t)<MIN_PARA_SENT || words(t)<MIN_PARA_WORDS){ m.className="bad"; m.textContent=`Too short to count. Give it at least ${MIN_PARA_SENT} full sentences (${MIN_PARA_WORDS}+ words): your side, your reasons, and the other side's best argument. Or skip it.`; return; }
+  st.para={text:t}; finish();
+}
+function finish(){
+  st.stage="done"; st.finishedAt=new Date().toISOString();
+  st.lastDone={proved:st.res.filter(r=>r&&r.ok).length, skipped:st.res.filter(r=>r&&r.skipped).length, activeSec:st.activeSec, startedAt:st.startedAt, finishedAt:st.finishedAt};
+  persist(); render(); toTop();
+}
+function status(r){ return r.skipped?`<span class="muted">Skipped</span>`:r.ok?`<b class="good">Proved</b>`:`<b class="bad">Not yet</b>`; }
+function done(){
+  const L=st.lastDone; if(!L){ st=fresh(); persist(); return render(); }
+  app.innerHTML=`<div class="panel"><h2>Round complete.</h2>
+  <p>Time: <b>${mmss(L.activeSec)}</b></p>
+  <table><tr><th>#</th><th style="text-align:left">Skill</th><th>Result</th></tr>
+  ${PR.map((p,i)=>`<tr><td>P${i+1}</td><td style="text-align:left">${esc(p.skill)}</td><td>${status(st.res[i])}</td></tr>`).join("")}
+  <tr><td>¶</td><td style="text-align:left">Argument paragraph</td><td>${st.para&&st.para.skipped?`<span class="muted">Skipped</span>`:"Sent to Mom for a read"}</td></tr></table>
+  <p class="muted">"Proved" means you got it right on the one try. Anything marked "Not yet" or skipped is where the next few shifts will focus.</p>
+  ${reportBtn("checkReport","📨 Send the round report to Mom")}
+  <div class="nextshift">▶ <b>Next: your Day 1 shift</b> → <a href="../day1/${PREVIEW_QS}">Shift 1: The Bank Wants Numbers</a></div>
+  ${PREVIEW?`<p><button class="sec" onclick="resetPreview()">Reset preview run</button></p>`:""}</div>`;
+  if(!PREVIEW && !st.autoSent){ st.autoSent=true; persist(); const b=document.querySelector("button.rep"); if(b) reportToMom(b,checkReport); }
+}
+function resetPreview(){ if(!PREVIEW) return; st=fresh(); persist(); render(); toTop(); }
+
+/* ---- Report to Mom (FormSubmit AJAX) — same mechanism as the main games ---- */
+const MOM_EMAIL="8caedc1e9653325b52b367e2e172d2a3"; // FormSubmit alias (hides Mom's address)
+const REPORT_URL="https://formsubmit.co/ajax/"+MOM_EMAIL;
+function nowStr(){try{return new Date().toLocaleString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short"});}catch(e){return new Date().toString();}}
+function fmtTime(iso){ if(!iso) return "—"; try{return new Date(iso).toLocaleString("en-US",{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short"});}catch(e){return iso;} }
+function postReport(fields){
+ const ctl=typeof AbortController!=="undefined"?new AbortController():null;
+ const t=ctl?setTimeout(()=>ctl.abort(),15000):null;
+ return fetch(REPORT_URL,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(fields),signal:ctl?ctl.signal:undefined})
+  .then(r=>r.json().catch(()=>({success:r.ok?"true":"false",message:"HTTP "+r.status})).then(j=>{j._status=r.status;return j;}))
+  .finally(()=>{if(t)clearTimeout(t);});
+}
+function reportBtn(builder,label,small){
+ if(PREVIEW) return `<div class="report"><button type="button" class="rep${small?" small":""}" disabled>📨 Reports off (preview)</button><span class="rstat">Preview – reports off</span></div>`;
+ return `<div class="report"><button type="button" class="rep${small?" small":""}" onclick="reportToMom(this,${builder})">${label}</button><span class="rstat" role="status" aria-live="polite"></span></div>`;
+}
+function reportToMom(btn,build){
+ const st=btn.nextElementSibling;
+ if(PREVIEW){btn.disabled=true;st.textContent="Preview – reports off";return;}
+ if(btn.dataset.sent||btn.disabled)return;
+ if(navigator.onLine===false){st.className="rstat bad";st.textContent="No internet — try again later.";btn.textContent="🔁 Try again";return;}
+ let fields;
+ try{fields=Object.assign({_subject:REPORT_SUBJECT,_template:"box",_captcha:"false",Date:nowStr(),Player:REPORT_PLAYER,Game:REPORT_GAME},build());}
+ catch(e){st.className="rstat bad";st.textContent="Oops — couldn't build the report.";return;}
+ btn.disabled=true;btn.textContent="Sending… 📤";st.className="rstat";st.textContent="";
+ postReport(fields).then(j=>{
+  if(String(j.success)!=="true")throw new Error(j.message||"Send failed");
+  btn.dataset.sent="1";btn.textContent="Sent! ✅";btn.classList.add("sent");st.className="rstat good";st.textContent="Report sent to Mom.";
+ }).catch(e=>{
+  btn.disabled=false;btn.textContent="🔁 Try again";st.className="rstat bad";
+  st.textContent=navigator.onLine===false?"No internet — try again later.":/activat/i.test(e&&e.message||"")?"Reports aren't switched on yet. Try again later.":"That didn't send. Tap to try again.";
+ });
+}
+
+const REPORT_SUBJECT="Game Report: Christian prove-it round", REPORT_PLAYER="Christian (age 14)", REPORT_GAME="Startup Tycoon: Food Truck Season — Prove-It Round";
+function fmtList(a){ return a.length ? a.join(", ") : "None"; }
+function day1Order(){
+  try{ const d=JSON.parse(localStorage.getItem(PREVIEW?"tycoonDailyPreview":"tycoonDaily")||"{}").d1;      // read only
+    if(!d || !d.startedAt) return "Yes — Shift 1 hadn't been started when he finished this round.";
+    return new Date(d.startedAt) < new Date(st.startedAt) ? `No — he started Shift 1 at ${fmtTime(d.startedAt)}, before this round.` : `Yes — Shift 1 was started after this round began (${fmtTime(d.startedAt)}).`;
+  }catch(e){ return "Unknown"; } }
+function paraHints(t){
+  const has=(re)=>re.test(t)?"found":"not found";
+  return `claim word (should / ban / support / oppose / agree): ${has(/\b(should|shouldn'?t|ban|support|oppose|agree|disagree|against|favor|believe|think)\b/i)}; `+
+    `numbers or evidence: ${has(/\d|percent|for example|for instance|according/i)}; `+
+    `counterargument signal (some people / others / opponents / however / although / while): ${has(/\b(some people|others|other side|opponents?|critics|however|although|though|while|on the other hand|might say|may say|argue)\b/i)}; `+
+    `conclusion signal (in conclusion / overall / that's why / so / therefore): ${has(/\b(in conclusion|overall|that'?s why|therefore|so the city|in the end|to sum up|for these reasons)\b/i)}`;
+}
+function checkReport(){
+  const L=st.lastDone, K=KEYS();
+  const tag=(p)=>`P${PR.indexOf(p)+1} ${p.skill}`;
+  const proved=PR.filter((p,i)=>st.res[i]&&st.res[i].ok).map(tag), skipped=PR.filter((p,i)=>st.res[i]&&st.res[i].skipped).map(tag),
+        missed=PR.filter((p,i)=>st.res[i]&&!st.res[i].ok&&!st.res[i].skipped).map(tag);
+  const pt=st.para||{skipped:true}, txt=pt.text||"";
+  const f={
+    "Report type":"Readiness check — start of Grade 9 / Algebra I readiness (prove-it round, Food Truck style)",
+    "Check date":C.date,
+    "Problems proved (right on the one try)":`${L.proved} of ${NP} — ready marker is ${C.ready.problems} of ${NP} plus a paragraph with a claim, reasons, and a counterargument: problems ${L.proved>=C.ready.problems?"MET ✅":"not yet"}; paragraph: please read below`,
+    "Mastered (proved)":fmtList(proved),
+    "Skipped (he chose to skip — not shown, so not counted as mastered)":fmtList(skipped),
+    "Missed (to work on)":fmtList(missed),
+    "Done before Day 1 shift?":day1Order(),
+    "Time taken":`${mmss(L.activeSec)} (min:sec on the visible clock; started ${fmtTime(L.startedAt)}, finished ${fmtTime(L.finishedAt)})`,
+    "Time per problem":PR.map((p,i)=>`P${i+1} ${mmss(st.sec[i])}`).join(" · ")+` · paragraph ${mmss(st.paraSec)}`
+  };
+  PR.forEach((p,i)=>{ const r=st.res[i], k=`P${i+1} ${p.skill}`;
+    if(!r || r.skipped){ f[k]=`⏭ skipped • key: ${K[p.id]}`; return; }
+    if(p.form==="multi"){
+      const near=Math.abs(r.beVal-parseFloat(K.P5raw))<0.1;
+      f[k]=`${r.ok?"✅ proved":"❌ not yet"} — equation: "P = ${r.eq.replace(/^\s*p\s*=\s*/i,"")}" ${r.eqOk?"✅":"❌"}; c means: "${r.cm}" (please judge this part); break-even: "${r.be}" ${r.beOk?"✅":"❌"}${!r.beOk&&near?" (found 21.4 but didn't round up to a whole burger)":""} • key: ${K[p.id]}`;
+    } else f[k]=`${r.ok?"✅ proved":"❌ not yet"} — he typed: "${r.raw}" • key: ${K[p.id]}`;
+  });
+  f["P5 baseline note"]="Break-even is what his Day 2 shift (Fri Oct 16) teaches, so P5 here is his starting point. Compare with Day 2's report.";
+  f["Argument paragraph prompt"]=C.paragraph.prompt;
+  f["His argument paragraph"]=pt.skipped?("(skipped)"+(pt.draft?` — unsent draft: "${pt.draft}"`:"")):txt;
+  if(!pt.skipped){
+    f["Paragraph length"]=`${sentences(txt)} sentences, ${words(txt)} words (asked for ${C.paragraph.target})`;
+    f["Paragraph auto-hints (keyword check only — please read it yourself)"]=paraHints(txt);
+  }
+  f["What to look for in the paragraph"]=C.paragraph.lookfor;
+  f["Format"]="One answer per problem, right/wrong not shown until he finished, any problem could be skipped (each skip logged here).";
+  return f;
+}
+showHead(); render();
+</script>
+<script>
+/* ---- Date lock + hidden preview. Unlock = midnight America/New_York, stored as an absolute UTC instant. ---- */
+var META = {"game": "truck", "day": "check", "date": "Thursday, Oct 15", "dateShort": "Thu, Oct 15", "unlock": 1792036800000, "lockRank": "Prove-it round · Thursday, Oct 15", "lockTag": "Prove it · Closed", "lockH2": "Opens", "lockMsg": "The prove-it round opens at midnight Eastern Time. Do it first thing that morning, before your Day 1 shift."};
+var PAYLOAD = "eyJkYXkiOiB7InRpdGxlIjogIlByb3ZlIEl0IiwgImRhdGUiOiAiVGh1cnNkYXksIE9jdCAxNSIsICJwcm9ibGVtcyI6IFt7ImlkIjogIlAxIiwgInNraWxsIjogIkV4cG9uZW50IHJ1bGVzIiwgImZvcm0iOiAicG93ZXIiLCAicSI6ICJTaW1wbGlmeTogKDI8c3VwPjM8L3N1cD4gw5cgMjxzdXA+NTwvc3VwPikgLyAyPHN1cD40PC9zdXA+IiwgInBoIjogImUuZy4gM14yIG9yIDkiLCAiaCI6IFs4MDYzNDM2OF19LCB7ImlkIjogIlAyIiwgInNraWxsIjogIlNjaWVudGlmaWMgbm90YXRpb24iLCAiZm9ybSI6ICJzY2kiLCAicSI6ICJBIG5hdGlvbmFsIGNoYWluIHNvbGQgNC4yIMOXIDEwPHN1cD43PC9zdXA+IGJ1cmdlcnMgbGFzdCB5ZWFyLiBZb3VyIHRydWNrIHNvbGQgNiDDlyAxMDxzdXA+Mzwvc3VwPi4gSG93IG1hbnkgdGltZXMgbW9yZSBkaWQgdGhlIGNoYWluIHNlbGw/IiwgInBoIjogImUuZy4gMyB4IDEwXjQgb3IgMzAwMDAiLCAiaCI6IFsxNzYyMzY1MDM5XX0sIHsiaWQiOiAiUDMiLCAic2tpbGwiOiAiUHl0aGFnb3JlYW4gdGhlb3JlbSIsICJmb3JtIjogInBsYWluIiwgInEiOiAiQSAxMy1mdCBsYWRkZXIgbGVhbnMgYWdhaW5zdCB0aGUgdHJ1Y2sgd2l0aCBpdHMgYmFzZSA1IGZ0IGZyb20gdGhlIHRydWNrLiBIb3cgaGlnaCB1cCB0aGUgdHJ1Y2sgZG9lcyBpdCByZWFjaD8iLCAicGgiOiAiZmVldCIsICJoIjogWzI0ODE5Mzc4MzBdfSwgeyJpZCI6ICJQNCIsICJza2lsbCI6ICJTbG9wZSIsICJmb3JtIjogInBsYWluIiwgInEiOiAiU2VsbGluZyA0MCBidXJnZXJzIGluIGEgZGF5IG1ha2VzICQxMzAgcHJvZml0LiBTZWxsaW5nIDcwIGJ1cmdlcnMgbWFrZXMgJDM0MC4gSG93IG11Y2ggZG9lcyBwcm9maXQgZ28gdXAgcGVyIGJ1cmdlcj8iLCAicGgiOiAiZG9sbGFycyBwZXIgYnVyZ2VyIiwgImgiOiBbMTQwNjk2NzMxNV19LCB7ImlkIjogIlA1IiwgInNraWxsIjogIlNsb3BlLWludGVyY2VwdCBmb3JtICsgbWVhbmluZyIsICJmb3JtIjogIm11bHRpIiwgInEiOiAiVXNpbmcgUDQsIHdyaXRlIHRoZSBwcm9maXQgZXF1YXRpb24gUCA9IG1iICsgYy4gV2hhdCBkb2VzIGMgbWVhbiwgYW5kIGhvdyBtYW55IGJ1cmdlcnMgZG8geW91IG5lZWQgdG8gc2VsbCB0byBicmVhayBldmVuPyIsICJoZXEiOiA4OTIyMTIxMTAsICJoYmUiOiA0MDUyNTkwNTAwfV0sICJwYXJhZ3JhcGgiOiB7InByb21wdCI6ICJUaGUgY2l0eSB3YW50cyB0byBiYW4gZm9vZCB0cnVja3Mgd2l0aGluIDIwMCBmZWV0IG9mIGFueSByZXN0YXVyYW50LiBQaWNrIGEgc2lkZS4gR2l2ZSB0d28gcmVhc29ucyB3aXRoIGV2aWRlbmNlIG9yIG51bWJlcnMsIGFuZCBhbnN3ZXIgb25lIGFyZ3VtZW50IGZyb20gdGhlIG90aGVyIHNpZGUuIiwgInRhcmdldCI6ICI14oCTNyBzZW50ZW5jZXMiLCAibG9va2ZvciI6ICJhIGNsZWFyIGNsYWltLCAyIHJlYXNvbnMgd2l0aCBzdXBwb3J0LCBhIGNvdW50ZXJhcmd1bWVudCBoZSBhbnN3ZXJzLCBhbmQgYSBjb25jbHVzaW9uIn0sICJyZWFkeSI6IHsicHJvYmxlbXMiOiA0fSwgImtzIjogInJjMjYtb2N0MTUtcmVhZGluZXNzIiwgInVubG9jayI6IDE3OTIwMzY4MDAwMDB9LCAiY2hlY2siOiB7ImsiOiAiQ1VGaUJ3OVZRMVlEYXhsU1dFRlZYMHhKVTFFaVVSQU1EVTFVVkVrVkhFSTdVa1JVVGxKZlEwSlRFa0pFQWdZSEV4a05VRFZTUmxOT1IwSkJVZ1ZHRkFGUFFTUUZGeGRTUjBWVFNSNEFBVk1RRmtCUlNCMUJXQkVYZlVkSFcwUkxQa1ZPVTBVQkVoc05YbFpFSHhWT1VsaEJTVmhiVlZNYUFVTVdCeGhmUXgxZkZVa1REQTBkU1FnTUN4WVdRMUZaWGhzUVdoRjNYeGNFQ2trTUdBQWRVeHNRRWdjWVgweERFZGVrK2tWVFZVZGFTVk1BSFVNQUJBME5GZ1pXVUY4QlMwTklTVXcxUmdFVEZCQU1EVTFSUlI4QkhsQVkifX0=";
+var PH = 3887916057;
+var DAY = null, MAPS = null, CHECK = null, PREVIEW = false, PREVIEW_QS = "";
+function fnv1a(s){ var h=0x811c9dc5; for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,0x01000193)>>>0; } return h>>>0; }
+try{ var _t=new URLSearchParams(location.search).get("p"); if(_t && fnv1a(_t)===PH){ PREVIEW=true; PREVIEW_QS="?p="+encodeURIComponent(_t); } }catch(e){}
+function openGame(){
+  var o=JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(PAYLOAD),function(c){return c.charCodeAt(0);})));
+  DAY=o.day; MAPS=o.maps||{}; if(o.check) CHECK=o.check;
+  if(PREVIEW){ var b=document.createElement("span"); b.className="badge"; b.id="previewBadge"; b.style.cssText="background:#8e44ad;color:#fff"; b.textContent="Preview – reports off"; document.querySelector("header").appendChild(b); }
+  var s=document.createElement("script"); s.textContent=document.getElementById("game").textContent; document.body.appendChild(s);
+}
+function countdownText(ms){
+  var s=Math.max(0,Math.floor(ms/1000)), d=Math.floor(s/86400), h=Math.floor(s%86400/3600), m=Math.floor(s%3600/60), x=s%60;
+  function p(n){return n<10?"0"+n:""+n;}
+  return (d?d+(d===1?" day ":" days "):"")+p(h)+"h "+p(m)+"m "+p(x)+"s";
+}
+function showLocked(){
+  var app=document.getElementById("app");
+  if(META.game==="cam"){
+    document.getElementById("rank").textContent=META.lockRank||("Day "+META.day+" of 5 • "+META.dateShort);
+    app.innerHTML='<div class="card file" style="text-align:center"><span class="era">'+META.era+'</span><br><span class="stamp">SEALED</span>'+
+      '<h2>Case sealed until '+META.date+'</h2><p>'+(META.lockMsg||'This case file is locked in the evidence room, Officer Cam. It opens at midnight (Eastern Time).')+'</p>'+
+      '<p style="font-size:1.6rem;font-weight:900;color:#c0392b" id="cd"></p><p class="hint">⏳ Check back on '+META.date+'!</p></div>';
+  } else {
+    document.getElementById("best").textContent=META.lockRank||("Shift "+META.day+" of 5 · "+META.date);
+    app.innerHTML='<div class="panel" style="text-align:center"><span class="tag">'+(META.lockTag||('Shift '+META.day+' · Closed'))+'</span>'+
+      '<h2 style="margin-top:10px">'+(META.lockH2||'Shift opens')+' '+META.date+'</h2><p class="muted">'+(META.lockMsg||'The truck is parked. This shift opens at midnight Eastern Time.')+'</p>'+
+      '<p style="font-size:1.6rem;font-weight:700;color:#f4a261" id="cd"></p><p class="muted">Come back on '+META.date+'.</p></div>';
+  }
+  var cd=document.getElementById("cd");
+  function tick(){ var left=META.unlock-Date.now(); if(left<=0){ clearInterval(iv); app.innerHTML=""; openGame(); return; } cd.textContent=countdownText(left); }
+  var iv=setInterval(tick,1000); tick();
+}
+if(PREVIEW || Date.now()>=META.unlock) openGame(); else showLocked();
+</script>
+</body>
+</html>

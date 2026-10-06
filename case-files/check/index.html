@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta name="robots" content="noindex">
+<title>Case File: Readiness — Officer Cam's Case Files</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Trebuchet MS",Arial,sans-serif;background:#1c2541;color:#1c1c1c;min-height:100vh}
+  header{background:#0b132b;color:#ffd166;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+  header h1{margin:0;font-size:1.3rem;letter-spacing:1px}
+  .badge{background:#ffd166;color:#0b132b;border-radius:20px;padding:4px 12px;font-weight:bold;font-size:.9rem}
+  main{max-width:860px;margin:18px auto;padding:0 12px}
+  .card{background:#fdf6e3;border-radius:12px;padding:18px;margin-bottom:16px;box-shadow:0 4px 0 #0b132b}
+  .file{background:#f4e1b0;border-left:8px solid #c0392b}
+  h2{margin-top:0;color:#0b132b}
+  button{font:inherit;font-weight:bold;border:none;border-radius:8px;padding:10px 16px;margin:4px;cursor:pointer;background:#3a86ff;color:#fff}
+  button:hover{filter:brightness(1.1)}
+  button.alt{background:#6c757d}
+  button.red{background:#c0392b}
+  button.done{background:#2a9d8f}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  .suspect{background:#fff;border-radius:10px;padding:12px;border:2px solid #ddd}
+  .suspect .face{font-size:2.4rem}
+  .suspect .role{font-size:.85rem;color:#666;font-style:italic}
+  input{font:inherit;padding:9px;border-radius:8px;border:2px solid #aaa;width:160px}
+  .msg{margin-top:10px;font-weight:bold}
+  .ok{color:#2a9d8f}.bad{color:#c0392b}
+  .evidence li{margin:6px 0}
+  .hint{font-size:.9rem;color:#555;font-style:italic}
+  .stamp{display:inline-block;border:4px solid #c0392b;color:#c0392b;padding:6px 14px;font-size:1.6rem;transform:rotate(-8deg);font-weight:900;margin:10px 0}
+  .report{margin:8px 0}.rstat{display:block;margin-top:4px;font-weight:bold;font-size:.95rem}.rstat.good{color:#2a9d8f}.rstat.bad{color:#c0392b}
+  button.rep{background:#8e44ad}button.rep.small{font-size:.85rem;padding:7px 12px}button.rep.sent{background:#2a9d8f}button:disabled{cursor:default;filter:none;opacity:.9}
+  button{max-width:100%;white-space:normal}
+  .opt{display:block;width:100%;text-align:left;background:#fff;color:#0b132b;border:2px solid #3a86ff;margin:8px 0;padding:12px 14px}
+  .opt.wrong{background:#fde2e1;border-color:#c0392b;color:#8a1c12;text-decoration:line-through}
+  .opt.right{background:#d8f3ee;border-color:#2a9d8f;color:#14532d}
+  .factfile{background:#e8f1ff;border-left:5px solid #3a86ff;padding:10px 12px;border-radius:8px;margin:10px 0}
+  .era{display:inline-block;background:#0b132b;color:#ffd166;border-radius:14px;padding:3px 10px;font-size:.85rem;font-weight:bold}
+  textarea{font:inherit;width:100%;min-height:190px;padding:10px;border-radius:8px;border:2px solid #aaa;resize:vertical;font-size:1rem}
+  .chip{background:#ffd166;color:#0b132b;font-size:.9rem;padding:7px 11px;border-radius:16px}
+  .counter{font-size:.9rem;font-weight:bold;margin:6px 0}
+  .glyph{display:inline-flex;flex-direction:column;align-items:center;gap:6px;background:#fff;border:3px solid #8a6d3b;border-radius:10px;padding:14px 22px;margin:8px 0}
+  .glyph .dots{font-size:1.6rem;letter-spacing:10px;color:#0b132b;line-height:1}
+  .glyph .bar{width:96px;height:14px;background:#0b132b;border-radius:7px}
+  .nextcase{background:#0b132b;color:#ffd166;border-radius:12px;padding:16px;margin-top:12px;text-align:center}
+  .nextcase a{color:#fff;font-weight:bold;font-size:1.1rem;word-break:break-all}
+  blockquote{background:#fff;border-left:5px solid #8e44ad;margin:10px 0;padding:10px 12px;white-space:pre-wrap;text-align:left}
+  table.sc{border-collapse:collapse;margin:8px auto}table.sc td{border:1px solid #bbb;padding:6px 10px;background:#fff;text-align:left}
+  summary{cursor:pointer;padding:4px 0}
+ .opt.sel{background:#fff3c4;border-color:#c0392b;border-width:3px;font-weight:bold}
+ button:disabled{opacity:.5}
+</style>
+</head>
+<body>
+<header><h1>🚔 OFFICER CAM'S CASE FILES</h1><span class="badge" id="rank"></span></header>
+<main id="app"></main>
+<script type="text/plain" id="game">
+/* Cam's readiness case file — injected by the boot script below once it's open (Thu Oct 15, midnight ET) */
+const KEY = PREVIEW ? "ocamCheckPreview" : "ocamCheck";   // own keys: "ocam" and "ocamDaily" are never touched
+const C = DAY;
+const NR = C.reading.length, NM = C.math.length;
+function fresh(){ return {v:1, stage:"intro", idx:0, reading:C.reading.map(()=>null), math:C.math.map(()=>null), sel:null,
+  activeSec:0, startedAt:null, finishedAt:null, autoSent:false, lastDone:null}; }
+let st; try{ st=JSON.parse(localStorage.getItem(KEY)||"null"); }catch(e){ st=null; }
+if(!st || st.v!==1) st=fresh();
+function persist(){ try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){} badge(); }
+function badge(){ document.getElementById("rank").textContent = "Readiness case file • " + C.dateShort; }
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+const app = document.getElementById("app");
+const toTop = ()=>{ try{window.scrollTo(0,0);}catch(e){} };
+const H = (id,s)=>fnv1a("rc26|"+id+"|"+s);
+function canon(v){ return v.toFixed(4).replace(/0+$/,"").replace(/\.$/,""); }
+function KEYS(){ const salt=C.ks, b=Uint8Array.from(atob(CHECK.k),c=>c.charCodeAt(0)).map((x,i)=>x^salt.charCodeAt(i%salt.length)); return JSON.parse(new TextDecoder().decode(b)); }
+
+// active-time clock (counts only while the page is visible and the file is open)
+setInterval(()=>{ if(document.visibilityState==="visible" && (st.stage==="reading"||st.stage==="math")){ st.activeSec+=1; if(st.activeSec%5===0) persist(); } },1000);
+
+function header(part){
+  return `<div class="card file"><span class="era">${C.era}</span><h2 style="margin:8px 0 0">${C.title}</h2>${part?`<p class="hint" style="margin:6px 0 0">${part}</p>`:""}</div>`;
+}
+function render(){
+  if(st.stage==="intro") return intro();
+  if(st.stage==="reading") return readingScreen();
+  if(st.stage==="math") return mathScreen();
+  if(st.stage==="done") return doneScreen();
+}
+function intro(){
+  app.innerHTML = `${header()}
+  <div class="card"><h2>Special assignment, Officer Cam 👮</h2>
+  <p>📅 <b>${C.date}</b></p>
+  <p>${C.intro}</p>
+  <ol><li><b>Part A: Witness Statement.</b> Read it, then answer ${NR} questions.</li>
+  <li><b>Part B: Evidence Math.</b> ${NM} problems. Scratch paper is great, so show your work there.</li></ol>
+  <p>🔒 Every answer goes into a sealed evidence envelope. You get <b>one answer for each question</b>, and the Chief opens the envelope at the end, so take your time and check your work before you lock it in.</p>
+  <p class="hint">Do this case file before today's history case (Day 1).</p>
+  <button onclick="startFile()">🔎 Open the case file</button></div>`;
+}
+function startFile(){ if(!st.startedAt) st.startedAt=new Date().toISOString(); st.stage="reading"; st.idx=0; st.sel=null; persist(); render(); toTop(); }
+
+function readingScreen(){
+  const i=st.idx, q=C.reading[i];
+  app.innerHTML = `${header(`Part A: Witness Statement • Question ${i+1} of ${NR}`)}
+  <div class="card"><h2>📄 Witness statement</h2><blockquote style="white-space:normal;font-size:1.05rem;line-height:1.5">${esc(C.passage)}</blockquote></div>
+  <div class="card" id="qcard"><h2>Question ${i+1} of ${NR}</h2><p style="font-size:1.05rem">${esc(q.q)}</p>
+   ${q.options.map((o,j)=>`<button class="opt ${st.sel===j?"sel":""}" onclick="choose(${j})">${String.fromCharCode(65+j)}. ${esc(o)}</button>`).join("")}
+   <div class="msg" id="m"></div>
+   <button class="done" onclick="lockReading()" ${st.sel==null?"disabled":""}>🔒 Lock in my answer</button>
+  </div>`;
+}
+function choose(j){ st.sel=j; persist(); readingScreen(); const el=document.getElementById("qcard"); if(el&&el.scrollIntoView) el.scrollIntoView({block:"start"}); }
+function lockReading(){
+  const i=st.idx, q=C.reading[i];
+  if(st.sel==null) return;
+  const text=q.options[st.sel];
+  st.reading[i]={picked:text, ok:H(q.id,text)===q.h};
+  st.sel=null;
+  if(i+1<NR){ st.idx=i+1; } else { st.stage="math"; st.idx=0; }
+  persist(); render(); toTop();
+}
+
+function parseNum(raw){
+  let s=String(raw).toLowerCase().replace(/[−–—]/g,"-").replace(/,/g,"").trim();
+  if(s.includes("=")) s=s.split("=").pop();
+  let m=s.match(/(-?\d+)\s+(\d+)\s*\/\s*(\d+)/);                       // mixed number like 1 1/2
+  if(m){ const d=+m[3]; return d ? (+m[1]) + (+m[2])/d : NaN; }
+  m=s.match(/(-?\d*\.?\d+)\s*\/\s*(\d*\.?\d+)/);                        // fraction like 3/5
+  if(m){ const d=parseFloat(m[2]); return d ? parseFloat(m[1])/d : NaN; }
+  m=s.match(/-?\d*\.?\d+/); return m ? parseFloat(m[0]) : NaN;
+}
+function mathScreen(){
+  const i=st.idx, q=C.math[i];
+  app.innerHTML = `${header(`Part B: Evidence Math • Problem ${i+1} of ${NM}`)}
+  <div class="card" id="qcard"><h2>🧮 Evidence math ${i+1} of ${NM}</h2>
+   <p style="font-size:1.1rem">${esc(q.q)}</p>
+   <input id="ans" style="width:220px" autocomplete="off" inputmode="text" placeholder="${q.frac?"e.g. 3/5":"your answer"}" onkeydown="if(event.key==='Enter')lockMath()">
+   <span class="hint">${esc(q.unit)}</span>
+   <p class="hint">${q.frac?"Type a fraction like 3/5 (or a decimal).":"Type just your final answer."} Work it out on scratch paper first.</p>
+   <div class="msg" id="m"></div>
+   <button class="done" onclick="lockMath()">🔒 Lock in my answer</button>
+  </div>`;
+  const inp=document.getElementById("ans"); if(inp) inp.focus();
+}
+function lockMath(){
+  const i=st.idx, q=C.math[i], raw=document.getElementById("ans").value.trim(), m=document.getElementById("m");
+  if(!raw) return;
+  const v=parseNum(raw);
+  if(!isFinite(v)){ m.className="msg bad"; m.textContent="Type your answer as a number (like 42, 3.5, or 3/5)."; return; }
+  st.math[i]={raw:raw, ok:q.h.includes(H(q.id,canon(v)))};
+  if(i+1<NM){ st.idx=i+1; persist(); render(); toTop(); }
+  else finish();
+}
+function finish(){
+  st.stage="done"; st.finishedAt=new Date().toISOString();
+  const r=st.reading.filter(x=>x&&x.ok).length, mm=st.math.filter(x=>x&&x.ok).length;
+  st.lastDone={reading:r, math:mm, activeSec:st.activeSec, startedAt:st.startedAt, finishedAt:st.finishedAt};
+  persist(); render(); toTop();
+}
+function mmss(sec){ sec=Math.max(0,Math.round(sec)); const m=Math.floor(sec/60), s=sec%60; return m+":"+(s<10?"0":"")+s; }
+function doneScreen(){
+  const L=st.lastDone; if(!L){ st=fresh(); persist(); return render(); }
+  const row=(q,a,n)=>`<tr><td>${n}</td><td>${esc(q.skill)}</td><td>${a&&a.ok?"✅ Cracked it":"🔎 Let's look at this one together"}</td></tr>`;
+  app.innerHTML = `<div class="card" style="text-align:center"><span class="stamp">FILE COMPLETE</span>
+  <h2>Case file finished, Officer Cam!</h2>
+  <p>The Chief has your sealed answers. Mom and your teacher will go over any 🔎 ones with you.</p>
+  <table class="sc"><tr><td colspan="3"><b>Part A: Witness Statement</b></td></tr>${C.reading.map((q,i)=>row(q,st.reading[i],"A"+(i+1))).join("")}
+  <tr><td colspan="3"><b>Part B: Evidence Math</b></td></tr>${C.math.map((q,i)=>row(q,st.math[i],"B"+(i+1))).join("")}
+  <tr><td colspan="2">Time on the file</td><td>${mmss(L.activeSec)}</td></tr></table>
+  ${reportBtn("checkReport","📨 Send my case file to Mom")}
+  <div class="nextcase">▶ <b>Next up: today's history case</b><br><a href="../day1/${PREVIEW_QS}">Daily Case #1 (Ancient Greece)</a></div>
+  ${PREVIEW?`<p><button class="alt" onclick="resetPreview()">↺ Reset preview run</button></p>`:""}</div>`;
+  if(!PREVIEW && !st.autoSent){ st.autoSent=true; persist(); const b=document.querySelector("button.rep"); if(b) reportToMom(b,checkReport); }
+}
+function resetPreview(){ if(!PREVIEW) return; st=fresh(); persist(); render(); toTop(); }
+
+/* ---- Report to Mom (FormSubmit AJAX) — same mechanism as the main games ---- */
+const MOM_EMAIL="8caedc1e9653325b52b367e2e172d2a3"; // FormSubmit alias (hides Mom's address)
+const REPORT_URL="https://formsubmit.co/ajax/"+MOM_EMAIL;
+function nowStr(){try{return new Date().toLocaleString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short"});}catch(e){return new Date().toString();}}
+function fmtTime(iso){ if(!iso) return "—"; try{return new Date(iso).toLocaleString("en-US",{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short"});}catch(e){return iso;} }
+function postReport(fields){
+ const ctl=typeof AbortController!=="undefined"?new AbortController():null;
+ const t=ctl?setTimeout(()=>ctl.abort(),15000):null;
+ return fetch(REPORT_URL,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(fields),signal:ctl?ctl.signal:undefined})
+  .then(r=>r.json().catch(()=>({success:r.ok?"true":"false",message:"HTTP "+r.status})).then(j=>{j._status=r.status;return j;}))
+  .finally(()=>{if(t)clearTimeout(t);});
+}
+function reportBtn(builder,label,small){
+ if(PREVIEW) return `<div class="report"><button type="button" class="rep${small?" small":""}" disabled>📨 Reports off (preview)</button><span class="rstat">Preview – reports off</span></div>`;
+ return `<div class="report"><button type="button" class="rep${small?" small":""}" onclick="reportToMom(this,${builder})">${label}</button><span class="rstat" role="status" aria-live="polite"></span></div>`;
+}
+function reportToMom(btn,build){
+ const st=btn.nextElementSibling;
+ if(PREVIEW){btn.disabled=true;st.textContent="Preview – reports off";return;}
+ if(btn.dataset.sent||btn.disabled)return;
+ if(navigator.onLine===false){st.className="rstat bad";st.textContent="No internet — try again later.";btn.textContent="🔁 Try again";return;}
+ let fields;
+ try{fields=Object.assign({_subject:REPORT_SUBJECT,_template:"box",_captcha:"false",Date:nowStr(),Player:REPORT_PLAYER,Game:REPORT_GAME},build());}
+ catch(e){st.className="rstat bad";st.textContent="Oops — couldn't build the report.";return;}
+ btn.disabled=true;btn.textContent="Sending… 📤";st.className="rstat";st.textContent="";
+ postReport(fields).then(j=>{
+  if(String(j.success)!=="true")throw new Error(j.message||"Send failed");
+  btn.dataset.sent="1";btn.textContent="Sent! ✅";btn.classList.add("sent");st.className="rstat good";st.textContent="Mom got your report!";
+ }).catch(e=>{
+  btn.disabled=false;btn.textContent="🔁 Try again";st.className="rstat bad";
+  st.textContent=navigator.onLine===false?"No internet — try again later.":/activat/i.test(e&&e.message||"")?"Almost! Mom needs to switch on reports first. Try again later.":"Oops — that didn't send. Tap to try again!";
+ });
+}
+
+const REPORT_SUBJECT="Game Report: Cam readiness case file", REPORT_PLAYER="Cam (age 11)", REPORT_GAME="Officer Cam's Case Files — Readiness Case File";
+function fmtList(a){ return a.length ? a.join(", ") : "None"; }
+function checkReport(){
+  const L=st.lastDone, K=KEYS(), R=C.ready;
+  const qs=[...C.reading.map((q,i)=>({q, a:st.reading[i]})), ...C.math.map((q,i)=>({q, a:st.math[i]}))];
+  const f={
+    "Report type":"Readiness check — start of Grade 6 (reading + math only)",
+    "Check date":C.date,
+    "Reading (Part A)":`${L.reading} of ${NR} right — ready marker is ${R.reading} of ${NR}: ${L.reading>=R.reading?"MET ✅":"not yet"}`,
+    "Math (Part B)":`${L.math} of ${NM} right — ready marker is ${R.math} of ${NM}: ${L.math>=R.math?"MET ✅":"not yet"}`,
+    "Summary":(L.reading>=R.reading&&L.math>=R.math)?"Ready on both markers.":(L.reading>=R.reading?"Reading marker met; math needs work.":L.math>=R.math?"Math marker met; reading needs work.":"Neither marker met yet."),
+    "Mastered (right on the one try)":fmtList(qs.filter(x=>x.a&&x.a.ok).map(x=>`${x.q.id} ${x.q.skill}`)),
+    "To work on (missed)":fmtList(qs.filter(x=>!(x.a&&x.a.ok)).map(x=>`${x.q.id} ${x.q.skill}`)),
+    "Time taken":`${mmss(L.activeSec)} (min:sec of active time; started ${fmtTime(L.startedAt)}, finished ${fmtTime(L.finishedAt)})`
+  };
+  C.reading.forEach((q,i)=>{ const a=st.reading[i]; f[`${q.id} ${q.skill}`]=`${a.ok?"✅ right":"❌ wrong"} — he picked: "${a.picked}"`+(a.ok?"":` • key: "${K[q.id]}"`); });
+  C.math.forEach((q,i)=>{ const a=st.math[i]; f[`${q.id} ${q.skill}`]=`${a.ok?"✅ right":"❌ wrong"} — he typed: "${a.raw}" • key: ${K[q.id]}`; });
+  f["Writing"]="Not part of this check on purpose — his Day 1 case report (same day) is the writing sample.";
+  f["Format"]="One answer per question, no hints, right/wrong not shown until he finished.";
+  return f;
+}
+badge(); render();
+</script>
+<script>
+/* ---- Date lock + hidden preview. Unlock = midnight America/New_York, stored as an absolute UTC instant. ---- */
+var META = {"game": "cam", "day": "check", "date": "Thursday, Oct 15", "dateShort": "Thu, Oct 15", "unlock": 1792036800000, "era": "🔎 Readiness Case File", "lockRank": "Readiness case file • Thu, Oct 15", "lockMsg": "This special case file is locked in the evidence room, Officer Cam. It opens at midnight (Eastern Time)."};
+var PAYLOAD = "eyJkYXkiOiB7InRpdGxlIjogIkNhc2UgRmlsZTogUmVhZGluZXNzIiwgImVyYSI6ICLwn5SOIFJlYWRpbmVzcyBDYXNlIEZpbGUiLCAiZGF0ZSI6ICJUaHVyc2RheSwgT2N0IDE1IiwgImludHJvIjogIlRoZSBDaGllZiBoYXMgb25lIHNwZWNpYWwgY2FzZSBmaWxlIGZvciB5b3UgYmVmb3JlIHRvZGF5J3MgaGlzdG9yeSBjYXNlLiBQYXJ0IEEgaXMgYSB3aXRuZXNzIHN0YXRlbWVudDogcmVhZCBpdCBjYXJlZnVsbHkgYW5kIGFuc3dlciA0IHF1ZXN0aW9ucy4gUGFydCBCIGlzIGV2aWRlbmNlIG1hdGg6IDYgcHJvYmxlbXMsIGFuZCBlYWNoIG9uZSBpcyBhIGxpdHRsZSBoYXJkZXIgdGhhbiB0aGUgbGFzdC4iLCAicGFzc2FnZSI6ICJFdmVyeSBuaWdodCBmb3IgZm9ydHkgeWVhcnMsIE1yLiBBbHZhcmV6IGNsaW1iZWQgdGhlIDExMiBzdGVwcyBvZiB0aGUgSGFyYm9yIFBvaW50IGxpZ2h0aG91c2UgdG8gc3dpdGNoIG9uIHRoZSBsYW1wLiBXaGVuIHRoZSB0b3duIHZvdGVkIHRvIHJlcGxhY2UgaGltIHdpdGggYW4gYXV0b21hdGljIGxpZ2h0LCBtYW55IHBlb3BsZSBleHBlY3RlZCBoaW0gdG8gYmUgcmVsaWV2ZWQuIEluc3RlYWQsIGhlIHdhcyByZWx1Y3RhbnQgdG8gaGFuZCBvdmVyIGhpcyBrZXkuIEhlIGxpbmdlcmVkIGF0IHRoZSBib3R0b20gb2YgdGhlIHN0YWlycywgdHVybmluZyBpdCBvdmVyIGluIGhpcyBoYW5kcy4gXCJUaGUgbWFjaGluZSB3aWxsIG5ldmVyIG1pc3MgYSBuaWdodCxcIiB0aGUgbWF5b3IgdG9sZCBoaW0ga2luZGx5LiBNci4gQWx2YXJleiBub2RkZWQsIGJ1dCBoZSBzdGlsbCBjYW1lIGJhY2sgZXZlcnkgZXZlbmluZyBhdCBzdW5zZXQsIGp1c3QgdG8gd2F0Y2ggdGhlIGJlYW0gc3dlZXAgYWNyb3NzIHRoZSB3YXRlci4gU2hpcHMgbm8gbG9uZ2VyIG5lZWRlZCBoaW0sIGJ1dCBoZSBmb3VuZCBoZSBzdGlsbCBuZWVkZWQgdGhlIGxpZ2h0aG91c2UuIiwgInJlYWRpbmciOiBbeyJpZCI6ICJBMSIsICJza2lsbCI6ICJNYWluIGlkZWEiLCAicSI6ICJXaGF0IGlzIHRoZSBtYWluIGlkZWE/IiwgIm9wdGlvbnMiOiBbIk1yLiBBbHZhcmV6IGhhcyBhIGhhcmQgdGltZSBsZXR0aW5nIGdvIG9mIGEgam9iIGhlIGxvdmVkLiIsICJUaGUgbWF5b3Igd2FzIHVua2luZCB0byBNci4gQWx2YXJlei4iLCAiTGlnaHRob3VzZXMgYXJlIGJlaW5nIHJlcGxhY2VkIGJ5IG1hY2hpbmVzLiIsICJUaGUgbGlnaHRob3VzZSBoYXMgMTEyIHN0ZXBzLiJdLCAiaCI6IDEzODU1NzY2NDJ9LCB7ImlkIjogIkEyIiwgInNraWxsIjogIkNvbnRleHQgY2x1ZXMiLCAicSI6ICJJbiB0aGUgcGFzc2FnZSwgXCJyZWx1Y3RhbnRcIiBtb3N0IGxpa2VseSBtZWFuczoiLCAib3B0aW9ucyI6IFsicHJvdWQiLCAiZXhjaXRlZCIsICJjb25mdXNlZCIsICJ1bndpbGxpbmciXSwgImgiOiA4MjE5NzgwNzZ9LCB7ImlkIjogIkEzIiwgInNraWxsIjogIlRleHQgZXZpZGVuY2UiLCAicSI6ICJXaGljaCBkZXRhaWwgaXMgdGhlIGJlc3QgZXZpZGVuY2UgdGhhdCBoZSBzdGlsbCBjYXJlZCBhYm91dCB0aGUgbGlnaHRob3VzZT8iLCAib3B0aW9ucyI6IFsiSGUgY2FtZSBiYWNrIGV2ZXJ5IGV2ZW5pbmcgYXQgc3Vuc2V0IHRvIHdhdGNoIHRoZSBiZWFtLiIsICJUaGUgdG93biB2b3RlZCBvbiB0aGUgY2hhbmdlLiIsICJUaGUgbWF5b3Igc3Bva2Uga2luZGx5IHRvIGhpbS4iLCAiSGUgY2xpbWJlZCAxMTIgc3RlcHMuIl0sICJoIjogMTUzOTAyMzQ4MH0sIHsiaWQiOiAiQTQiLCAic2tpbGwiOiAiSW5mZXJlbmNlIiwgInEiOiAiV2hhdCBkb2VzIHRoZSBsYXN0IHNlbnRlbmNlIG1lYW4/IiwgIm9wdGlvbnMiOiBbIlRoZSBsaWdodGhvdXNlIGdhdmUgaGlzIGxpZmUgbWVhbmluZywgZXZlbiBhZnRlciB0aGUgam9iIGVuZGVkLiIsICJIZSB3YW50ZWQgdG8gYnV5IHRoZSBsaWdodGhvdXNlLiIsICJTaGlwcyB3ZXJlIGluIGRhbmdlciB3aXRob3V0IGhpbS4iLCAiSGUgd2FzIGFuZ3J5IGF0IHRoZSBzaGlwcy4iXSwgImgiOiAzODU1NDc1MDc0fV0sICJtYXRoIjogW3siaWQiOiAiQjEiLCAic2tpbGwiOiAiTXVsdGktZGlnaXQgbXVsdGlwbGljYXRpb24iLCAidW5pdCI6ICJtYXJibGVzIiwgInEiOiAiVGhlIGV2aWRlbmNlIGxvY2tlciBob2xkcyAyNCBib3hlcyB3aXRoIDEzNiBtYXJibGVzIGluIGVhY2guIEhvdyBtYW55IG1hcmJsZXMgaW4gYWxsPyIsICJoIjogWzMyNTg0OTU0OTBdfSwgeyJpZCI6ICJCMiIsICJza2lsbCI6ICJMb25nIGRpdmlzaW9uLCAyLWRpZ2l0IGRpdmlzb3IiLCAidW5pdCI6ICJjb2lucyIsICJxIjogIjkxOCBzdG9sZW4gY29pbnMgYXJlIHNwbGl0IGV2ZW5seSBpbnRvIDI3IHBvdWNoZXMuIEhvdyBtYW55IGNvaW5zIGFyZSBpbiBlYWNoIHBvdWNoPyIsICJoIjogWzEzNjE4MDY3NTNdfSwgeyJpZCI6ICJCMyIsICJza2lsbCI6ICJBZGRpbmcgdW5saWtlIGZyYWN0aW9ucyIsICJ1bml0IjogIm1pbGUiLCAiZnJhYyI6IHRydWUsICJxIjogIlRoZSBzdXNwZWN0IHdhbGtlZCAyLzMgb2YgYSBtaWxlLCB0aGVuIGFub3RoZXIgMS80IG9mIGEgbWlsZS4gSG93IGZhciBkaWQgaGUgd2FsayBpbiBhbGw/IiwgImgiOiBbMTEyOTM1NTMxMiwgMTI1NTQ4MDM4MiwgMzU5ODI0NjgwNF19LCB7ImlkIjogIkI0IiwgInNraWxsIjogIkRlY2ltYWxzIiwgInVuaXQiOiAiY20iLCAicSI6ICJUd28gZm9vdHByaW50cyBtZWFzdXJlIDEyLjc1IGNtIGFuZCA5LjYgY20uIEhvdyBtdWNoIGxvbmdlciBpcyB0aGUgZmlyc3Qgb25lPyIsICJoIjogWzE0Mjk2NTY0MTldfSwgeyJpZCI6ICJCNSIsICJza2lsbCI6ICJNdWx0aXBseWluZyBmcmFjdGlvbnMiLCAidW5pdCI6ICJvZiB0aGUgY2FrZSIsICJmcmFjIjogdHJ1ZSwgInEiOiAiMi8zIG9mIHRoZSAzLzQgb2YgYSBjYWtlIGxlZnQgb24gdGhlIGNvdW50ZXIgd2FzIGVhdGVuLiBXaGF0IGZyYWN0aW9uIG9mIHRoZSB3aG9sZSBjYWtlIHdhcyBlYXRlbj8iLCAiaCI6IFsxNjY0NTUxMTI2XX0sIHsiaWQiOiAiQjYiLCAic2tpbGwiOiAiVm9sdW1lIiwgInVuaXQiOiAiY3ViaWMgY20iLCAicSI6ICJUaGUgZXZpZGVuY2UgYm94IGlzIDggY20gbG9uZywgNSBjbSB3aWRlLCBhbmQgNiBjbSB0YWxsLiBXaGF0IGlzIGl0cyB2b2x1bWU/IiwgImgiOiBbNDAyMDU0NTIzNl19XSwgInJlYWR5IjogeyJyZWFkaW5nIjogMywgIm1hdGgiOiA1fSwgImRhdGVTaG9ydCI6ICJUaHUsIE9jdCAxNSIsICJrcyI6ICJyYzI2LW9jdDE1LXJlYWRpbmVzcyIsICJ1bmxvY2siOiAxNzkyMDM2ODAwMDAwfSwgImNoZWNrIjogeyJrIjogIkNVRnpCdzlWUTFaOFJ3TlNKQTBTQ0J3QUNWTWFBa0VXVEU4TEZVTlJEUVlNREFGSkFnQUhCeHNOVlJaS0FFTWJWeFZNVWc4T0Jra0dBRk1mSFJWWFVnTk5UMVFUZEI5UVgwRkdIQUFTR2g4ZUNseFJEME5EVm5BR0QwaEZReXdNVGdZU0hoZERVRmRPQkVNUlIxQmZDMFVFRWd3QURCMFVVZ0pHRmw0YURRZFVRUTBHQ2tFVENCb0dHMU1HQzFjV1R3b0NHUjhYQVZKSElGQkxWRVZSSnhvR0VscEVDQXNBV1ZwWUFRQkJBd2dZQUZNYkd4QVNXa1FKQmxSY1VFd2NEQThEUlU0QUJSWWNRMU5RV1FvUlZFVmRTRklQRGdaSkN3c1hGaFpORUJvTlRTRkZFdzhOVUZaTlZsOWFSMTlUVUNFQUZCZFBRVWNGRndGU1J5TlhTMVJGVVVKRFRBTUVEUUlLR0ZRWEFWSkhJMUJMVkVWUlFGeFNCeFpPQWtGWUVSZHZSMGRiUkV0ZlNrRlJYa01RZEJ0TldWUVRCeGxDUlFJUkN3Y0dVeEFmUVU4PSJ9fQ==";
+var PH = 3887916057;
+var DAY = null, MAPS = null, CHECK = null, PREVIEW = false, PREVIEW_QS = "";
+function fnv1a(s){ var h=0x811c9dc5; for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,0x01000193)>>>0; } return h>>>0; }
+try{ var _t=new URLSearchParams(location.search).get("p"); if(_t && fnv1a(_t)===PH){ PREVIEW=true; PREVIEW_QS="?p="+encodeURIComponent(_t); } }catch(e){}
+function openGame(){
+  var o=JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(PAYLOAD),function(c){return c.charCodeAt(0);})));
+  DAY=o.day; MAPS=o.maps||{}; if(o.check) CHECK=o.check;
+  if(PREVIEW){ var b=document.createElement("span"); b.className="badge"; b.id="previewBadge"; b.style.cssText="background:#8e44ad;color:#fff"; b.textContent="Preview – reports off"; document.querySelector("header").appendChild(b); }
+  var s=document.createElement("script"); s.textContent=document.getElementById("game").textContent; document.body.appendChild(s);
+}
+function countdownText(ms){
+  var s=Math.max(0,Math.floor(ms/1000)), d=Math.floor(s/86400), h=Math.floor(s%86400/3600), m=Math.floor(s%3600/60), x=s%60;
+  function p(n){return n<10?"0"+n:""+n;}
+  return (d?d+(d===1?" day ":" days "):"")+p(h)+"h "+p(m)+"m "+p(x)+"s";
+}
+function showLocked(){
+  var app=document.getElementById("app");
+  if(META.game==="cam"){
+    document.getElementById("rank").textContent=META.lockRank||("Day "+META.day+" of 5 • "+META.dateShort);
+    app.innerHTML='<div class="card file" style="text-align:center"><span class="era">'+META.era+'</span><br><span class="stamp">SEALED</span>'+
+      '<h2>Case sealed until '+META.date+'</h2><p>'+(META.lockMsg||'This case file is locked in the evidence room, Officer Cam. It opens at midnight (Eastern Time).')+'</p>'+
+      '<p style="font-size:1.6rem;font-weight:900;color:#c0392b" id="cd"></p><p class="hint">⏳ Check back on '+META.date+'!</p></div>';
+  } else {
+    document.getElementById("best").textContent=META.lockRank||("Shift "+META.day+" of 5 · "+META.date);
+    app.innerHTML='<div class="panel" style="text-align:center"><span class="tag">'+(META.lockTag||('Shift '+META.day+' · Closed'))+'</span>'+
+      '<h2 style="margin-top:10px">'+(META.lockH2||'Shift opens')+' '+META.date+'</h2><p class="muted">'+(META.lockMsg||'The truck is parked. This shift opens at midnight Eastern Time.')+'</p>'+
+      '<p style="font-size:1.6rem;font-weight:700;color:#f4a261" id="cd"></p><p class="muted">Come back on '+META.date+'.</p></div>';
+  }
+  var cd=document.getElementById("cd");
+  function tick(){ var left=META.unlock-Date.now(); if(left<=0){ clearInterval(iv); app.innerHTML=""; openGame(); return; } cd.textContent=countdownText(left); }
+  var iv=setInterval(tick,1000); tick();
+}
+if(PREVIEW || Date.now()>=META.unlock) openGame(); else showLocked();
+</script>
+</body>
+</html>
