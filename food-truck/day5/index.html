@@ -35,6 +35,8 @@
  .nextshift{background:#1e2330;border:1px solid #f4a261;border-radius:10px;padding:14px;margin-top:12px}
  .nextshift a{color:#f4a261;font-weight:700;word-break:break-all}
  .datatable td,.datatable th{text-align:center}
+ .choice{background:#1e2330;border:1px solid #39404f;border-radius:8px;padding:12px;margin:8px 0;cursor:pointer}
+ .choice:hover{border-color:#f4a261}
 </style>
 </head>
 <body>
@@ -45,12 +47,23 @@
 const TOTAL_DAYS = 5;
 const KEY = PREVIEW ? "tycoonDailyPreview" : "tycoonDaily";   // new namespaced keys — "tycoonBest"/"tycoonLast" are never touched
 const DK = "d" + DAY.day;
-const MAX_PROFIT = DAY.tasks.reduce((a,t)=>a+t.value,0);
+const MAX_TASKS = DAY.tasks.reduce((a,t)=>a+t.value,0);
+const MAX_EVENT = Math.max(...Object.values(DAY.event.choices).map(c=>c.effect));
+const MAX_PROFIT = MAX_TASKS + MAX_EVENT;
 let all; try{all=JSON.parse(localStorage.getItem(KEY)||"{}")||{};}catch(e){all={};}
 let st = all[DK] || null;
 function fresh(keep){ return {stage:"brief", idx:0, results:DAY.tasks.map(()=>({tries:0,ok:false,answers:[],earned:0,closed:false})), activeSec:0, startedAt:null, finishedAt:null,
-  best:keep?keep.best:null, plays:keep?keep.plays:0, autoSent:keep?keep.autoSent:false, lastDone:keep?keep.lastDone:null}; }
+  best:keep?keep.best:null, plays:keep?keep.plays:0, autoSent:keep?keep.autoSent:false, lastDone:keep?keep.lastDone:null, v:2, ev:{active:false, done:false, stage:"choose", choice:null, mathAnswer:null, mathOk:null, effect:0, badge:null, why:null}}; }
+const EV = DAY.event;
+function freshEv(){ return {active:false, done:false, stage:"choose", choice:null, mathAnswer:null, mathOk:null, effect:0, badge:null, why:null}; }
 if(!st) st=fresh();
+if(st.v!==2){                       // saves made before the mid-shift event existed
+  st.v=2; st.best=null;             // profit scale changed, so an old best wouldn't be comparable
+  st.ev=freshEv();
+  if(st.stage==="tasks" && st.idx>=EV.at) st.ev.active=true;   // already past the event slot: show it before continuing
+  if(st.stage==="done") st.ev.done=true;
+  persist();
+}
 function persist(){ all[DK]=st; try{localStorage.setItem(KEY,JSON.stringify(all));}catch(e){} showBest(); }
 function money(n){ n=Math.round(n); return (n<0?"−$":"$")+Math.abs(n).toLocaleString(); }
 function showBest(){ document.getElementById("best").textContent = `Shift ${DAY.day} of ${TOTAL_DAYS} · ${DAY.date}` + (st.best!=null?` · Shift best: ${money(st.best)}`:""); }
@@ -107,7 +120,7 @@ function check(t, raw){
 }
 
 /* ---------- screens ---------- */
-function profitNow(){ return st.results.reduce((a,r)=>a+r.earned,0); }
+function profitNow(){ return st.results.reduce((a,r)=>a+r.earned,0) + (st.ev&&(st.ev.done||st.ev.stage==="result")?st.ev.effect:0); }
 function firstTry(){ return st.results.filter(r=>r.ok&&r.tries===1).length; }
 function statsHTML(){
   const done=st.results.filter(r=>r.closed).length, p=profitNow();
@@ -125,12 +138,13 @@ function brief(){
   app.innerHTML=`<div class="panel"><span class="tag">Shift ${DAY.day} · ${DAY.date}</span><h2 style="margin-top:8px">${DAY.title}</h2>
   <p class="muted">${DAY.client}</p><p>${DAY.brief}</p>${dataTable()}
   <ul><li><b>${DAY.tasks.length} decisions</b>, up to <b>${money(MAX_PROFIT)}</b> on the line.</li>
+  <li>Expect the unexpected: something will come up mid-shift.</li>
   <li>Right the first time: you book the full amount. Fix it on the second try: you keep part of it. Miss twice: you eat a loss.</li>
   <li>Calculator's fine. Guessing isn't.</li></ul>
   <button onclick="startShift()">Open for business ▶</button></div>`;
 }
 function startShift(){ if(!st.startedAt) st.startedAt=new Date().toISOString(); st.stage="tasks"; persist(); render(); toTop(); }
-function render(){ if(st.stage==="brief") return brief(); if(st.stage==="tasks") return task(); if(st.stage==="done") return done(); }
+function render(){ if(st.stage==="brief") return brief(); if(st.stage==="tasks") return (st.ev.active&&!st.ev.done) ? eventScreen() : task(); if(st.stage==="done") return done(); }
 function task(){
   const i=st.idx, t=DAY.tasks[i], r=st.results[i];
   const last=r.answers[r.answers.length-1];
@@ -165,19 +179,72 @@ function commit(){
   else if(r.tries>=2){ r.closed=true; r.earned = -Math.round(t.value*0.25); }
   persist(); task();
 }
-function nextTask(){ if(st.idx+1<DAY.tasks.length) st.idx++; else finish(); persist(); render(); toTop(); }
+function nextTask(){
+  const n=st.idx+1;
+  if(!st.ev.done && n===EV.at){ st.ev.active=true; st.ev.stage="choose"; persist(); render(); toTop(); return; }
+  if(n<DAY.tasks.length) st.idx=n; else finish(); persist(); render(); toTop();
+}
+/* ---- mid-shift event ---- */
+function eventScreen(){
+  const e=st.ev;
+  let body="";
+  if(e.stage==="choose"){
+    body=`<p style="font-size:1.05rem">${esc(EV.text)}</p><p class="muted">What do you do?</p>
+    ${EV.order.map((k,j)=>`<div class="choice" role="button" tabindex="0" onclick="evChoose('${k}')">${String.fromCharCode(65+j)}. ${esc(EV.choices[k].label)}</div>`).join("")}`;
+  } else if(e.stage==="math"){
+    const m=EV.choices.c.math;
+    body=`<p class="muted">You chose: ${esc(EV.choices.c.label)}</p><p style="font-size:1.05rem">${esc(m.q)}</p>
+    <div class="row">${m.prefix?`<span class="pre">${esc(m.prefix)}</span>`:""}<input class="ans" id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${esc(m.ph||"")}" onkeydown="if(event.key==='Enter')evMath()"><button onclick="evMath()">Run it</button></div>
+    <div class="muted" id="m" style="margin-top:6px">One shot. The numbers decide how this plays out.</div>`;
+  } else {
+    const c=EV.choices[e.choice];
+    const txt = e.choice==="c" && e.mathOk===false ? `${esc(c.wrong)}<br><span class="muted">Key: ${esc(c.math.show)}</span>` : esc(c.result);
+    body=`<p class="muted">You chose: ${esc(c.label)}</p>${e.mathAnswer!=null?`<p>Your numbers: <b>${esc(e.mathAnswer)}</b> ${e.mathOk?"✅":"❌"}</p>`:""}
+    <div class="note">${txt}<br><b class="${e.effect>=0?"good":"bad"}">Event P&amp;L: ${e.effect>=0?"+":""}${money(e.effect)}</b>${e.badge?`<br>🏅 <b>Badge unlocked: ${esc(e.badge)}</b>`:""}</div>
+    <p class="quote" style="border-left:3px solid #f4a261;padding-left:10px;color:#c9cfd9;font-style:italic;margin-top:14px">${esc(EV.quote)}<br><span style="font-style:normal">${esc(EV.line)}</span></p>
+    <label class="muted" for="why" style="display:block;margin-top:10px">Why'd you pick that? (optional)</label>
+    <div class="row"><input class="ans" id="why" maxlength="300" autocomplete="off" placeholder="one line" value="${esc(e.why||"")}" style="max-width:none"></div>
+    <button onclick="evDone()" style="margin-top:10px">Back to the shift ▶</button>`;
+  }
+  app.innerHTML=`<div class="panel">${statsHTML()}</div>
+  <div class="panel" id="evp"><span class="tag">⚡ ${esc(EV.time)}</span>${body}</div>`;
+}
+function evChoose(k){
+  const e=st.ev; if(e.stage!=="choose") return;
+  e.choice=k;
+  if(k==="c"){ e.stage="math"; }
+  else { e.effect=EV.choices[k].effect; e.stage="result"; }
+  persist(); eventScreen(); toTop();
+}
+function evMath(){
+  const e=st.ev, c=EV.choices.c, raw=document.getElementById("ans").value.trim(), m=document.getElementById("m");
+  const res=check(c.math, raw);
+  if(res.empty) return;
+  if(res.invalid){ m.className="bad"; m.textContent=res.invalid; return; }
+  e.mathAnswer=raw; e.mathOk=!!res.ok;
+  e.effect = res.ok ? c.effect : c.wrongEffect;
+  e.badge = res.ok ? c.badge : null;
+  if(e.badge){ all.badges=all.badges||{}; all.badges[DK]=e.badge; }
+  e.stage="result"; persist(); eventScreen(); toTop();
+}
+function evDone(){
+  const e=st.ev; const w=document.getElementById("why"); e.why=w?w.value.trim().slice(0,300):""; e.done=true; e.active=false;
+  if(EV.at<DAY.tasks.length) st.idx=EV.at; else finish();
+  persist(); render(); toTop();
+}
 function finish(){
   st.stage="done"; st.finishedAt=new Date().toISOString();
   const p=profitNow(); const prevBest=st.best; st.plays=(st.plays||0)+1;
   const nb = prevBest==null || p>prevBest; if(nb) st.best=p;
   st.lastDone={profit:p, newBest:nb && prevBest!=null, prevBest, firstTry:firstTry(), activeSec:st.activeSec, startedAt:st.startedAt, finishedAt:st.finishedAt, play:st.plays,
-    results:st.results.map(r=>({tries:r.tries,ok:r.ok,answers:r.answers.slice(),earned:r.earned}))};
+    results:st.results.map(r=>({tries:r.tries,ok:r.ok,answers:r.answers.slice(),earned:r.earned})), ev:Object.assign({},st.ev), maxProfit:MAX_PROFIT};
 }
 function grade(p){ const f=p/MAX_PROFIT; return f>=0.9?"Investor-ready":f>=0.7?"Solid operator":f>=0.4?"Getting by — tighten the books":"Running in the red — hire a bookkeeper"; }
 function mins(sec){ return `about ${Math.max(1,Math.round(sec/60))} min`; }
 function ledger(L){
   return `<table class="ledger"><tr><th>#</th><th>Decision</th><th>Result</th><th>P&amp;L</th></tr>${DAY.tasks.map((t,i)=>{const r=L.results[i];
    return `<tr><td>${i+1}</td><td>${esc(t.title)}</td><td>${r.ok?(r.tries===1?"✅ 1st try":"✅ 2nd try"):"❌ missed"}</td><td class="${r.earned>=0?"good":"bad"}">${money(r.earned)}</td></tr>`;}).join("")}
+   ${L.ev&&L.ev.choice?`<tr><td>⚡</td><td>Mid-shift event${L.ev.badge?` · 🏅 ${esc(L.ev.badge)}`:""}</td><td></td><td class="${L.ev.effect>=0?"good":"bad"}">${money(L.ev.effect)}</td></tr>`:""}
    <tr><th></th><th>Shift total</th><th></th><th class="${L.profit>=0?"good":"bad"}">${money(L.profit)}</th></tr></table>`;
 }
 function nextHTML(){
@@ -240,7 +307,7 @@ function shiftReport(){
    "Report type":`Daily algebra shift — Day ${DAY.day} of ${TOTAL_DAYS}`,
    "Day & topic":`Day ${DAY.day} (${DAY.date}) — ${DAY.topic}`,
    "Shift":DAY.title,
-   "Shift profit (score)":`${money(L.profit)} of ${money(MAX_PROFIT)} possible — ${grade(L.profit)}`,
+   "Shift profit (score)":`${money(L.profit)} of ${money(MAX_PROFIT)} possible (math ${money(MAX_TASKS)} + best event outcome ${money(MAX_EVENT)}) — ${grade(L.profit)}`,
    "Shift personal best":money(st.best)+(L.newBest?" — NEW best! 🎉":""),
    "Correct on first try":`${L.firstTry} of ${DAY.tasks.length}`,
    "Correct after a second try":String(L.results.filter(r=>r.ok&&r.tries===2).length),
@@ -248,6 +315,17 @@ function shiftReport(){
    "Time on shift":`${mins(L.activeSec)} of active time (started ${fmtTime(L.startedAt)}, finished ${fmtTime(L.finishedAt)})`,
    "Play":L.play>1?`Replay #${L.play}`:"First play"
   };
+  const E=L.ev;
+  if(E&&E.choice){
+    const c=EV.choices[E.choice];
+    f["Mid-shift event (stoic moment)"]=`${EV.time} — ${EV.text}`;
+    f["His choice"]=`${c.label}`+(E.choice==="c"?" (the run-the-numbers option)":"");
+    if(E.choice==="c") f["His math on the event"]=`"${E.mathAnswer}" ${E.mathOk?"✅ correct":"❌ incorrect"} • key: ${c.math.show}`;
+    f["Event result"]=`${E.effect>=0?"+":""}${money(E.effect)} to shift profit`+(E.badge?` • badge: ${E.badge}`:"");
+    f["Quote shown after he chose"]=`${EV.quote} — ${EV.line}`;
+    f["Why he picked it (his words)"]=E.why?E.why:"(skipped)";
+    const b=all.badges||{}; f["Badges this week"]=`${Object.keys(b).length} of ${TOTAL_DAYS}`+(Object.keys(b).length?` (${Object.keys(b).sort().map(k=>b[k]).join(", ")})`:"");
+  } else f["Mid-shift event (stoic moment)"]="Not part of this run (finished before the event was added)";
   DAY.tasks.forEach((t,i)=>{ const r=L.results[i];
     f[`Q${i+1} ${t.title}`]=`${r.ok?(r.tries===1?"✅ first try":"✅ second try"):"❌ missed"} — his answer${r.answers.length>1?"s":""}: ${r.answers.map(a=>`"${a}"`).join(" then ")} • key: ${t.show}`; });
   return f;
@@ -257,7 +335,7 @@ showBest(); render();
 <script>
 /* ---- Date lock + hidden preview. Unlock = midnight America/New_York, stored as an absolute UTC instant. ---- */
 var META = {"game": "truck", "day": 5, "date": "Wednesday, Oct 21", "dateShort": "Wed, Oct 21", "unlock": 1792555200000, "era": ""};
-var PAYLOAD = "eyJkYXkiOiB7ImRheSI6IDUsICJkYXRlIjogIldlZG5lc2RheSwgT2N0IDIxIiwgInRvcGljIjogIlNsb3BlICYgcmF0ZSBvZiBjaGFuZ2UgZnJvbSBzYWxlcyBkYXRhICsgY2Fwc3RvbmUiLCAidGl0bGUiOiAiU2hpZnQgNTogUmVhZCB0aGUgRGF0YSwgU2V0IHRoZSBQcmljZSIsICJjbGllbnQiOiAiRW5kLW9mLXNlYXNvbiByZXZpZXcg4oCUIGludmVzdG9yIG1lZXRpbmciLCAiYnJpZWYiOiAiQW4gaW52ZXN0b3IgaXMgdGhpbmtpbmcgYWJvdXQgZnVuZGluZyBhIHNlY29uZCB0cnVjay4gU2hlIHdhbnRzIHRvIHNlZSB0aGF0IHlvdSBjYW4gcmVhZCB5b3VyIG93biBzYWxlcyBkYXRhLCBidWlsZCBhIGRlbWFuZCBtb2RlbCwgYW5kIHNldCBhIHByaWNlIHRoYXQgbWF4aW1pemVzIHByb2ZpdC4gV2Vla2x5IGZpeGVkIGNvc3RzOiAkMzcwICgkMjUwIHRydWNrIGZlZSArICQxMjAgd2FnZXMpLiBFYWNoIG1lYWwgY29zdHMgJDMuNTAuIEhlcmUncyB5b3VyIHByaWNlIHRlc3QgZGF0YToiLCAidGFibGUiOiBbWyJQcmljZSBwZXIgbWVhbCIsICIkNiIsICIkOCIsICIkMTAiLCAiJDEyIl0sIFsiTWVhbHMgc29sZCBwZXIgd2VlayIsICIyNjAiLCAiMjIwIiwgIjE4MCIsICIxNDAiXV0sICJ0YXNrcyI6IFt7ImlkIjogInNsb3BlIiwgInRpdGxlIjogIlNsb3BlIG9mIGRlbWFuZCIsICJ0eXBlIjogIm51bSIsICJhIjogLTIwLCAicSI6ICJVc2luZyB0aGUgdGFibGUsIHdoYXQncyB0aGUgc2xvcGUg4oCUIHRoZSBjaGFuZ2UgaW4gbWVhbHMgc29sZCBmb3IgZWFjaCAkMSBpbmNyZWFzZSBpbiBwcmljZT8gKEluY2x1ZGUgdGhlIHNpZ24uKSIsICJzdGFrZSI6ICJUaGUgaW52ZXN0b3IncyBmaXJzdCBxdWVzdGlvbjogaG93IHNlbnNpdGl2ZSBhcmUgeW91ciBjdXN0b21lcnMgdG8gcHJpY2U/IiwgInZhbHVlIjogMTUwLCAibWlzcyI6ICJZb3UgbWlzcmVhZCB5b3VyIG93biBkYXRhIGluIGZyb250IG9mIHRoZSBpbnZlc3Rvci4gTm90IGEgZ3JlYXQgZmlyc3QgaW1wcmVzc2lvbi4iLCAiaGludCI6ICJTbG9wZSA9IChjaGFuZ2UgaW4gbWVhbHMpIMO3IChjaGFuZ2UgaW4gcHJpY2UpID0gKDIyMCDiiJIgMjYwKSDDtyAoOCDiiJIgNikuIiwgInNob3ciOiAi4oiSMjAgbWVhbHMgcGVyICQxIn0sIHsiaWQiOiAiZGVtYW5kIiwgInRpdGxlIjogIkRlbWFuZCBtb2RlbCIsICJ0eXBlIjogImV4cHIiLCAidmFycyI6IFsicCJdLCAia2V5IjogIi0yMCpwKzM4MCIsICJwcmVmaXgiOiAicSA9IiwgInBoIjogImluIHRlcm1zIG9mIHAiLCAicSI6ICJXcml0ZSB0aGUgZGVtYW5kIGVxdWF0aW9uOiBtZWFscyBzb2xkIHEgaW4gdGVybXMgb2YgcHJpY2UgcCAoc2xvcGUtaW50ZXJjZXB0IGZvcm0sIHEgPSBtcCArIGIpLiIsICJzdGFrZSI6ICJUaGlzIG1vZGVsIGRyaXZlcyBldmVyeSBwcm9qZWN0aW9uIHNoZSdsbCBzZWUuIiwgInZhbHVlIjogMjAwLCAibWlzcyI6ICJZb3VyIGRlbWFuZCBtb2RlbCBkaWRuJ3QgZml0IHRoZSBkYXRhLiBUaGUgaW52ZXN0b3IncyBhbmFseXN0IGhhZCB0byBmaXggaXQuIiwgImhpbnQiOiAiVXNlIHNsb3BlIOKIkjIwIGFuZCB0aGUgcG9pbnQgKDYsIDI2MCk6IDI2MCA9IOKIkjIwKDYpICsgYi4iLCAic2hvdyI6ICJxID0g4oiSMjBwICsgMzgwIn0sIHsiaWQiOiAicDkiLCAidGl0bGUiOiAiUHJvZml0IGF0ICQ5IiwgInR5cGUiOiAibnVtIiwgImEiOiA3MzAsICJxIjogIlVzZSB5b3VyIGRlbWFuZCBtb2RlbC4gSWYgeW91IGNoYXJnZSAkOSwgd2hhdCdzIHlvdXIgd2Vla2x5IHByb2ZpdD8gKGRvbGxhcnMpIiwgInN0YWtlIjogIlNoZSB3YW50cyBhIHByb2plY3Rpb24gYXQgdG9kYXkncyBwcmljZS4iLCAidmFsdWUiOiAxNTAsICJtaXNzIjogIldyb25nIHByb2plY3Rpb24gYXQgeW91ciBjdXJyZW50IHByaWNlLiBUaGUgaW52ZXN0b3Iga25vY2tlZCBoZXIgb2ZmZXIgZG93bi4iLCAiaGludCI6ICJNZWFscyA9IOKIkjIwKDkpICsgMzgwLiBQcm9maXQgPSBtZWFscyDDlyAoOSDiiJIgMy41MCkg4oiSIDM3MC4iLCAic2hvdyI6ICIkNzMwICgyMDAgbWVhbHMpIn0sIHsiaWQiOiAicDExIiwgInRpdGxlIjogIlRlc3QgJDExIiwgInR5cGUiOiAibnVtIiwgImEiOiA4MzAsICJxIjogIk5vdyB0ZXN0ICQxMS4gV2hhdCdzIHRoZSB3ZWVrbHkgcHJvZml0IGF0ICQxMT8gKGRvbGxhcnMpIiwgInN0YWtlIjogIkhpZ2hlciBwcmljZSwgZmV3ZXIgY3VzdG9tZXJzIOKAlCBpcyBpdCB3b3J0aCBpdD8iLCAidmFsdWUiOiAxNTAsICJtaXNzIjogIllvdXIgJDExIHByb2plY3Rpb24gd2FzIG9mZiwgc28geW91IGFsbW9zdCBwYXNzZWQgb24gYSBiZXR0ZXIgcHJpY2UuIiwgImhpbnQiOiAiTWVhbHMgPSDiiJIyMCgxMSkgKyAzODAuIFRoZW4gbXVsdGlwbHkgYnkgKDExIOKIkiAzLjUwKSBhbmQgc3VidHJhY3QgMzcwLiIsICJzaG93IjogIiQ4MzAgKDE2MCBtZWFscykg4oCUIGJldHRlciB0aGFuICQ5In0sIHsiaWQiOiAicmF0ZSIsICJ0aXRsZSI6ICJDYXNoIGdyb3d0aCByYXRlIiwgInR5cGUiOiAibnVtIiwgImEiOiAyODAsICJxIjogIllvdXIgYmFuayBiYWxhbmNlIHdhcyAkMiwxNDAgYXQgdGhlIGVuZCBvZiBXZWVrIDMgYW5kICQzLDI2MCBhdCB0aGUgZW5kIG9mIFdlZWsgNy4gV2hhdCdzIHRoZSBhdmVyYWdlIHJhdGUgb2YgY2hhbmdlIGluIGRvbGxhcnMgcGVyIHdlZWs/IiwgInN0YWtlIjogIlRoZSBpbnZlc3RvciB3YW50cyB0byBrbm93IGhvdyBmYXN0IHlvdSdyZSBncm93aW5nLiIsICJ2YWx1ZSI6IDE1MCwgIm1pc3MiOiAiWW91IG1pc3N0YXRlZCB5b3VyIGdyb3d0aCByYXRlLiBUaGUgaW52ZXN0b3IgZG91YmxlLWNoZWNrZWQgYW5kIG5vdGljZWQuIiwgImhpbnQiOiAiKDMyNjAg4oiSIDIxNDApIMO3ICg3IOKIkiAzKS4iLCAic2hvdyI6ICIkMjgwIHBlciB3ZWVrIn0sIHsiaWQiOiAiZnJ5ZXIiLCAidGl0bGUiOiAiQ2Fwc3RvbmU6IHNlY29uZCBmcnllciIsICJ0eXBlIjogIm51bSIsICJhIjogMTQsICJxIjogIkNhcHN0b25lOiBhIHNlY29uZCBmcnllciBjb3N0cyAkNSwwMDAuIElmIHlvdXIgYmFsYW5jZSBrZWVwcyBncm93aW5nIGF0IHRoYXQgc2FtZSByYXRlLCBhdCB0aGUgZW5kIG9mIHdoaWNoIHdlZWsgd2lsbCB5b3UgRklSU1QgaGF2ZSBhdCBsZWFzdCAkNSwwMDA/IiwgInN0YWtlIjogIk9yZGVyIHRvbyBlYXJseSBhbmQgdGhlIGNoZWNrIGJvdW5jZXMuIFRvbyBsYXRlIGFuZCB5b3UgbG9zZSBob2xpZGF5IHNhbGVzLiIsICJ2YWx1ZSI6IDIwMCwgIm1pc3MiOiAiWW91IG9yZGVyZWQgdGhlIGZyeWVyIG9uIHRoZSB3cm9uZyB3ZWVrLiBUaGUgcGF5bWVudCBib3VuY2VkIGFuZCB0aGUgc3VwcGxpZXIgY2hhcmdlZCBhIGZlZS4iLCAiaGludCI6ICJCYWxhbmNlID0gMjE0MCArIDI4MCh3IOKIkiAzKS4gU29sdmUgMjE0MCArIDI4MCh3IOKIkiAzKSDiiaUgNTAwMCwgdGhlbiByb3VuZCB0byBhIHdob2xlIHdlZWsuIFdoaWNoIHdheT8iLCAic2hvdyI6ICJXZWVrIDE0IChXZWVrIDEzIGlzIG9ubHkgJDQsOTQwKSJ9XSwgInVubG9jayI6IDE3OTI1NTUyMDAwMDB9fQ==";
+var PAYLOAD = "eyJkYXkiOiB7ImRheSI6IDUsICJkYXRlIjogIldlZG5lc2RheSwgT2N0IDIxIiwgInRvcGljIjogIlNsb3BlICYgcmF0ZSBvZiBjaGFuZ2UgZnJvbSBzYWxlcyBkYXRhICsgY2Fwc3RvbmUiLCAidGl0bGUiOiAiU2hpZnQgNTogUmVhZCB0aGUgRGF0YSwgU2V0IHRoZSBQcmljZSIsICJjbGllbnQiOiAiRW5kLW9mLXNlYXNvbiByZXZpZXcg4oCUIGludmVzdG9yIG1lZXRpbmciLCAiYnJpZWYiOiAiQW4gaW52ZXN0b3IgaXMgdGhpbmtpbmcgYWJvdXQgZnVuZGluZyBhIHNlY29uZCB0cnVjay4gU2hlIHdhbnRzIHRvIHNlZSB0aGF0IHlvdSBjYW4gcmVhZCB5b3VyIG93biBzYWxlcyBkYXRhLCBidWlsZCBhIGRlbWFuZCBtb2RlbCwgYW5kIHNldCBhIHByaWNlIHRoYXQgbWF4aW1pemVzIHByb2ZpdC4gV2Vla2x5IGZpeGVkIGNvc3RzOiAkMzcwICgkMjUwIHRydWNrIGZlZSArICQxMjAgd2FnZXMpLiBFYWNoIG1lYWwgY29zdHMgJDMuNTAuIEhlcmUncyB5b3VyIHByaWNlIHRlc3QgZGF0YToiLCAidGFibGUiOiBbWyJQcmljZSBwZXIgbWVhbCIsICIkNiIsICIkOCIsICIkMTAiLCAiJDEyIl0sIFsiTWVhbHMgc29sZCBwZXIgd2VlayIsICIyNjAiLCAiMjIwIiwgIjE4MCIsICIxNDAiXV0sICJ0YXNrcyI6IFt7ImlkIjogInNsb3BlIiwgInRpdGxlIjogIlNsb3BlIG9mIGRlbWFuZCIsICJ0eXBlIjogIm51bSIsICJhIjogLTIwLCAicSI6ICJVc2luZyB0aGUgdGFibGUsIHdoYXQncyB0aGUgc2xvcGUg4oCUIHRoZSBjaGFuZ2UgaW4gbWVhbHMgc29sZCBmb3IgZWFjaCAkMSBpbmNyZWFzZSBpbiBwcmljZT8gKEluY2x1ZGUgdGhlIHNpZ24uKSIsICJzdGFrZSI6ICJUaGUgaW52ZXN0b3IncyBmaXJzdCBxdWVzdGlvbjogaG93IHNlbnNpdGl2ZSBhcmUgeW91ciBjdXN0b21lcnMgdG8gcHJpY2U/IiwgInZhbHVlIjogMTUwLCAibWlzcyI6ICJZb3UgbWlzcmVhZCB5b3VyIG93biBkYXRhIGluIGZyb250IG9mIHRoZSBpbnZlc3Rvci4gTm90IGEgZ3JlYXQgZmlyc3QgaW1wcmVzc2lvbi4iLCAiaGludCI6ICJTbG9wZSA9IChjaGFuZ2UgaW4gbWVhbHMpIMO3IChjaGFuZ2UgaW4gcHJpY2UpID0gKDIyMCDiiJIgMjYwKSDDtyAoOCDiiJIgNikuIiwgInNob3ciOiAi4oiSMjAgbWVhbHMgcGVyICQxIn0sIHsiaWQiOiAiZGVtYW5kIiwgInRpdGxlIjogIkRlbWFuZCBtb2RlbCIsICJ0eXBlIjogImV4cHIiLCAidmFycyI6IFsicCJdLCAia2V5IjogIi0yMCpwKzM4MCIsICJwcmVmaXgiOiAicSA9IiwgInBoIjogImluIHRlcm1zIG9mIHAiLCAicSI6ICJXcml0ZSB0aGUgZGVtYW5kIGVxdWF0aW9uOiBtZWFscyBzb2xkIHEgaW4gdGVybXMgb2YgcHJpY2UgcCAoc2xvcGUtaW50ZXJjZXB0IGZvcm0sIHEgPSBtcCArIGIpLiIsICJzdGFrZSI6ICJUaGlzIG1vZGVsIGRyaXZlcyBldmVyeSBwcm9qZWN0aW9uIHNoZSdsbCBzZWUuIiwgInZhbHVlIjogMjAwLCAibWlzcyI6ICJZb3VyIGRlbWFuZCBtb2RlbCBkaWRuJ3QgZml0IHRoZSBkYXRhLiBUaGUgaW52ZXN0b3IncyBhbmFseXN0IGhhZCB0byBmaXggaXQuIiwgImhpbnQiOiAiVXNlIHNsb3BlIOKIkjIwIGFuZCB0aGUgcG9pbnQgKDYsIDI2MCk6IDI2MCA9IOKIkjIwKDYpICsgYi4iLCAic2hvdyI6ICJxID0g4oiSMjBwICsgMzgwIn0sIHsiaWQiOiAicDkiLCAidGl0bGUiOiAiUHJvZml0IGF0ICQ5IiwgInR5cGUiOiAibnVtIiwgImEiOiA3MzAsICJxIjogIlVzZSB5b3VyIGRlbWFuZCBtb2RlbC4gSWYgeW91IGNoYXJnZSAkOSwgd2hhdCdzIHlvdXIgd2Vla2x5IHByb2ZpdD8gKGRvbGxhcnMpIiwgInN0YWtlIjogIlNoZSB3YW50cyBhIHByb2plY3Rpb24gYXQgdG9kYXkncyBwcmljZS4iLCAidmFsdWUiOiAxNTAsICJtaXNzIjogIldyb25nIHByb2plY3Rpb24gYXQgeW91ciBjdXJyZW50IHByaWNlLiBUaGUgaW52ZXN0b3Iga25vY2tlZCBoZXIgb2ZmZXIgZG93bi4iLCAiaGludCI6ICJNZWFscyA9IOKIkjIwKDkpICsgMzgwLiBQcm9maXQgPSBtZWFscyDDlyAoOSDiiJIgMy41MCkg4oiSIDM3MC4iLCAic2hvdyI6ICIkNzMwICgyMDAgbWVhbHMpIn0sIHsiaWQiOiAicDExIiwgInRpdGxlIjogIlRlc3QgJDExIiwgInR5cGUiOiAibnVtIiwgImEiOiA4MzAsICJxIjogIk5vdyB0ZXN0ICQxMS4gV2hhdCdzIHRoZSB3ZWVrbHkgcHJvZml0IGF0ICQxMT8gKGRvbGxhcnMpIiwgInN0YWtlIjogIkhpZ2hlciBwcmljZSwgZmV3ZXIgY3VzdG9tZXJzIOKAlCBpcyBpdCB3b3J0aCBpdD8iLCAidmFsdWUiOiAxNTAsICJtaXNzIjogIllvdXIgJDExIHByb2plY3Rpb24gd2FzIG9mZiwgc28geW91IGFsbW9zdCBwYXNzZWQgb24gYSBiZXR0ZXIgcHJpY2UuIiwgImhpbnQiOiAiTWVhbHMgPSDiiJIyMCgxMSkgKyAzODAuIFRoZW4gbXVsdGlwbHkgYnkgKDExIOKIkiAzLjUwKSBhbmQgc3VidHJhY3QgMzcwLiIsICJzaG93IjogIiQ4MzAgKDE2MCBtZWFscykg4oCUIGJldHRlciB0aGFuICQ5In0sIHsiaWQiOiAicmF0ZSIsICJ0aXRsZSI6ICJDYXNoIGdyb3d0aCByYXRlIiwgInR5cGUiOiAibnVtIiwgImEiOiAyODAsICJxIjogIllvdXIgYmFuayBiYWxhbmNlIHdhcyAkMiwxNDAgYXQgdGhlIGVuZCBvZiBXZWVrIDMgYW5kICQzLDI2MCBhdCB0aGUgZW5kIG9mIFdlZWsgNy4gV2hhdCdzIHRoZSBhdmVyYWdlIHJhdGUgb2YgY2hhbmdlIGluIGRvbGxhcnMgcGVyIHdlZWs/IiwgInN0YWtlIjogIlRoZSBpbnZlc3RvciB3YW50cyB0byBrbm93IGhvdyBmYXN0IHlvdSdyZSBncm93aW5nLiIsICJ2YWx1ZSI6IDE1MCwgIm1pc3MiOiAiWW91IG1pc3N0YXRlZCB5b3VyIGdyb3d0aCByYXRlLiBUaGUgaW52ZXN0b3IgZG91YmxlLWNoZWNrZWQgYW5kIG5vdGljZWQuIiwgImhpbnQiOiAiKDMyNjAg4oiSIDIxNDApIMO3ICg3IOKIkiAzKS4iLCAic2hvdyI6ICIkMjgwIHBlciB3ZWVrIn0sIHsiaWQiOiAiZnJ5ZXIiLCAidGl0bGUiOiAiQ2Fwc3RvbmU6IHNlY29uZCBmcnllciIsICJ0eXBlIjogIm51bSIsICJhIjogMTQsICJxIjogIkNhcHN0b25lOiBhIHNlY29uZCBmcnllciBjb3N0cyAkNSwwMDAuIElmIHlvdXIgYmFsYW5jZSBrZWVwcyBncm93aW5nIGF0IHRoYXQgc2FtZSByYXRlLCBhdCB0aGUgZW5kIG9mIHdoaWNoIHdlZWsgd2lsbCB5b3UgRklSU1QgaGF2ZSBhdCBsZWFzdCAkNSwwMDA/IiwgInN0YWtlIjogIk9yZGVyIHRvbyBlYXJseSBhbmQgdGhlIGNoZWNrIGJvdW5jZXMuIFRvbyBsYXRlIGFuZCB5b3UgbG9zZSBob2xpZGF5IHNhbGVzLiIsICJ2YWx1ZSI6IDIwMCwgIm1pc3MiOiAiWW91IG9yZGVyZWQgdGhlIGZyeWVyIG9uIHRoZSB3cm9uZyB3ZWVrLiBUaGUgcGF5bWVudCBib3VuY2VkIGFuZCB0aGUgc3VwcGxpZXIgY2hhcmdlZCBhIGZlZS4iLCAiaGludCI6ICJCYWxhbmNlID0gMjE0MCArIDI4MCh3IOKIkiAzKS4gU29sdmUgMjE0MCArIDI4MCh3IOKIkiAzKSDiiaUgNTAwMCwgdGhlbiByb3VuZCB0byBhIHdob2xlIHdlZWsuIFdoaWNoIHdheT8iLCAic2hvdyI6ICJXZWVrIDE0IChXZWVrIDEzIGlzIG9ubHkgJDQsOTQwKSJ9XSwgInVubG9jayI6IDE3OTI1NTUyMDAwMDAsICJldmVudCI6IHsiYXQiOiA0LCAidGltZSI6ICJXZWRuZXNkYXkg4oCUIGZlc3RpdmFsIHdlZWtlbmQgY29taW5nIHVwIiwgInRleHQiOiAiQmlnIGZlc3RpdmFsIHRoaXMgd2Vla2VuZC4gQSBmcmllbmQgc2F5czogXCJUcmlwbGUgeW91ciBwcmljZXMuIFBlb3BsZSBhcmUgc3R1Y2sgdGhlcmUg4oCUIHRoZXknbGwgcGF5LlwiIFlvdXIgbm9ybWFsIHByaWNlIGlzICQ5LiIsICJjaG9pY2VzIjogeyJhIjogeyJsYWJlbCI6ICJUcmlwbGUgcHJpY2VzIHRvICQyNyBmb3IgdGhlIHF1aWNrIHdpbi4iLCAiZWZmZWN0IjogLTEyMCwgInJlc3VsdCI6ICJIdWdlIGZpcnN0IGRheSAoKyQzMDApLiBUaGVuIHlvdXIgcmVndWxhcnMgaGVhcmQgYWJvdXQgJDI3IG1lYWxzLCBhbmQgdGhlaXIgZGVtYW5kIGRyb3BwZWQgZm9yIHRoZSByZXN0IG9mIHRoZSBzZWFzb24gKOKIkiQ0MjApLiJ9LCAiYiI6IHsibGFiZWwiOiAiS2VlcCBub3JtYWwgcHJpY2VzIGFuZCBjaGFuZ2Ugbm90aGluZy4iLCAiZWZmZWN0IjogMCwgInJlc3VsdCI6ICJBIHNvbGlkLCBzYWZlIHdlZWtlbmQuIE5vdGhpbmcgbG9zdCwgYnV0IHlvdSBsZWZ0IG1vbmV5IG9uIHRoZSB0YWJsZS4ifSwgImMiOiB7ImxhYmVsIjogIlVzZSB5b3VyIGRlbWFuZCBsaW5lICh0aGUgc2xvcGUpIHRvIGZpbmQgdGhlIHByaWNlIHRoYXQgbWFrZXMgdGhlIG1vc3QgcHJvZml0IHdpdGhvdXQgY3J1c2hpbmcgZGVtYW5kLiIsICJtYXRoIjogeyJ0eXBlIjogIm51bSIsICJhIjogMTksICJwcmVmaXgiOiAiJCIsICJwaCI6ICJwcmljZSIsICJxIjogIllvdXIgZGVtYW5kIGxpbmUgaXMgcSA9IOKIkjIwcCArIDM4MC4gU3RhcnQgaGVyZTogYXQgd2hhdCBwcmljZSBkb2VzIGl0IHByZWRpY3QgWkVSTyBzYWxlcz8iLCAic2hvdyI6ICIkMTkgKDAgPSDiiJIyMHAgKyAzODApIn0sICJlZmZlY3QiOiA2MCwgImJhZGdlIjogIkxvbmcgR2FtZSIsICJyZXN1bHQiOiAicSA9IDAgYXQgJDE5LCBzbyAkMjcgd291bGQgc2NhcmUgb2ZmIGV2ZXJ5b25lIHdobyBoYXMgYSBjaG9pY2UuIFlvdSBwcmljZWQgdGhlIGZlc3RpdmFsIGF0ICQxMSwgeW91ciBiZXN0IHRlc3RlZCBwcmljZSwgYW5kIGtlcHQgeW91ciByZWd1bGFycy4iLCAid3JvbmdFZmZlY3QiOiAtMjAsICJ3cm9uZyI6ICJZb3VyIHplcm8tZGVtYW5kIHByaWNlIHdhcyBvZmYsIHNvIHlvdSBndWVzc2VkIGF0ICQxMyBhbmQgbG9zdCBzb21lIGN1c3RvbWVycy4ifX0sICJxdW90ZSI6ICJcIk5vIGdyZWF0IHRoaW5nIGlzIGNyZWF0ZWQgc3VkZGVubHkuXCIg4oCUIEVwaWN0ZXR1cyIsICJsaW5lIjogIkEgcXVpY2sgd2luIGNhbiBjb3N0IHlvdSB0aGUgd2hvbGUgc2Vhc29uLiBSZWFkIHRoZSBzbG9wZSBiZWZvcmUgeW91IGdyYWIuIiwgIm9yZGVyIjogWyJjIiwgImIiLCAiYSJdfX19";
 var PH = 3887916057;
 var DAY = null, MAPS = null, PREVIEW = false, PREVIEW_QS = "";
 function fnv1a(s){ var h=0x811c9dc5; for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,0x01000193)>>>0; } return h>>>0; }
