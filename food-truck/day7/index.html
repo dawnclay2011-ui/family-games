@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta name="robots" content="noindex">
+<title>Shift 7: Halloween Eve Rush — Startup Tycoon: Food Truck Season</title>
+<style>
+ *{box-sizing:border-box}
+ body{margin:0;font-family:system-ui,Segoe UI,Arial,sans-serif;background:#0f1115;color:#e8e8e8}
+ header{padding:14px 18px;background:#151922;border-bottom:1px solid #2a2f3a;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center}
+ h1{margin:0;font-size:1.2rem;color:#f4a261;letter-spacing:.5px}
+ h2{margin-top:0}
+ main{max-width:900px;margin:16px auto;padding:0 12px}
+ .panel{background:#171b24;border:1px solid #2a2f3a;border-radius:10px;padding:16px;margin-bottom:14px}
+ .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+ .stat{background:#1e2330;border-radius:8px;padding:10px}
+ .stat .k{font-size:.75rem;color:#9aa3b2;text-transform:uppercase}
+ .stat .v{font-size:1.3rem;font-weight:700}
+ button{font:inherit;font-weight:600;background:#f4a261;color:#111;border:none;border-radius:8px;padding:10px 16px;cursor:pointer;margin:4px 4px 0 0}
+ button.sec{background:#2a2f3a;color:#e8e8e8}
+ .good{color:#7bd389}.bad{color:#ef6f6c}.muted{color:#9aa3b2;font-size:.9rem}
+ table{width:100%;border-collapse:collapse;font-size:.9rem}td,th{padding:6px;border-bottom:1px solid #2a2f3a;text-align:right}td:first-child,th:first-child{text-align:left}
+ .report{margin:10px 0}.rstat{display:block;margin-top:4px;font-weight:600;font-size:.95rem}
+ button.rep{background:#7bd389}button.rep.small{font-size:.85rem;padding:7px 12px}button.rep.sent{background:#2a9d8f;color:#fff}button:disabled{cursor:default;opacity:.9}
+ button{max-width:100%;white-space:normal}
+ .tag{display:inline-block;background:#2a2f3a;color:#f4a261;border-radius:6px;padding:3px 8px;font-size:.8rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+ .stake{border-left:3px solid #f4a261;padding:6px 10px;color:#c9cfd9;background:#1b202b;border-radius:0 6px 6px 0;margin:10px 0}
+ .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}
+ .row .pre{font-weight:700;font-size:1.1rem;color:#f4a261}
+ input.ans{font:inherit;font-size:1.05rem;padding:10px;border-radius:8px;border:1px solid #39404f;background:#0f1115;color:#e8e8e8;flex:1;min-width:150px;max-width:320px}
+ .note{background:#1e2330;border:1px solid #39404f;border-radius:8px;padding:10px 12px;margin-top:10px}
+ .ledger td:nth-child(2),.ledger th:nth-child(2){text-align:left}
+ .nextshift{background:#1e2330;border:1px solid #f4a261;border-radius:10px;padding:14px;margin-top:12px}
+ .nextshift a{color:#f4a261;font-weight:700;word-break:break-all}
+ .datatable td,.datatable th{text-align:center}
+ .choice{background:#1e2330;border:1px solid #39404f;border-radius:8px;padding:12px;margin:8px 0;cursor:pointer}
+ .choice:hover{border-color:#f4a261}
+</style>
+</head>
+<body>
+<header><h1>🚚 STARTUP TYCOON — Food Truck Season</h1><span class="muted" id="best"></span></header>
+<main id="app"></main>
+<script type="text/plain" id="game">
+/* game code — injected by the boot script below once the day is open */
+const TOTAL_DAYS = 10;
+const KEY = PREVIEW ? "tycoonDailyPreview" : "tycoonDaily";   // new namespaced keys — "tycoonBest"/"tycoonLast" are never touched
+const DK = "d" + DAY.day;
+const MAX_TASKS = DAY.tasks.reduce((a,t)=>a+t.value,0);
+const MAX_EVENT = Math.max(...Object.values(DAY.event.choices).map(c=>c.effect));
+const MAX_PROFIT = MAX_TASKS + MAX_EVENT;
+let all; try{all=JSON.parse(localStorage.getItem(KEY)||"{}")||{};}catch(e){all={};}
+let st = all[DK] || null;
+function fresh(keep){ return {stage:"brief", idx:0, results:DAY.tasks.map(()=>({tries:0,ok:false,answers:[],earned:0,closed:false})), activeSec:0, startedAt:null, finishedAt:null,
+  best:keep?keep.best:null, plays:keep?keep.plays:0, autoSent:keep?keep.autoSent:false, lastDone:keep?keep.lastDone:null, v:2, ev:{active:false, done:false, stage:"choose", choice:null, mathAnswer:null, mathOk:null, effect:0, badge:null, why:null}}; }
+const EV = DAY.event;
+function freshEv(){ return {active:false, done:false, stage:"choose", choice:null, mathAnswer:null, mathOk:null, effect:0, badge:null, why:null}; }
+if(!st) st=fresh();
+if(st.v!==2){                       // saves made before the mid-shift event existed
+  st.v=2; st.best=null;             // profit scale changed, so an old best wouldn't be comparable
+  st.ev=freshEv();
+  if(st.stage==="tasks" && st.idx>=EV.at) st.ev.active=true;   // already past the event slot: show it before continuing
+  if(st.stage==="done") st.ev.done=true;
+  persist();
+}
+function persist(){ all[DK]=st; try{localStorage.setItem(KEY,JSON.stringify(all));}catch(e){} showBest(); }
+function money(n){ n=Math.round(n); return (n<0?"−$":"$")+Math.abs(n).toLocaleString(); }
+function showBest(){ document.getElementById("best").textContent = `Shift ${DAY.day} of ${TOTAL_DAYS} · ${DAY.date}` + (st.best!=null?` · Shift best: ${money(st.best)}`:""); }
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+const app=document.getElementById("app");
+const toTop=()=>{ try{window.scrollTo(0,0);}catch(e){} };
+setInterval(()=>{ if(document.visibilityState==="visible" && st.stage==="tasks"){ st.activeSec+=5; persist(); } },5000);
+
+/* ---------- answer checking ---------- */
+function clean(s){ return String(s).toLowerCase().replace(/[−–—]/g,"-").replace(/[×·]/g,"*").replace(/÷/g,"/").replace(/≥/g,">=").replace(/≤/g,"<=").replace(/=>/g,">=").replace(/=</g,"<=").replace(/\$/g,"").replace(/,/g,"").replace(/\s+/g,""); }
+function compile(expr, vars){
+  if(!expr) return null;
+  if(!/^[0-9.+\-*/()a-z^]+$/.test(expr)) return null;
+  const letters = expr.match(/[a-z]/g)||[];
+  if(letters.some(l=>!vars.includes(l))) return null;
+  let e = expr.replace(/(\d|\))(?=[a-z(])/g,"$1*").replace(/([a-z])(?=[a-z0-9(])/g,"$1*").replace(/\)(?=[0-9a-z(])/g,")*").replace(/\^/g,"**").replace(/(^|\()-/g,(m,a)=>a+"0-");
+  try{ const f=new Function(...vars, "return ("+e+");"); f(...vars.map(()=>1.37)); return f; }catch(err){ return null; }
+}
+function num(s){ const c=String(s).replace(/[−–—]/g,"-").replace(/[^0-9.\-]/g,""); if(!/\d/.test(c)) return NaN; return parseFloat(c); }
+const near=(a,b)=>Math.abs(a-b) <= 1e-6*Math.max(1,Math.abs(b));
+function check(t, raw){
+  const s=clean(raw);
+  if(!s) return {empty:true};
+  if(t.type==="num"){ const v=num(raw); if(isNaN(v)) return {invalid:"Enter a number."}; return {ok:Math.abs(v-t.a)<=0.011}; }
+  const key=compile(t.key.replace(/\s/g,"").replace(/>=|<=|>|</,m=>m), t.vars);
+  if(t.type==="expr"){
+    let e=s;
+    if(e.includes("=")){ const p=e.split("="); if(p.length!==2) return {invalid:"Use one = sign at most."};
+      const lhsRe=/^[a-z](\([a-z]\))?$/;
+      if(lhsRe.test(p[0]) && !t.vars.includes(p[0])) e=p[1]; else if(lhsRe.test(p[1]) && !t.vars.includes(p[1])) e=p[0]; else return {invalid:`Write it as ${t.prefix} (expression in ${t.vars.join(", ")}).`}; }
+    const f=compile(e,t.vars); if(!f) return {invalid:`I couldn't read that. Use numbers, + − × ÷, parentheses, and the variable ${t.vars.join(", ")}.`};
+    const pts=[0,1,2.5,7,40,140,333];
+    return {ok:pts.every(x=>near(f(x),key(x)))};
+  }
+  if(t.type==="eq2"){
+    const p=s.split("="); if(p.length!==2) return {invalid:"Write an equation with one = sign."};
+    const L=compile(p[0],t.vars), R=compile(p[1],t.vars); if(!L||!R) return {invalid:`I couldn't read that. Use numbers and the variables ${t.vars.join(" and ")}.`};
+    const f=(a,b)=>L(a,b)-R(a,b);
+    const u=[f(1,0)-f(0,0), f(0,1)-f(0,0), f(0,0)], k=[key(1,0)-key(0,0), key(0,1)-key(0,0), key(0,0)];
+    if(!near(f(2,3), u[2]+2*u[0]+3*u[1])) return {ok:false};
+    const r=u[0]/k[0]; if(!isFinite(r)||r===0) return {ok:false};
+    return {ok:u.every((x,i)=>near(x,r*k[i]))};
+  }
+  if(t.type==="ineq"){
+    const m=s.match(/>=|<=|>|</g); if(!m||m.length!==1) return {invalid:"Use exactly one inequality sign (>=, <=, >, or <)."};
+    const op=m[0], p=s.split(op); const L=compile(p[0],t.vars), R=compile(p[1],t.vars);
+    if(!L||!R) return {invalid:`I couldn't read that. Use numbers and the variable ${t.vars.join(", ")}.`};
+    const truth=(x)=>{ const a=L(x),b=R(x); return op===">="?a>=b-1e-9:op==="<="?a<=b+1e-9:op===">"?a>b+1e-9:a<b-1e-9; };
+    const km=t.key.match(/>=|<=|>|</)[0], kp=t.key.split(km), KL=compile(kp[0],t.vars), KR=compile(kp[1],t.vars);
+    const ktruth=(x)=>{ const a=KL(x),b=KR(x); return km===">="?a>=b-1e-9:km==="<="?a<=b+1e-9:km===">"?a>b+1e-9:a<b-1e-9; };
+    return {ok:t.tests.every(x=>truth(x)===ktruth(x))};
+  }
+  return {invalid:"?"};
+}
+
+/* ---------- screens ---------- */
+function profitNow(){ return st.results.reduce((a,r)=>a+r.earned,0) + (st.ev&&(st.ev.done||st.ev.stage==="result")?st.ev.effect:0); }
+function firstTry(){ return st.results.filter(r=>r.ok&&r.tries===1).length; }
+function statsHTML(){
+  const done=st.results.filter(r=>r.closed).length, p=profitNow();
+  return `<div class="stats">
+   <div class="stat"><div class="k">Shift profit</div><div class="v ${p<0?"bad":""}">${money(p)}</div></div>
+   <div class="stat"><div class="k">Decisions</div><div class="v">${done} / ${DAY.tasks.length}</div></div>
+   <div class="stat"><div class="k">Right first time</div><div class="v">${firstTry()}</div></div>
+   <div class="stat"><div class="k">Shift best</div><div class="v">${st.best!=null?money(st.best):"—"}</div></div></div>`;
+}
+function dataTable(){
+  if(!DAY.table) return "";
+  return `<table class="datatable" style="margin-top:10px">${DAY.table.map((r,i)=>`<tr>${r.map((c,j)=>i===0||j===0?`<th>${c}</th>`:`<td>${c}</td>`).join("")}</tr>`).join("")}</table>`;
+}
+function brief(){
+  app.innerHTML=`<div class="panel"><span class="tag">Shift ${DAY.day} · ${DAY.date}</span><h2 style="margin-top:8px">${DAY.title}</h2>
+  <p class="muted">${DAY.client}</p><p>${DAY.brief}</p>${dataTable()}
+  <ul><li><b>${DAY.tasks.length} decisions</b>, up to <b>${money(MAX_PROFIT)}</b> on the line.</li>
+  <li>Expect the unexpected: something will come up mid-shift.</li>
+  <li>Right the first time: you book the full amount. Fix it on the second try: you keep part of it. Miss twice: you eat a loss.</li>
+  <li>Calculator's fine. Guessing isn't.</li></ul>
+  <button onclick="startShift()">Open for business ▶</button></div>`;
+}
+function startShift(){ if(!st.startedAt) st.startedAt=new Date().toISOString(); st.stage="tasks"; persist(); render(); toTop(); }
+function render(){ if(st.stage==="brief") return brief(); if(st.stage==="tasks") return (st.ev.active&&!st.ev.done) ? eventScreen() : task(); if(st.stage==="done") return done(); }
+function task(){
+  const i=st.idx, t=DAY.tasks[i], r=st.results[i];
+  const last=r.answers[r.answers.length-1];
+  let fb="";
+  if(r.closed){
+    if(r.ok&&r.tries===1) fb=`<div class="note"><b class="good">✅ Booked. +${money(t.value)}</b><br><span class="muted">Key: ${esc(t.show)}</span></div>`;
+    else if(r.ok) fb=`<div class="note"><b class="good">✅ Fixed on the second try. +${money(r.earned)}</b> <span class="muted">(full value was ${money(t.value)})</span><br><span class="muted">Key: ${esc(t.show)}</span></div>`;
+    else fb=`<div class="note"><b class="bad">❌ ${esc(t.miss)} ${money(r.earned)}</b><br>Correct answer: <b>${esc(t.show)}</b><br><span class="muted">How it works: ${esc(t.hint)}</span></div>`;
+  } else if(r.tries===1){
+    fb=`<div class="note"><b class="bad">❌ That doesn't add up.</b> ${esc(t.miss)}<br><span class="muted">One more shot: fix it now and you keep ${money(Math.round(t.value*0.4))} of ${money(t.value)}. Miss again and it costs you ${money(Math.round(t.value*0.25))}.</span><br>📒 <b>Accountant's note:</b> ${esc(t.hint)}</div>`;
+  }
+  app.innerHTML=`<div class="panel">${statsHTML()}</div>
+  <div class="panel"><details ${i===0&&!r.tries?"open":""}><summary style="cursor:pointer"><b>📋 Shift brief</b> <span class="muted">— tap for the numbers</span></summary><p>${DAY.brief}</p></details>${DAY.table?`<b>Your price test data</b>${dataTable()}`:""}</div>
+  <div class="panel" id="taskp"><span class="tag">Decision ${i+1} of ${DAY.tasks.length} · ${esc(t.title)}</span>
+   <p style="font-size:1.05rem">${esc(t.q)}</p>
+   <div class="stake">💼 <b>On the line (${money(t.value)}):</b> ${esc(t.stake)}</div>
+   ${r.closed?`<p>Your answer: <b>${esc(last||"")}</b></p>`:`<div class="row">${t.prefix?`<span class="pre">${esc(t.prefix)}</span>`:""}<input class="ans" id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${esc(t.ph||"your answer")}" onkeydown="if(event.key==='Enter')commit()"><button onclick="commit()">Commit</button></div>
+   <div class="muted" id="m" style="margin-top:6px">${t.type==="expr"||t.type==="eq2"||t.type==="ineq"?"Type it like: 4.5x + 120 (use * or just write numbers next to letters).":""}</div>`}
+   ${fb}
+   ${r.closed?`<button onclick="nextTask()">${i+1<DAY.tasks.length?"Next decision ▶":"Close out the shift ▶"}</button>`:""}
+  </div>`;
+  const el=document.getElementById("taskp"); if(el&&(r.tries||r.closed)&&el.scrollIntoView) el.scrollIntoView({block:"start"});
+  const inp=document.getElementById("ans"); if(inp&&r.tries) inp.focus();
+}
+function commit(){
+  const i=st.idx, t=DAY.tasks[i], r=st.results[i], raw=document.getElementById("ans").value.trim(), m=document.getElementById("m");
+  const res=check(t,raw);
+  if(res.empty) return;
+  if(res.invalid){ m.className="bad"; m.textContent=res.invalid; return; }
+  r.tries++; r.answers.push(raw);
+  if(res.ok){ r.ok=true; r.closed=true; r.earned = r.tries===1 ? t.value : Math.round(t.value*0.4); }
+  else if(r.tries>=2){ r.closed=true; r.earned = -Math.round(t.value*0.25); }
+  persist(); task();
+}
+function nextTask(){
+  const n=st.idx+1;
+  if(!st.ev.done && n===EV.at){ st.ev.active=true; st.ev.stage="choose"; persist(); render(); toTop(); return; }
+  if(n<DAY.tasks.length) st.idx=n; else finish(); persist(); render(); toTop();
+}
+/* ---- mid-shift event ---- */
+function eventScreen(){
+  const e=st.ev;
+  let body="";
+  if(e.stage==="choose"){
+    body=`<p style="font-size:1.05rem">${esc(EV.text)}</p><p class="muted">What do you do?</p>
+    ${EV.order.map((k,j)=>`<div class="choice" role="button" tabindex="0" onclick="evChoose('${k}')">${String.fromCharCode(65+j)}. ${esc(EV.choices[k].label)}</div>`).join("")}`;
+  } else if(e.stage==="math"){
+    const m=EV.choices.c.math;
+    body=`<p class="muted">You chose: ${esc(EV.choices.c.label)}</p><p style="font-size:1.05rem">${esc(m.q)}</p>
+    <div class="row">${m.prefix?`<span class="pre">${esc(m.prefix)}</span>`:""}<input class="ans" id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${esc(m.ph||"")}" onkeydown="if(event.key==='Enter')evMath()"><button onclick="evMath()">Run it</button></div>
+    <div class="muted" id="m" style="margin-top:6px">One shot. The numbers decide how this plays out.</div>`;
+  } else {
+    const c=EV.choices[e.choice];
+    const txt = e.choice==="c" && e.mathOk===false ? `${esc(c.wrong)}<br><span class="muted">Key: ${esc(c.math.show)}</span>` : esc(c.result);
+    body=`<p class="muted">You chose: ${esc(c.label)}</p>${e.mathAnswer!=null?`<p>Your numbers: <b>${esc(e.mathAnswer)}</b> ${e.mathOk?"✅":"❌"}</p>`:""}
+    <div class="note">${txt}<br><b class="${e.effect>=0?"good":"bad"}">Event P&amp;L: ${e.effect>=0?"+":""}${money(e.effect)}</b>${e.badge?`<br>🏅 <b>Badge unlocked: ${esc(e.badge)}</b>`:""}</div>
+    <p class="quote" style="border-left:3px solid #f4a261;padding-left:10px;color:#c9cfd9;font-style:italic;margin-top:14px">${esc(EV.quote)}<br><span style="font-style:normal">${esc(EV.line)}</span></p>
+    <label class="muted" for="why" style="display:block;margin-top:10px">Why'd you pick that? (optional)</label>
+    <div class="row"><input class="ans" id="why" maxlength="300" autocomplete="off" placeholder="one line" value="${esc(e.why||"")}" style="max-width:none"></div>
+    <button onclick="evDone()" style="margin-top:10px">Back to the shift ▶</button>`;
+  }
+  app.innerHTML=`<div class="panel">${statsHTML()}</div>
+  <div class="panel" id="evp"><span class="tag">⚡ ${esc(EV.time)}</span>${body}</div>`;
+}
+function evChoose(k){
+  const e=st.ev; if(e.stage!=="choose") return;
+  e.choice=k;
+  if(k==="c"){ e.stage="math"; }
+  else { e.effect=EV.choices[k].effect; e.stage="result"; }
+  persist(); eventScreen(); toTop();
+}
+function evMath(){
+  const e=st.ev, c=EV.choices.c, raw=document.getElementById("ans").value.trim(), m=document.getElementById("m");
+  const res=check(c.math, raw);
+  if(res.empty) return;
+  if(res.invalid){ m.className="bad"; m.textContent=res.invalid; return; }
+  e.mathAnswer=raw; e.mathOk=!!res.ok;
+  e.effect = res.ok ? c.effect : c.wrongEffect;
+  e.badge = res.ok ? c.badge : null;
+  if(e.badge){ all.badges=all.badges||{}; all.badges[DK]=e.badge; }
+  e.stage="result"; persist(); eventScreen(); toTop();
+}
+function evDone(){
+  const e=st.ev; const w=document.getElementById("why"); e.why=w?w.value.trim().slice(0,300):""; e.done=true; e.active=false;
+  if(EV.at<DAY.tasks.length) st.idx=EV.at; else finish();
+  persist(); render(); toTop();
+}
+function finish(){
+  st.stage="done"; st.finishedAt=new Date().toISOString();
+  const p=profitNow(); const prevBest=st.best; st.plays=(st.plays||0)+1;
+  const nb = prevBest==null || p>prevBest; if(nb) st.best=p;
+  st.lastDone={profit:p, newBest:nb && prevBest!=null, prevBest, firstTry:firstTry(), activeSec:st.activeSec, startedAt:st.startedAt, finishedAt:st.finishedAt, play:st.plays,
+    results:st.results.map(r=>({tries:r.tries,ok:r.ok,answers:r.answers.slice(),earned:r.earned})), ev:Object.assign({},st.ev), maxProfit:MAX_PROFIT};
+}
+function grade(p){ const f=p/MAX_PROFIT; return f>=0.9?"Investor-ready":f>=0.7?"Solid operator":f>=0.4?"Getting by — tighten the books":"Running in the red — hire a bookkeeper"; }
+function mins(sec){ return `about ${Math.max(1,Math.round(sec/60))} min`; }
+function ledger(L){
+  return `<table class="ledger"><tr><th>#</th><th>Decision</th><th>Result</th><th>P&amp;L</th></tr>${DAY.tasks.map((t,i)=>{const r=L.results[i];
+   return `<tr><td>${i+1}</td><td>${esc(t.title)}</td><td>${r.ok?(r.tries===1?"✅ 1st try":"✅ 2nd try"):"❌ missed"}</td><td class="${r.earned>=0?"good":"bad"}">${money(r.earned)}</td></tr>`;}).join("")}
+   ${L.ev&&L.ev.choice?`<tr><td>⚡</td><td>Mid-shift event${L.ev.badge?` · 🏅 ${esc(L.ev.badge)}`:""}</td><td></td><td class="${L.ev.effect>=0?"good":"bad"}">${money(L.ev.effect)}</td></tr>`:""}
+   <tr><th></th><th>Shift total</th><th></th><th class="${L.profit>=0?"good":"bad"}">${money(L.profit)}</th></tr></table>`;
+}
+function nextHTML(){
+  if(!DAY.next) return `<div class="nextshift">🏁 <b>Season block complete.</b> That's all five shifts this week. New shifts drop when you're back at Mom's.<br><br><a href="../">Back to the main game (Food Truck Season)</a></div>`;
+  const open=Date.now()>=DAY.next.unlock;
+  return `<div class="nextshift">${open?"🔓":"🔒"} <b>${open?`Next shift (opened ${DAY.next.dateShort})`:`Next shift opens ${DAY.next.dateShort}`} → </b><a href="../day${DAY.next.day}/${PREVIEW_QS}">${DAY.next.url}</a><br><span class="muted">Shift ${DAY.next.day}: ${esc(DAY.next.teaser)}</span><br><span class="muted">${open?"It's open now.":"Save it for that school day — Mom will send it too."}</span></div>`;
+}
+function done(){
+  const L=st.lastDone; if(!L){ st.stage="brief"; return render(); }
+  app.innerHTML=`<div class="panel">${statsHTML()}</div>
+  <div class="panel"><h2>🏁 Shift ${DAY.day} closed — ${esc(DAY.title.replace(/^Shift \d+: /,""))}</h2>
+  <p>Shift profit: <b class="${L.profit>=0?"good":"bad"}" style="font-size:1.3rem">${money(L.profit)}</b> of ${money(MAX_PROFIT)} possible — <b>${grade(L.profit)}</b></p>
+  ${L.newBest?`<p class="good"><b>New shift best!</b> Previous: ${money(L.prevBest)}</p>`:(st.best!=null&&st.best>L.profit?`<p class="muted">Shift best: ${money(st.best)}</p>`:"")}
+  <p class="muted">Right the first time: ${L.firstTry} of ${DAY.tasks.length} · Time: ${mins(L.activeSec)}</p>
+  ${ledger(L)}
+  ${reportBtn("shiftReport","📨 Send shift report to Mom")}
+  ${nextHTML()}
+  <p><button class="sec" onclick="replay()">Run this shift again (beat your best)</button></p></div>`;
+  if(!PREVIEW && !st.autoSent){ st.autoSent=true; persist(); const b=document.querySelector("button.rep"); if(b) reportToMom(b,shiftReport); }
+}
+function replay(){ if(!confirm("Run this shift again? Your shift best is kept.")) return; st=fresh(st); persist(); render(); toTop(); }
+
+/* ---- Report to Mom (FormSubmit AJAX) — same mechanism as the main games ---- */
+const MOM_EMAIL="8caedc1e9653325b52b367e2e172d2a3"; // FormSubmit alias (hides Mom's address)
+const REPORT_URL="https://formsubmit.co/ajax/"+MOM_EMAIL;
+function nowStr(){try{return new Date().toLocaleString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short"});}catch(e){return new Date().toString();}}
+function fmtTime(iso){ if(!iso) return "—"; try{return new Date(iso).toLocaleString("en-US",{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short"});}catch(e){return iso;} }
+function postReport(fields){
+ const ctl=typeof AbortController!=="undefined"?new AbortController():null;
+ const t=ctl?setTimeout(()=>ctl.abort(),15000):null;
+ return fetch(REPORT_URL,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(fields),signal:ctl?ctl.signal:undefined})
+  .then(r=>r.json().catch(()=>({success:r.ok?"true":"false",message:"HTTP "+r.status})).then(j=>{j._status=r.status;return j;}))
+  .finally(()=>{if(t)clearTimeout(t);});
+}
+function reportBtn(builder,label,small){
+ if(PREVIEW) return `<div class="report"><button type="button" class="rep${small?" small":""}" disabled>📨 Reports off (preview)</button><span class="rstat">Preview – reports off</span></div>`;
+ return `<div class="report"><button type="button" class="rep${small?" small":""}" onclick="reportToMom(this,${builder})">${label}</button><span class="rstat" role="status" aria-live="polite"></span></div>`;
+}
+function reportToMom(btn,build){
+ const st=btn.nextElementSibling;
+ if(PREVIEW){btn.disabled=true;st.textContent="Preview – reports off";return;}
+ if(btn.dataset.sent||btn.disabled)return;
+ if(navigator.onLine===false){st.className="rstat bad";st.textContent="No internet — try again later.";btn.textContent="🔁 Try again";return;}
+ let fields;
+ try{fields=Object.assign({_subject:REPORT_SUBJECT,_template:"box",_captcha:"false",Date:nowStr(),Player:REPORT_PLAYER,Game:REPORT_GAME},build());}
+ catch(e){st.className="rstat bad";st.textContent="Oops — couldn't build the report.";return;}
+ btn.disabled=true;btn.textContent="Sending… 📤";st.className="rstat";st.textContent="";
+ postReport(fields).then(j=>{
+  if(String(j.success)!=="true")throw new Error(j.message||"Send failed");
+  btn.dataset.sent="1";btn.textContent="Sent! ✅";btn.classList.add("sent");st.className="rstat good";st.textContent="Report sent to Mom.";
+ }).catch(e=>{
+  btn.disabled=false;btn.textContent="🔁 Try again";st.className="rstat bad";
+  st.textContent=navigator.onLine===false?"No internet — try again later.":/activat/i.test(e&&e.message||"")?"Reports aren't switched on yet. Try again later.":"That didn't send. Tap to try again.";
+ });
+}
+const REPORT_SUBJECT=`Game Report: Christian – Food Truck Daily Shift ${DAY.day} (${DAY.topic.split(" (")[0]})`, REPORT_PLAYER="Christian (age 14)", REPORT_GAME="Startup Tycoon: Food Truck Season — Daily Shifts";
+function shiftReport(){
+  const L=st.lastDone;
+  const f={
+   "Report type":`Daily algebra shift — Day ${DAY.day} of ${TOTAL_DAYS}`,
+   "Day & topic":`Day ${DAY.day} (${DAY.date}) — ${DAY.topic}`,
+   "Shift":DAY.title,
+   "Shift profit (score)":`${money(L.profit)} of ${money(MAX_PROFIT)} possible (math ${money(MAX_TASKS)} + best event outcome ${money(MAX_EVENT)}) — ${grade(L.profit)}`,
+   "Shift personal best":money(st.best)+(L.newBest?" — NEW best! 🎉":""),
+   "Correct on first try":`${L.firstTry} of ${DAY.tasks.length}`,
+   "Correct after a second try":String(L.results.filter(r=>r.ok&&r.tries===2).length),
+   "Missed (answer shown)":String(L.results.filter(r=>!r.ok).length),
+   "Time on shift":`${mins(L.activeSec)} of active time (started ${fmtTime(L.startedAt)}, finished ${fmtTime(L.finishedAt)})`,
+   "Play":L.play>1?`Replay #${L.play}`:"First play"
+  };
+  const E=L.ev;
+  if(E&&E.choice){
+    const c=EV.choices[E.choice];
+    f["Mid-shift event (stoic moment)"]=`${EV.time} — ${EV.text}`;
+    f["His choice"]=`${c.label}`+(E.choice==="c"?" (the run-the-numbers option)":"");
+    if(E.choice==="c") f["His math on the event"]=`"${E.mathAnswer}" ${E.mathOk?"✅ correct":"❌ incorrect"} • key: ${c.math.show}`;
+    f["Event result"]=`${E.effect>=0?"+":""}${money(E.effect)} to shift profit`+(E.badge?` • badge: ${E.badge}`:"");
+    f["Quote shown after he chose"]=`${EV.quote} — ${EV.line}`;
+    f["Why he picked it (his words)"]=E.why?E.why:"(skipped)";
+    const b=all.badges||{}; f["Badges this week"]=`${Object.keys(b).length} of ${TOTAL_DAYS}`+(Object.keys(b).length?` (${Object.keys(b).sort().map(k=>b[k]).join(", ")})`:"");
+  } else f["Mid-shift event (stoic moment)"]="Not part of this run (finished before the event was added)";
+  DAY.tasks.forEach((t,i)=>{ const r=L.results[i];
+    f[`Q${i+1} ${t.title}`]=`${r.ok?(r.tries===1?"✅ first try":"✅ second try"):"❌ missed"} — his answer${r.answers.length>1?"s":""}: ${r.answers.map(a=>`"${a}"`).join(" then ")} • key: ${t.show}`; });
+  return f;
+}
+showBest(); render();
+</script>
+<script>
+/* ---- Date lock + hidden preview. Unlock = midnight America/New_York, stored as an absolute UTC instant. ---- */
+var META = {"game": "truck", "day": 7, "date": "Friday, Oct 30", "dateShort": "Fri, Oct 30", "unlock": 1793332800000, "era": "", "lockRank": "Shift 7 of 10 · Friday, Oct 30"};
+var PAYLOAD = "eyJkYXkiOiB7ImRheSI6IDcsICJ0b3BpYyI6ICJTeXN0ZW1zIG9mIGxpbmVhciBpbmVxdWFsaXRpZXMgKGNvbnN0cmFpbnRzICYgY29ybmVyIHBvaW50cykiLCAidGl0bGUiOiAiU2hpZnQgNzogSGFsbG93ZWVuIEV2ZSBSdXNoIiwgImNsaWVudCI6ICJEb3dudG93biBIYWxsb3dlZW4gRXZlIGJsb2NrIHBhcnR5IiwgImJyaWVmIjogIlRvbW9ycm93IGlzIHRoZSBiaWcgSGFsbG93ZWVuIEV2ZSBibG9jayBwYXJ0eS4gWW91J2xsIHNlbGwgaG90IGNpZGVyICh4IGN1cHMpIGFuZCBwdW1wa2luIGRvbnV0cyAoeSBkb251dHMpLiBZb3Ugb25seSBoYXZlIDMwMCBzZXJ2aW5nIGN1cHMgYW5kIGJhZ3MsIHNvIHggKyB5IOKJpCAzMDAuIENpZGVyIGNvc3RzIHlvdSAkMSBhIGN1cCBhbmQgZG9udXRzIGNvc3QgJDAuNTAgZWFjaCwgYW5kIHlvdXIgc3VwcGx5IGJ1ZGdldCBpcyAkMjAwLCBzbyB4ICsgMC41eSDiiaQgMjAwLiBZb3UgbWFrZSAkMiBwcm9maXQgcGVyIGNpZGVyIGFuZCAkMS41MCBwcm9maXQgcGVyIGRvbnV0LiBCbGF6ZSBCdXJnZXJzIHdpbGwgYmUgcGFya2VkIGFjcm9zcyB0aGUgc3RyZWV0LiIsICJ0YXNrcyI6IFt7ImlkIjogImNoZWNrIiwgInRpdGxlIjogIlRlc3QgYSBwbGFuIiwgInR5cGUiOiAibnVtIiwgInEiOiAiVGVzdCB0aGUgcGxhbiB4ID0gMTIwIGNpZGVycywgeSA9IDE1MCBkb251dHMuIEhvdyBtdWNoIG9mIHRoZSAkMjAwIGJ1ZGdldCBkb2VzIGl0IHVzZT8gKGRvbGxhcnMpIiwgInN0YWtlIjogIkJlZm9yZSB5b3UgYnV5IGFueXRoaW5nLCBtYWtlIHN1cmUgdGhlIHBsYW4gZml0cy4iLCAidmFsdWUiOiAxNTAsICJtaXNzIjogIllvdSBvdmVyc3BlbnQgb24gc3VwcGxpZXMgYW5kIGhhZCB0byBwdXQgc29tZSBiYWNrIGF0IHRoZSBzdG9yZS4iLCAiaGludCI6ICJDb3N0ID0gMSgxMjApICsgMC41KDE1MCkuIiwgInNob3ciOiAiJDE5NSDigJQgaXQgZml0cyAoYW5kIDI3MCDiiaQgMzAwKSIsICJhIjogMTk1fSwgeyJpZCI6ICJjeCIsICJ0aXRsZSI6ICJDb3JuZXIgcG9pbnQ6IHgiLCAidHlwZSI6ICJudW0iLCAicSI6ICJGaW5kIHRoZSBjb3JuZXIgd2hlcmUgQk9USCBsaW1pdHMgYXJlIG1heGVkIG91dDogeCArIHkgPSAzMDAgYW5kIHggKyAwLjV5ID0gMjAwLiBXaGF0IGlzIHggdGhlcmU/IiwgInN0YWtlIjogIlRoZSBiZXN0IHBsYW4gaXMgdXN1YWxseSBhdCBhIGNvcm5lciBvZiB0aGUgcmVnaW9uLiIsICJ2YWx1ZSI6IDIwMCwgIm1pc3MiOiAiWW91IGd1ZXNzZWQgdGhlIG1peCBhbmQgcmFuIG91dCBvZiBjdXBzIGhhbGZ3YXkgdGhyb3VnaCB0aGUgbmlnaHQuIiwgImhpbnQiOiAiU3VidHJhY3QgdGhlIHNlY29uZCBlcXVhdGlvbiBmcm9tIHRoZSBmaXJzdDogMC41eSA9IDEwMC4gRmluZCB5LCB0aGVuIHguIiwgInNob3ciOiAieCA9IDEwMCBjaWRlcnMiLCAiYSI6IDEwMH0sIHsiaWQiOiAiY3kiLCAidGl0bGUiOiAiQ29ybmVyIHBvaW50OiB5IiwgInR5cGUiOiAibnVtIiwgInEiOiAiQXQgdGhhdCBzYW1lIGNvcm5lciwgaG93IG1hbnkgZG9udXRzICh5KT8iLCAic3Rha2UiOiAiTm93IGZpbmlzaCB0aGUgY29ybmVyIHBvaW50LiIsICJ2YWx1ZSI6IDE1MCwgIm1pc3MiOiAiV3JvbmcgZG9udXQgY291bnQg4oCUIHlvdSBvdmVyLW9yZGVyZWQgbWl4IHRoYXQgd2VudCB0byB3YXN0ZS4iLCAiaGludCI6ICJQbHVnIHggPSAxMDAgaW50byB4ICsgeSA9IDMwMC4iLCAic2hvdyI6ICJ5ID0gMjAwIGRvbnV0cyIsICJhIjogMjAwfSwgeyJpZCI6ICJwMSIsICJ0aXRsZSI6ICJQcm9maXQgYXQgdGhlIGNvcm5lciIsICJ0eXBlIjogIm51bSIsICJxIjogIldoYXQncyB5b3VyIHByb2ZpdCBhdCAoMTAwLCAyMDApPyIsICJzdGFrZSI6ICJDb21wYXJlIGNvcm5lcnMgdG8gcGljayB0aGUgYmVzdCBwbGFuLiIsICJ2YWx1ZSI6IDE1MCwgIm1pc3MiOiAiWW91IG1pc2NhbGN1bGF0ZWQgdGhlIHByb2ZpdCBhbmQgcGlja2VkIGEgd2Vha2VyIHBsYW4uIiwgImhpbnQiOiAiMigxMDApICsgMS41KDIwMCkuIiwgInNob3ciOiAiJDUwMCIsICJhIjogNTAwfSwgeyJpZCI6ICJwMiIsICJ0aXRsZSI6ICJQcm9maXQgYXQgYW5vdGhlciBjb3JuZXIiLCAidHlwZSI6ICJudW0iLCAicSI6ICJBbm90aGVyIGNvcm5lciBpcyAoMCwgMzAwKTogb25seSBkb251dHMuIFdoYXQncyB0aGUgcHJvZml0IHRoZXJlPyIsICJzdGFrZSI6ICJJcyBnb2luZyBhbGwtZG9udXQgYmV0dGVyPyIsICJ2YWx1ZSI6IDE1MCwgIm1pc3MiOiAiWW91IGFsbW9zdCB3ZW50IGFsbC1kb251dCB3aXRob3V0IGNoZWNraW5nIHRoZSBudW1iZXJzLiIsICJoaW50IjogIjIoMCkgKyAxLjUoMzAwKS4iLCAic2hvdyI6ICIkNDUwIOKAlCBsZXNzIHRoYW4gJDUwMCIsICJhIjogNDUwfSwgeyJpZCI6ICJpbmVxIiwgInRpdGxlIjogIkRvbnV0LW9ubHkgZ29hbCIsICJ0eXBlIjogImluZXEiLCAicSI6ICJJZiB0aGUgY2lkZXIgbWFjaGluZSBicmVha3MgYW5kIHlvdSBjYW4gT05MWSBzZWxsIGRvbnV0cywgd3JpdGUgYW4gaW5lcXVhbGl0eSBpbiB5IGZvciBtYWtpbmcgYXQgbGVhc3QgJDM5MCBwcm9maXQuIiwgInN0YWtlIjogIkhhdmUgYSBiYWNrdXAgcGxhbiByZWFkeS4iLCAidmFsdWUiOiAxNTAsICJtaXNzIjogIllvdXIgYmFja3VwIHBsYW4ncyB0YXJnZXQgd2FzIHdyb25nLCBzbyB5b3UnZCBoYXZlIGJlZW4gc2hvcnQuIiwgImhpbnQiOiAiUHJvZml0IHBlciBkb251dCDDlyB5IOKJpSAzOTAuIiwgInNob3ciOiAiMS41eSDiiaUgMzkwICAoeSDiiaUgMjYwKSIsICJ2YXJzIjogWyJ5Il0sICJrZXkiOiAiMS41Knk+PTM5MCIsICJ0ZXN0cyI6IFswLCAxMDAsIDI1OSwgMjU5LjUsIDI1OS45LCAyNjAsIDI2MC4xLCAyNjEsIDMwMCwgMTAwMF0sICJwcmVmaXgiOiAiIiwgInBoIjogImUuZy4gMnkgPj0gMTAwIn1dLCAiZXZlbnQiOiB7ImF0IjogMywgInRpbWUiOiAiRnJpZGF5LCA4OjQwIEFNIiwgInRleHQiOiAiWW91ciBzdXBwbGllciBkcm9wcGVkIG9mZiB5b3VyIGRvbnV0IG1peCwgYW5kIHlvdSBjb3VudCA1MCBleHRyYSBiYWdzLiBUaGUgaW52b2ljZSBvbmx5IGNoYXJnZXMgeW91IGZvciB3aGF0IHlvdSBvcmRlcmVkLiBOb2JvZHkgd291bGQgZXZlciBrbm93LiIsICJjaG9pY2VzIjogeyJhIjogeyJsYWJlbCI6ICJLZWVwIHF1aWV0IGFuZCB1c2UgdGhlIGZyZWUgYmFncy4iLCAiZWZmZWN0IjogLTkwLCAicmVzdWx0IjogIlRoZSBzdXBwbGllciBmb3VuZCB0aGUgbWlzdGFrZSBpbiB0aGVpciBpbnZlbnRvcnkgYSB3ZWVrIGxhdGVyLiBUaGV5IGJpbGxlZCB5b3UsIGFkZGVkIGEgZmVlLCBhbmQgbW92ZWQgeW91IHRvIHRoZSBib3R0b20gb2YgdGhlaXIgZGVsaXZlcnkgbGlzdC4ifSwgImIiOiB7ImxhYmVsIjogIkNhbGwgdGhlIHN1cHBsaWVyIGFuZCBzZW5kIHRoZSBleHRyYSBiYWdzIGJhY2suIiwgImVmZmVjdCI6IDAsICJyZXN1bHQiOiAiVGhleSB0aGFua2VkIHlvdSBhbmQgcGlja2VkIHRoZW0gdXAuIE5vdGhpbmcgZ2FpbmVkLCBub3RoaW5nIGxvc3Qg4oCUIGFuZCB5b3Uga2VwdCBhIGdvb2Qgc3VwcGxpZXIuIn0sICJjIjogeyJsYWJlbCI6ICJDYWxsIHRoZSBzdXBwbGllciwgdGVsbCB0aGVtIGFib3V0IHRoZSBtaXN0YWtlLCBhbmQgd29yayBvdXQgaWYgYnV5aW5nIHRoZSBleHRyYXMgYWN0dWFsbHkgaGVscHMgeW91LiIsICJtYXRoIjogeyJ0eXBlIjogIm51bSIsICJhIjogNzUsICJwcmVmaXgiOiAiJCIsICJwaCI6ICJleHRyYSBwcm9maXQiLCAicSI6ICJFYWNoIGV4dHJhIGJhZyBjb3N0cyAkMC41MCBhbmQgbWFrZXMgb25lIGRvbnV0IHRoYXQgZWFybnMgJDIgYXQgdGhlIHBhcnR5LiBJZiB5b3UgYnV5IGFsbCA1MCBiYWdzIGFuZCBzZWxsIHRoZW0sIGhvdyBtdWNoIEVYVFJBIHByb2ZpdCBpcyB0aGF0PyIsICJzaG93IjogIiQ3NSAoNTAgw5cgJDIg4oiSIDUwIMOXICQwLjUwKSJ9LCAiZWZmZWN0IjogNTAsICJiYWRnZSI6ICJTdHJhaWdodCBTaG9vdGVyIiwgInJlc3VsdCI6ICI1MCDDlyAkMiDiiJIgNTAgw5cgJDAuNTAgPSAkNzUuIFlvdSB0b2xkIHRoZSBzdXBwbGllciwgcGFpZCBmb3IgdGhlIGJhZ3MsIGFuZCBzb2xkIGV2ZXJ5IGRvbnV0LiBUaGV5IGdhdmUgeW91IGEgZGlzY291bnQgb24geW91ciBuZXh0IG9yZGVyIGZvciBiZWluZyBob25lc3QuIiwgIndyb25nRWZmZWN0IjogLTIwLCAid3JvbmciOiAiWW91ciBtYXRoIHdhcyBvZmYsIHNvIHlvdSBib3VnaHQgdGhlIGJhZ3Mgd2l0aG91dCBhIHJlYWwgcGxhbiBhbmQgc29tZSB3ZW50IHN0YWxlLiJ9fSwgInF1b3RlIjogIlwiSWYgaXQgaXMgbm90IHJpZ2h0LCBkbyBub3QgZG8gaXQ7IGlmIGl0IGlzIG5vdCB0cnVlLCBkbyBub3Qgc2F5IGl0LlwiIOKAlCBNYXJjdXMgQXVyZWxpdXMiLCAibGluZSI6ICJCZWluZyBob25lc3Qgd2hlbiBub2JvZHkncyB3YXRjaGluZyBpcyBzdGlsbCB0aGUgZGVhbC4iLCAib3JkZXIiOiBbImEiLCAiYyIsICJiIl19LCAiZGF0ZSI6ICJGcmlkYXksIE9jdCAzMCIsICJ1bmxvY2siOiAxNzkzMzMyODAwMDAwLCAibmV4dCI6IHsiZGF5IjogOCwgImRhdGUiOiAiTW9uZGF5LCBOb3YgMiIsICJkYXRlU2hvcnQiOiAiTW9uLCBOb3YgMiIsICJ1bmxvY2siOiAxNzkzNTk1NjAwMDAwLCAidGVhc2VyIjogIkdvaW5nIEJpZyBhdCB0aGUgU3RhZGl1bSDigJQgRXhwb25lbnQgcnVsZXMgJiBzY2llbnRpZmljIG5vdGF0aW9uIiwgInVybCI6ICJodHRwczovL2Rhd25jbGF5MjAxMS11aS5naXRodWIuaW8vZmFtaWx5LWdhbWVzL2Zvb2QtdHJ1Y2svZGF5OC8ifX19";
+var PH = 3887916057;
+var DAY = null, MAPS = null, CHECK = null, PREVIEW = false, PREVIEW_QS = "";
+function fnv1a(s){ var h=0x811c9dc5; for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,0x01000193)>>>0; } return h>>>0; }
+try{ var _t=new URLSearchParams(location.search).get("p"); if(_t && fnv1a(_t)===PH){ PREVIEW=true; PREVIEW_QS="?p="+encodeURIComponent(_t); } }catch(e){}
+function openGame(){
+  var o=JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(PAYLOAD),function(c){return c.charCodeAt(0);})));
+  DAY=o.day; MAPS=o.maps||{}; if(o.check) CHECK=o.check;
+  if(PREVIEW){ var b=document.createElement("span"); b.className="badge"; b.id="previewBadge"; b.style.cssText="background:#8e44ad;color:#fff"; b.textContent="Preview – reports off"; document.querySelector("header").appendChild(b); }
+  var s=document.createElement("script"); s.textContent=document.getElementById("game").textContent; document.body.appendChild(s);
+}
+function countdownText(ms){
+  var s=Math.max(0,Math.floor(ms/1000)), d=Math.floor(s/86400), h=Math.floor(s%86400/3600), m=Math.floor(s%3600/60), x=s%60;
+  function p(n){return n<10?"0"+n:""+n;}
+  return (d?d+(d===1?" day ":" days "):"")+p(h)+"h "+p(m)+"m "+p(x)+"s";
+}
+function showLocked(){
+  var app=document.getElementById("app");
+  if(META.game==="cam"){
+    document.getElementById("rank").textContent=META.lockRank||("Day "+META.day+" of 5 • "+META.dateShort);
+    app.innerHTML='<div class="card file" style="text-align:center"><span class="era">'+META.era+'</span><br><span class="stamp">SEALED</span>'+
+      '<h2>Case sealed until '+META.date+'</h2><p>'+(META.lockMsg||'This case file is locked in the evidence room, Officer Cam. It opens at midnight (Eastern Time).')+'</p>'+
+      '<p style="font-size:1.6rem;font-weight:900;color:#c0392b" id="cd"></p><p class="hint">⏳ Check back on '+META.date+'!</p></div>';
+  } else {
+    document.getElementById("best").textContent=META.lockRank||("Shift "+META.day+" of 5 · "+META.date);
+    app.innerHTML='<div class="panel" style="text-align:center"><span class="tag">'+(META.lockTag||('Shift '+META.day+' · Closed'))+'</span>'+
+      '<h2 style="margin-top:10px">'+(META.lockH2||'Shift opens')+' '+META.date+'</h2><p class="muted">'+(META.lockMsg||'The truck is parked. This shift opens at midnight Eastern Time.')+'</p>'+
+      '<p style="font-size:1.6rem;font-weight:700;color:#f4a261" id="cd"></p><p class="muted">Come back on '+META.date+'.</p></div>';
+  }
+  var cd=document.getElementById("cd");
+  function tick(){ var left=META.unlock-Date.now(); if(left<=0){ clearInterval(iv); app.innerHTML=""; openGame(); return; } cd.textContent=countdownText(left); }
+  var iv=setInterval(tick,1000); tick();
+}
+if(PREVIEW || Date.now()>=META.unlock) openGame(); else showLocked();
+</script>
+
+</body>
+</html>
