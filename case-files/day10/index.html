@@ -335,6 +335,83 @@ function caseReport(){
     "Report length":`${words(L.report)} words, ${sentences(L.report)} sentences`
   };
 }
+/* ==== HELP + CASE REVIEW add-on (build3) ==== */
+const HELPDATA = {"common": {"culprit": "The person who did the crime. Today: the suspect whose story doesn't match real history.", "suspect": "A person who MIGHT have done the crime. Your job is to check each one's story.", "evidence": "Facts or clues that prove something is true.", "alibi": "Proof that a person was somewhere else, or telling the truth, so they couldn't have done it.", "civilization": "A big group of people with cities, leaders, laws, and writing, like Egypt or the Maya.", "civics": "Learning about rules, laws, and who gets to make decisions.", "replica": "A copy made to look just like the real thing.", "archive": "A place where old records and facts are kept.", "artifact": "An object made by people long ago, like a pot, tool, or coin.", "archaeologist": "A scientist who digs up and studies things people left long ago.", "empire": "Many lands and peoples ruled by one powerful leader.", "emperor": "The ruler of an empire.", "culture": "The way a group of people lives: their food, beliefs, art, and customs.", "ancient": "From a very, very long time ago.", "collector": "Someone who buys and keeps special objects."}, "day": {"Mansa Musa": "A very rich king (mansa) of the Mali Empire.", "mansa": "The Mali word for king or emperor.", "Timbuktu": "A Mali city famous for learning, books, and trade.", "Niger": "The big river that Timbuktu is near.", "Sahara": "The huge desert in North Africa.", "caravan": "A group of traders traveling together, often with camels.", "pilgrimage": "A long trip to a holy place."}, "hints": {"intro": "Tap 'Open the case file' to start. Read each suspect's story slowly. Tap any underlined word to see what it means.", "clues": "Find the suspect the question names. Re-read just THAT person's story. Then pick the answer that is true in real history. Tap underlined words if one is confusing.", "arrest": "Look at your evidence board. Which suspect's story had a fact that was WRONG? That's your culprit.", "report": "Fill in each sentence starter with a real answer: WHO did it, WHAT clue proved it, and WHY the others are cleared. Use the fact files for ideas.", "civics": "Think: what rule did they break (like stealing)? Then who made decisions in that civilization — a king, citizens, an emperor? Check the Help words list.", "bonus": "This is optional! Read the numbers carefully. Mean = add them up, then divide by how many.", "done": "Great work, Officer! Make sure your report went to Mom."}, "review": [{"q": "What is a CIVILIZATION?", "o": ["A single house", "A big group of people with cities, leaders, and laws", "A type of boat", "A museum"], "a": 1, "why": "Egypt, China, the Vikings, and Mali are all civilizations."}, {"q": "In the Aztec world, who decided what happened to a lawbreaker?", "o": ["The emperor and his judges", "The bank", "The farmers' kids", "Nobody"], "a": 0, "why": "The Aztec ruler (tlatoani) and his judges and council decided."}, {"q": "What was a quipu?", "o": ["A Maya calendar", "Knotted strings the Inca used to record numbers", "A Roman road", "A kind of boat"], "a": 1, "why": "Knots near the top were hundreds, then tens, then ones."}]};
+const HKEY = (PREVIEW?"ocamHelpPreview":"ocamHelp");
+let HLOG; try{HLOG=JSON.parse(localStorage.getItem(HKEY)||"{}")||{};}catch(e){HLOG={};}
+const hl = HLOG[DK] || (HLOG[DK]={words:[],hints:0,review:null});
+function hsave(){ try{localStorage.setItem(HKEY,JSON.stringify(HLOG));}catch(e){} }
+const GLOSS = Object.assign({}, HELPDATA.common, HELPDATA.day);
+const GKEYS = Object.keys(GLOSS).sort((a,b)=>b.length-a.length);
+const GRE = new RegExp("\\b(" + GKEYS.map(k=>k.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|") + ")(s|es)?\\b","gi");
+function gfind(w){ w=w.toLowerCase(); return GKEYS.find(k=>k.toLowerCase()===w) || GKEYS.find(k=>w===k.toLowerCase()+"s"||w===k.toLowerCase()+"es"); }
+function logWord(k){ if(!hl.words.includes(k)){hl.words.push(k);hsave();} }
+(function(){
+  const css=document.createElement("style");
+  css.textContent=`#helpBtn{position:fixed;right:14px;bottom:14px;z-index:50;background:#2a9d8f;color:#fff;border:none;border-radius:30px;padding:12px 18px;font-size:1.1rem;font-weight:800;box-shadow:0 3px 10px rgba(0,0,0,.3);width:auto;margin:0}
+  #helpPanel{position:fixed;inset:auto 0 0 0;max-height:75vh;overflow:auto;z-index:60;background:#fffdf5;border-top:5px solid #2a9d8f;border-radius:16px 16px 0 0;padding:14px 16px 24px;box-shadow:0 -4px 16px rgba(0,0,0,.3);display:none}
+  #helpPanel h3{margin:6px 0}#helpPanel dt{font-weight:800;margin-top:8px;color:#0b132b}#helpPanel dd{margin:0 0 4px 0}
+  #helpPanel .hint{background:#e8f6f3;border-radius:10px;padding:10px;margin:8px 0}
+  .gw{border-bottom:2px dotted #2a9d8f;cursor:pointer}
+  #wordPop{position:fixed;left:10px;right:10px;bottom:80px;z-index:70;background:#0b132b;color:#fff;border-radius:12px;padding:12px 14px;font-size:1.05rem;display:none;box-shadow:0 3px 12px rgba(0,0,0,.4)}
+  .rv-ok{color:#1e8449;font-weight:700}.rv-bad{color:#c0392b;font-weight:700}`;
+  document.head.appendChild(css);
+  const b=document.createElement("button"); b.id="helpBtn"; b.type="button"; b.textContent="❓ Help"; b.onclick=openHelp; document.body.appendChild(b);
+  const p=document.createElement("div"); p.id="helpPanel"; p.setAttribute("role","dialog"); document.body.appendChild(p);
+  const w=document.createElement("div"); w.id="wordPop"; w.onclick=()=>w.style.display="none"; document.body.appendChild(w);
+})();
+function openHelp(){
+  const p=document.getElementById("helpPanel");
+  const stage = (typeof reviewActive!=="undefined"&&reviewActive)?"review":st.stage;
+  const hint = stage==="review" ? "Case Review: pick the best answer. If it's wrong, try again — the explanation will help." : (HELPDATA.hints[stage]||"");
+  const dayKeys=Object.keys(HELPDATA.day), comKeys=Object.keys(HELPDATA.common);
+  p.innerHTML=`<button type="button" class="alt" style="float:right;width:auto" onclick="closeHelp()">✖ Close</button>
+   <h3>🆘 Help, Officer Cam</h3><div class="hint">💡 <b>Hint:</b> ${hint}</div>
+   <h3>📖 Today's words</h3><dl>${dayKeys.map(k=>`<dt>${esc(k)}</dt><dd>${esc(GLOSS[k])}</dd>`).join("")}</dl>
+   <h3>🕵️ Detective words</h3><dl>${comKeys.map(k=>`<dt>${esc(k)}</dt><dd>${esc(GLOSS[k])}</dd>`).join("")}</dl>`;
+  p.style.display="block"; hl.hints++; hsave();
+}
+function closeHelp(){ document.getElementById("helpPanel").style.display="none"; }
+function showWord(k){ const w=document.getElementById("wordPop"); w.innerHTML=`<b>${esc(k)}</b>: ${esc(GLOSS[k])} <span style="opacity:.7">(tap to close)</span>`; w.style.display="block"; logWord(k); }
+document.addEventListener("click",e=>{ const g=e.target.closest&&e.target.closest(".gw"); if(g){ e.preventDefault(); e.stopPropagation(); const k=gfind(g.dataset.w)||g.dataset.w; if(GLOSS[k]) showWord(k);} },true);
+const SKIP={BUTTON:1,TEXTAREA:1,INPUT:1,SCRIPT:1,STYLE:1,SVG:1,svg:1,text:1,A:1,SELECT:1,OPTION:1};
+function glossify(root){
+  const tw=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode(n){ for(let p=n.parentNode;p&&p!==root;p=p.parentNode){ if(SKIP[p.nodeName]||(p.classList&&p.classList.contains("gw"))) return NodeFilter.FILTER_REJECT; } GRE.lastIndex=0; return GRE.test(n.nodeValue)?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT; }});
+  const nodes=[]; while(tw.nextNode()) nodes.push(tw.currentNode);
+  nodes.forEach(n=>{ const f=document.createDocumentFragment(); let last=0; const s=n.nodeValue; GRE.lastIndex=0; let m;
+    while((m=GRE.exec(s))){ f.appendChild(document.createTextNode(s.slice(last,m.index))); const sp=document.createElement("span"); sp.className="gw"; sp.dataset.w=m[1]; sp.textContent=m[0]; f.appendChild(sp); last=m.index+m[0].length; }
+    f.appendChild(document.createTextNode(s.slice(last))); n.parentNode.replaceChild(f,n); });
+}
+const gObs=new MutationObserver(()=>{ gObs.disconnect(); try{glossify(app);}catch(e){} gObs.observe(app,{childList:true,subtree:true}); });
+gObs.observe(app,{childList:true,subtree:true});
+/* ---- Case Review warm-up (days with HELPDATA.review) ---- */
+let reviewActive=false;
+const REVIEW = HELPDATA.review||null;
+const _render = render;
+render = function(){
+  if(REVIEW && st.stage==="intro" && !(hl.review&&hl.review.done)) return reviewScreen();
+  reviewActive=false; return _render();
+};
+function reviewScreen(){
+  reviewActive=true;
+  if(!hl.review) { hl.review={done:false,ans:REVIEW.map(()=>({tries:0,ok:false,picked:[]}))}; hsave(); }
+  const R=hl.review;
+  app.innerHTML = `${caseHeader()}<div class="card"><h2>🗂️ Case Review — quick warm-up</h2><p>Before today's case, the Chief wants to check a few things from past cases. ${REVIEW.length} quick questions!</p></div>`+
+   REVIEW.map((q,i)=>{ const a=R.ans[i]; return `<div class="card"><p><b>${i+1}. ${q.q}</b></p>${q.o.map((o,j)=>`<button class="opt ${a.ok&&j===q.a?"right":a.picked.includes(j)?"wrong":""}" ${a.ok||a.picked.includes(j)?"disabled":""} onclick="reviewPick(${i},${j})">${String.fromCharCode(65+j)}. ${esc(o)}</button>`).join("")}
+     ${a.ok?`<p class="rv-ok">✅ ${esc(q.why)}</p>`:a.picked.length?`<p class="rv-bad">Not quite — try another one! (Tap ❓ Help for word meanings.)</p>`:""}</div>`; }).join("")+
+   (R.ans.every(a=>a.ok)?`<div class="card"><button onclick="reviewDone()">🔎 On to today's case!</button></div>`:"");
+}
+function reviewPick(i,j){ const a=hl.review.ans[i]; if(a.ok||a.picked.includes(j)) return; a.tries++; a.picked.push(j); if(j===REVIEW[i].a) a.ok=true; hsave(); const y=window.scrollY; reviewScreen(); try{window.scrollTo(0,y);}catch(e){} }
+function reviewDone(){ hl.review.done=true; hsave(); render(); toTop(); }
+const _caseReport = caseReport;
+caseReport = function(){
+  const r=_caseReport();
+  r["Help words looked up"] = hl.words.length ? hl.words.join(", ") : "None";
+  r["Help button opened"] = hl.hints + (hl.hints===1?" time":" times");
+  if(REVIEW){ const R=hl.review; r["Case Review warm-up"] = R&&R.done ? REVIEW.map((q,i)=>`${i+1}) ${q.q} — ${R.ans[i].tries===1?"right first try ✅":"got it after "+R.ans[i].tries+" tries"}`).join(" | ") : "Not done"; }
+  return r;
+};
+/* ==== end add-on ==== */
 badge(); render();
 </script>
 <script>
