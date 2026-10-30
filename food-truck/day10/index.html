@@ -330,6 +330,80 @@ function shiftReport(){
     f[`Q${i+1} ${t.title}`]=`${r.ok?(r.tries===1?"✅ first try":"✅ second try"):"❌ missed"} — his answer${r.answers.length>1?"s":""}: ${r.answers.map(a=>`"${a}"`).join(" then ")} • key: ${t.show}`; });
   return f;
 }
+/* ==== TRUCK HELP add-on (build3) ==== */
+const HELPDATA = {"common": {"variable": "A letter (like x) that stands for a number you don't know yet or that can change.", "expression": "A math phrase with numbers, letters, and operations but no equals sign, like 4x + 120.", "equation": "Two expressions set equal with =. Solving it means finding the value that makes both sides match.", "coefficient": "The number multiplied by a variable. In 6x, the coefficient is 6.", "constant": "A number by itself that doesn't change, like the 120 in 4x + 120.", "profit": "Money left after costs: Profit = Revenue − Cost.", "revenue": "All the money that comes in from sales: price × number sold."}, "day": {"polynomial": "A sum of terms like 3x² − 5x + 2.", "binomial": "A polynomial with two terms, like x + 4.", "term": "One piece of a polynomial, separated by + or −.", "like terms": "Terms with the same variable and exponent, like 3x² and −x². Only these can be combined.", "degree": "The highest exponent in a polynomial.", "FOIL": "A way to multiply two binomials: First, Outer, Inner, Last."}, "refresh": [["Distributing", "Multiply the outside number by EVERY term inside: 4(2x − 3) = 8x − 12. A minus sign in front changes every sign inside: −(x − 5) = −x + 5."], ["Combining like terms", "Only add terms with the same letter and the same power. 4x + 3 + 2x − 1 = 6x + 2. Distribute first if there are parentheses: 3(x + 2) = 3x + 6."], ["Negative numbers", "Subtracting a number is adding its opposite: 5 − 8 = 5 + (−8) = −3. Two negatives: −4 − 6 = −10. Times or divide: same signs give a positive, different signs give a negative. (−3)(−5) = 15 and (−12) ÷ 4 = −3."], ["Exponent rules", "Multiply same base: add the exponents (x³·x⁴ = x⁷). Divide: subtract them (x⁶ ÷ x² = x⁴). Power of a power: multiply them ((x²)³ = x⁶). Anything⁰ = 1. 10³ = 1,000, so the exponent counts the zeros."]], "typehint": {"expr": "Type it with x, like 4.5x + 120. You can use * or just put numbers next to letters.", "eq2": "Write the whole equation with both letters and an = sign, like 10b + 20t = 300.", "ineq": "Use >= for 'at least' and <= for 'at most', like 6x - 300 >= 500.", "num": "Just type the number. Leave out the $ sign and the units."}};
+const HKEY = (PREVIEW?"tycoonHelpPreview":"tycoonHelp");
+let HLOG; try{HLOG=JSON.parse(localStorage.getItem(HKEY)||"{}")||{};}catch(e){HLOG={};}
+const hl = HLOG[DK] || (HLOG[DK]={opened:0,hintQs:[],words:[],refreshers:[]});
+function hsave(){ try{localStorage.setItem(HKEY,JSON.stringify(HLOG));}catch(e){} }
+function hpush(arr,v){ if(!arr.includes(v)){arr.push(v);hsave();} }
+const GLOSS = Object.assign({}, HELPDATA.common, HELPDATA.day);
+const GKEYS = Object.keys(GLOSS).sort((a,b)=>b.length-a.length);
+const GRE = new RegExp("\\b(" + GKEYS.map(k=>k.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|") + ")(s|es)?\\b","gi");
+function gfind(w){ w=w.toLowerCase(); return GKEYS.find(k=>k.toLowerCase()===w) || GKEYS.find(k=>w===k.toLowerCase()+"s"||w===k.toLowerCase()+"es"); }
+(function(){
+  const css=document.createElement("style");
+  css.textContent=`#helpBtn{position:fixed;right:14px;bottom:14px;z-index:50;background:#2a9d8f;color:#fff;border:none;border-radius:30px;padding:12px 18px;font-size:1.05rem;font-weight:700;box-shadow:0 3px 10px rgba(0,0,0,.35);width:auto;margin:0}
+  #helpPanel{position:fixed;inset:auto 0 0 0;max-height:78vh;overflow:auto;z-index:60;background:#fbfaf6;color:#1d2733;border-top:5px solid #2a9d8f;border-radius:16px 16px 0 0;padding:14px 16px 28px;box-shadow:0 -4px 16px rgba(0,0,0,.35);display:none;text-align:left}
+  #helpPanel h3{margin:10px 0 6px;color:#1d2733}#helpPanel dt{font-weight:700;margin-top:8px}#helpPanel dd{margin:0 0 4px 0}
+  #helpPanel .hint{background:#e6f4f1;border-radius:10px;padding:10px;margin:8px 0}
+  #helpPanel details{background:#f0eee6;border-radius:10px;padding:8px 10px;margin:6px 0}#helpPanel summary{cursor:pointer;font-weight:700}
+  #helpPanel button.hx{float:right;width:auto;margin:0;background:#1d2733;color:#fff;border:none;border-radius:8px;padding:6px 12px}
+  .gw{border-bottom:2px dotted #2a9d8f;cursor:pointer}
+  #wordPop{position:fixed;left:10px;right:10px;bottom:80px;z-index:70;background:#1d2733;color:#fff;border-radius:12px;padding:12px 14px;font-size:1.02rem;display:none;box-shadow:0 3px 12px rgba(0,0,0,.4)}`;
+  document.head.appendChild(css);
+  const b=document.createElement("button"); b.id="helpBtn"; b.type="button"; b.textContent="❓ Help"; b.onclick=openHelp; document.body.appendChild(b);
+  const p=document.createElement("div"); p.id="helpPanel"; p.setAttribute("role","dialog"); document.body.appendChild(p);
+  const w=document.createElement("div"); w.id="wordPop"; w.onclick=()=>w.style.display="none"; document.body.appendChild(w);
+})();
+function currentHint(){
+  if(st.stage==="brief") return {label:"Getting started", text:"Read the shift brief, then open for business. Every decision has a hint here, and you can check the words and refreshers below any time."};
+  if(st.stage==="done") return {label:"Shift finished", text:"Nice work getting through the shift. The refreshers below are good to skim before the next one."};
+  if(st.ev && st.ev.active && !st.ev.done){
+    if(st.ev.stage==="math") return {label:"Mid-shift math", text:"Write down what each number means first. If two plans are compared, set them equal and solve. Read the question again: what is it asking for, and in what units?", q:"event"};
+    return {label:"Mid-shift event", text:"There's no time limit. Think about what each choice does to your numbers before you pick."};
+  }
+  const t=DAY.tasks[st.idx];
+  return {label:`Decision ${st.idx+1}: ${t.title}`, text:t.hint, fmt:HELPDATA.typehint[t.type]||"", q:"Q"+(st.idx+1)+" "+t.title};
+}
+function openHelp(){
+  const p=document.getElementById("helpPanel"), h=currentHint();
+  hl.opened++; if(h.q) hpush(hl.hintQs,h.q); hsave();
+  const dayKeys=Object.keys(HELPDATA.day), comKeys=Object.keys(HELPDATA.common);
+  p.innerHTML=`<button type="button" class="hx" onclick="closeHelp()">✖ Close</button>
+   <h3>🧰 Help</h3><p style="margin:0">Using help is part of how good business owners work. Take your time.</p>
+   <div class="hint">💡 <b>${esc(h.label)}</b><br>${esc(h.text)}${h.fmt?`<br><span style="opacity:.8">✏️ ${esc(h.fmt)}</span>`:""}</div>
+   <h3>🔧 Quick refreshers</h3><p style="margin:0 0 4px">Short reviews of skills today's shift uses. Tap one to open it.</p>
+   ${HELPDATA.refresh.map((r,i)=>`<details ontoggle="if(this.open)logRef(${i})"><summary>${esc(r[0])}</summary><p>${esc(r[1])}</p></details>`).join("")}
+   <h3>📖 Today's words</h3><dl>${dayKeys.map(k=>`<dt>${esc(k)}</dt><dd>${esc(GLOSS[k])}</dd>`).join("")}</dl>
+   <h3>📘 Everyday algebra words</h3><dl>${comKeys.map(k=>`<dt>${esc(k)}</dt><dd>${esc(GLOSS[k])}</dd>`).join("")}</dl>
+   <p style="opacity:.75">Tip: underlined words on the page can be tapped for a quick meaning.</p>`;
+  p.style.display="block"; p.scrollTop=0;
+}
+function logRef(i){ hpush(hl.refreshers,HELPDATA.refresh[i][0]); }
+function closeHelp(){ document.getElementById("helpPanel").style.display="none"; }
+function showWord(k){ const w=document.getElementById("wordPop"); w.innerHTML=`<b>${esc(k)}</b>: ${esc(GLOSS[k])} <span style="opacity:.7">(tap to close)</span>`; w.style.display="block"; hpush(hl.words,k); }
+document.addEventListener("click",e=>{ const g=e.target.closest&&e.target.closest(".gw"); if(g){ e.preventDefault(); e.stopPropagation(); const k=gfind(g.dataset.w)||g.dataset.w; if(GLOSS[k]) showWord(k);} },true);
+const SKIP={BUTTON:1,TEXTAREA:1,INPUT:1,SCRIPT:1,STYLE:1,SVG:1,svg:1,text:1,A:1,SELECT:1,OPTION:1,SUMMARY:1,TABLE:1};
+function glossify(root){
+  const tw=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode(n){ for(let p=n.parentNode;p&&p!==root;p=p.parentNode){ if(SKIP[p.nodeName]||(p.classList&&p.classList.contains("gw"))) return NodeFilter.FILTER_REJECT; } GRE.lastIndex=0; return GRE.test(n.nodeValue)?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT; }});
+  const nodes=[]; while(tw.nextNode()) nodes.push(tw.currentNode);
+  nodes.forEach(n=>{ const f=document.createDocumentFragment(); let last=0; const s=n.nodeValue; GRE.lastIndex=0; let m;
+    while((m=GRE.exec(s))){ f.appendChild(document.createTextNode(s.slice(last,m.index))); const sp=document.createElement("span"); sp.className="gw"; sp.dataset.w=m[1]; sp.textContent=m[0]; f.appendChild(sp); last=m.index+m[0].length; }
+    f.appendChild(document.createTextNode(s.slice(last))); n.parentNode.replaceChild(f,n); });
+}
+const gObs=new MutationObserver(()=>{ gObs.disconnect(); try{glossify(app);}catch(e){} gObs.observe(app,{childList:true,subtree:true}); });
+gObs.observe(app,{childList:true,subtree:true});
+const _shiftReport = shiftReport;
+shiftReport = function(){
+  const r=_shiftReport();
+  r["Help button opened"] = hl.opened + (hl.opened===1?" time":" times");
+  r["Hints viewed for"] = hl.hintQs.length ? hl.hintQs.map(q=>q==="event"?"mid-shift math":q).join(", ") : "None";
+  r["Refreshers opened"] = hl.refreshers.length ? hl.refreshers.join(", ") : "None";
+  r["Words looked up"] = hl.words.length ? hl.words.join(", ") : "None";
+  return r;
+};
+/* ==== end truck add-on ==== */
 showBest(); render();
 </script>
 <script>
