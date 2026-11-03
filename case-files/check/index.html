@@ -192,7 +192,7 @@ function reportBtn(builder,label,small){
  return `<div class="report"><button type="button" class="rep${small?" small":""}" onclick="reportToMom(this,${builder})">${label}</button><span class="rstat" role="status" aria-live="polite"></span></div>`;
 }
 /*BACKUP_SENDER_v1*/
-const MOM_MAILTO=""; // optional real address for the Email button; empty = kid's mail app asks for it
+const MOM_MAILTO="dawnclay2011@gmail.com"; // optional real address for the Email button; empty = kid's mail app asks for it
 function reportText(f){return Object.keys(f).filter(k=>k[0]!=="_").map(k=>k+": "+(typeof f[k]==="object"?JSON.stringify(f[k]):f[k])).join("\n");}
 function retryReport(fields){
  const body=new URLSearchParams();Object.keys(fields).forEach(k=>body.append(k,typeof fields[k]==="object"?JSON.stringify(fields[k]):String(fields[k])));
