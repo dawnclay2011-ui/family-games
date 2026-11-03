@@ -1,0 +1,219 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Startup Tycoon: Black Pine Board Meeting</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,Segoe UI,Arial,sans-serif;background:#0f1115;color:#e8e8e8}
+header{padding:14px 18px;background:#151922;border-bottom:1px solid #2a2f3a;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center}
+h1{margin:0;font-size:1.2rem;color:#f4a261}h2{margin-top:0}h3{color:#f4a261;margin:14px 0 6px}
+main{max-width:900px;margin:16px auto;padding:0 12px 80px}
+.panel{background:#171b24;border:1px solid #2a2f3a;border-radius:10px;padding:16px;margin-bottom:14px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}.stat{background:#1e2330;border-radius:8px;padding:10px}
+.stat .k{font-size:.75rem;color:#9aa3b2;text-transform:uppercase}.stat .v{font-size:1.3rem;font-weight:700}
+button{font:inherit;font-weight:600;background:#f4a261;color:#111;border:none;border-radius:8px;padding:10px 16px;cursor:pointer;margin:4px 4px 0 0;max-width:100%;white-space:normal}
+button.sec{background:#2a2f3a;color:#e8e8e8}button:disabled{opacity:.5;cursor:default}
+.good{color:#7bd389}.bad{color:#ef6f6c}.muted{color:#9aa3b2;font-size:.9rem}
+table{width:100%;border-collapse:collapse;font-size:.9rem}td,th{padding:6px;border-bottom:1px solid #2a2f3a;text-align:right}td:first-child,th:first-child{text-align:left}
+.report{margin:10px 0}.rstat{display:block;margin-top:4px;font-weight:600;font-size:.95rem}
+button.rep{background:#7bd389}button.rep.sent{background:#2a9d8f;color:#fff}
+.tag{display:inline-block;background:#2a2f3a;color:#f4a261;border-radius:6px;padding:3px 8px;font-size:.8rem;font-weight:700;text-transform:uppercase}
+.stake{border-left:3px solid #f4a261;padding:6px 10px;color:#c9cfd9;background:#1b202b;border-radius:0 6px 6px 0;margin:10px 0}
+.note{background:#1e2330;border:1px solid #39404f;border-radius:8px;padding:10px 12px;margin-top:10px}
+.q{background:#1e2330;border-radius:8px;padding:12px;margin:10px 0}.q label{display:block;margin:4px 0}
+select,input[type=number],input[type=text],textarea{font:inherit;padding:8px;border-radius:8px;border:1px solid #39404f;background:#0f1115;color:#e8e8e8;max-width:100%}
+textarea{width:100%}textarea.why{min-height:44px;margin-top:6px}.err{color:#ef6f6c;font-weight:600}
+</style></head><body>
+<header><h1>🐾 Startup Tycoon: Black Pine Board Meeting</h1><span class="tag" id="hdr"></span></header>
+<main id="app"></main>
+<script>
+const KEY="tycoonBlackPine", PREVIEW=false;
+const REPORT_SUBJECT="Christian – Black Pine Board Meeting report", REPORT_PLAYER="Christian", REPORT_GAME="Startup Tycoon: Black Pine Board Meeting";
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||null}catch(e){return null}}
+function fresh(old){return {step:0,ans:{},runs:(old&&old.runs)||0,best:(old&&old.best)||null,helpOpened:(old&&old.helpOpened)||0,autoSent:false}}
+let st=load()||fresh(); function persist(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const $=id=>document.getElementById(id), money=n=>(n<0?"-$":"$")+Math.abs(Math.round(n)).toLocaleString("en-US");
+const toTop=()=>window.scrollTo(0,0);
+const STAKE=["Board of directors","Executive director","Keepers & staff","Donors","Volunteers","The animals","Local families & students","Noble County 4-H Club (landowner)","Water park investor","Town / county taxpayers"];
+
+/* ----- Fictional game budget (real places, made-up numbers) ----- */
+const ANIMALS=80, SAVINGS=150000, COST={food:18000,vet:9000,keepers:33000};
+const INCOME_OK={donations:30000,grant:25000,programs:10000}; // before crisis
+function why(id){return `<textarea class="why" id="why_${id}" placeholder="Why? (required — 1 or 2 sentences)">${esc((st.ans[id]||{}).why||"")}</textarea>`}
+
+/* ----- Round 1 ----- */
+const POWERS=[
+ {id:"p1",t:"Votes on the biggest decisions at Black Pine (budget, closing, big projects)"},
+ {id:"p2",t:"Runs day-to-day work: hires keepers, plans feeding and vet schedules"},
+ {id:"p3",t:"Owns the land the Fort Wayne Children's Zoo sits on"},
+ {id:"p4",t:"Owns the land Black Pine leases (rents)"},
+ {id:"p5",t:"Can stop giving money if they don't like a decision"},
+ {id:"p6",t:"Inspects the place and can take away its 'true sanctuary' / quality seal"},
+ {id:"p7",t:"Sets minimum care rules everyone must follow, no matter who's in charge"}];
+const DM=["Board of directors","Executive director","City of Fort Wayne (Parks Dept.)","Noble County 4-H Club","Donors","Accreditors (GFAS / AZA)","Laws & USDA inspectors"];
+const FACTS=`<div class="note"><b>Real-world facts (checked on official sites):</b><ul>
+<li>Black Pine Animal Sanctuary (Albion, IN) is a 501(c)(3) nonprofit led by a <b>volunteer board of directors</b> and run by a small paid staff plus volunteers.</li>
+<li>Since 2006 it sits on land <b>leased from the Noble County 4-H Club</b>.</li>
+<li>It is accredited by the <b>Global Federation of Animal Sanctuaries (GFAS)</b> since 2019 and inspected by GFAS and the USDA. It does not buy, sell, breed or trade animals.</li>
+<li>It's funded by donations and in-kind gifts, education programs, special events, and its gift shop.</li>
+<li>The Fort Wayne Children's Zoo is run by the nonprofit <b>Fort Wayne Zoological Society</b> under an agreement with the <b>City of Fort Wayne Parks and Recreation Department</b>, and is accredited by the <b>Association of Zoos & Aquariums (AZA)</b>.</li></ul>
+<span class="muted">Everything else in this game (dollar amounts, the crisis, the water park) is a made-up scenario.</span></div>`;
+
+function r1(){
+ return `<div class="panel"><span class="tag">Round 1 of 3</span><h2>Who's in charge?</h2>
+ <div class="stake">You just joined Black Pine's board. Before you can win a board fight, you need to know who holds which power. Match each power to who holds it. There's no grading — explain your thinking.</div>
+ ${POWERS.map(p=>`<div class="q"><b>${p.t}</b><br><select id="sel_${p.id}"><option value="">— pick —</option>${DM.map(d=>`<option ${((st.ans[p.id]||{}).choice===d)?"selected":""}>${d}</option>`).join("")}</select>${why(p.id)}</div>`).join("")}
+ <h3>💰 Money in: the normal monthly budget (made-up numbers)</h3>
+ <table><tr><th>Income source</th><th>Per month</th></tr><tr><td>Donations & in-kind gifts</td><td>${money(INCOME_OK.donations)}</td></tr><tr><td>Grant (a foundation award)</td><td>${money(INCOME_OK.grant)}</td></tr><tr><td>Tours, programs, events & gift shop</td><td>${money(INCOME_OK.programs)}</td></tr>
+ <tr><th>Cost</th><th></th></tr><tr><td>Food</td><td>${money(COST.food)}</td></tr><tr><td>Vet care</td><td>${money(COST.vet)}</td></tr><tr><td>Keepers (salaries)</td><td>${money(COST.keepers)}</td></tr></table>
+ <div class="q"><b>Profit check:</b> Income − Costs = ? per month<br><input type="number" id="num_b1" value="${esc((st.ans.b1||{}).choice||"")}" placeholder="$ per month">${why("b1")}</div>
+ <div class="q"><b>Which money source is riskiest to depend on?</b><br><select id="sel_b2"><option value="">— pick —</option>${["Donations","Grant","Programs & gift shop"].map(d=>`<option ${((st.ans.b2||{}).choice===d)?"selected":""}>${d}</option>`).join("")}</select>${why("b2")}</div>
+ <p class="err" id="err"></p><button onclick="save1()">Lock in Round 1 ➜</button></div>`;
+}
+function grab(ids,numIds){let miss=0;ids.forEach(id=>{const s=$("sel_"+id)||$("num_"+id);const c=s?s.value.trim():"";const w=$("why_"+id).value.trim();st.ans[id]={q:"",choice:c,why:w};if(!c||w.length<5)miss++;});return miss;}
+function save1(){const ids=POWERS.map(p=>p.id).concat(["b1","b2"]);const m=grab(ids);POWERS.forEach(p=>st.ans[p.id].q=p.t);st.ans.b1.q="Monthly profit (income − costs)";st.ans.b2.q="Riskiest money source";persist();
+ if(m){$("err").textContent=`${m} item(s) still need a pick AND a 'why'.`;return;} st.step=1;persist();render();toTop();}
+
+/* ----- Round 2 ----- */
+const OPTS=[
+ {k:"Fundraise",d:"Spend $10,000 on an emergency donor campaign. Expected: +$20,000/month in new donations.",up:-10000,mo:20000,safe:ANIMALS,rehome:0},
+ {k:"Cut costs",d:"Cut keeper hours. Saves $12,000/month, but fewer keepers per animal — 8 animals' care falls below standard.",up:0,mo:12000,safe:ANIMALS-8,rehome:0},
+ {k:"Rehome some animals",d:"Move 20 animals to other GFAS-accredited sanctuaries. Saves $15,000/month; those animals stay safe, just not at Black Pine.",up:0,mo:15000,safe:ANIMALS,rehome:20},
+ {k:"Do nothing yet",d:"Wait and hope a new grant shows up. No cost now.",up:0,mo:0,safe:ANIMALS,rehome:0}];
+function r2(){const a=st.ans;
+ return `<div class="panel"><span class="tag">Round 2 of 3</span><h2>The funding runs out</h2>
+ <div class="stake">Bad news at the board meeting: the <b>$25,000/month grant is gone</b>. Income drops to ${money(INCOME_OK.donations+INCOME_OK.programs)}/month, costs stay ${money(60000)}/month. The sanctuary has ${money(SAVINGS)} in savings. (Made-up numbers.)</div>
+ <div class="q"><b>Runway:</b> Monthly loss is $25,000. Solve 150,000 − 25,000m = 0. How many months (m) until savings hit $0?<br><input type="number" id="num_a1" value="${esc((a.a1||{}).choice||"")}" placeholder="months">${why("a1")}</div>
+ <div class="q"><b>Donors needed:</b> If the average new donor gives $50/month, how many new donors (d) cover the $25,000 gap? Solve 50d = 25,000.<br><input type="number" id="num_a2" value="${esc((a.a2||{}).choice||"")}" placeholder="donors">${why("a2")}</div>
+ <div class="q"><b>Your plan — pick one:</b>${OPTS.map((o,i)=>`<label><input type="radio" name="opt" value="${i}" ${((a.a3||{}).choice===o.k)?"checked":""}> <b>${o.k}</b> — ${o.d}</label>`).join("")}${why("a3")}</div>
+ <p class="err" id="err"></p><button onclick="save2()">Lock in Round 2 ➜</button></div>`;
+}
+function save2(){let m=grab(["a1","a2"]);st.ans.a1.q="Runway months (150,000 − 25,000m = 0)";st.ans.a2.q="Donors needed (50d = 25,000)";
+ const r=document.querySelector("input[name=opt]:checked");const w=$("why_a3").value.trim();st.ans.a3={q:"Funding plan",choice:r?OPTS[+r.value].k:"",why:w};if(!r||w.length<5)m++;persist();
+ if(m){$("err").textContent=`${m} item(s) still need an answer AND a 'why'.`;return;} st.step=2;persist();render();toTop();}
+function plan(){return OPTS.find(o=>o.k===(st.ans.a3||{}).choice)||OPTS[3];}
+
+/* ----- Round 3 ----- */
+const STOPPERS=["Board vote","Donors pulling money","Noble County 4-H Club (landowner)","Accreditors (GFAS)","Laws & USDA","Local government / zoning","Nobody — the director decides alone"];
+const OWED=["Food & clean water for life","Vet care","Trained keepers","A safe new home if Black Pine closes","Not being sold, bred or traded","Nothing — they're property"];
+function chk(name,list,id){const c=((st.ans[id]||{}).choice||"").split("; ");return list.map(x=>`<label><input type="checkbox" name="${name}" value="${esc(x)}" ${c.includes(x)?"checked":""}> ${x}</label>`).join("");}
+function sel(id,list){return `<select id="sel_${id}"><option value="">— pick —</option>${list.map(d=>`<option ${((st.ans[id]||{}).choice===d)?"selected":""}>${d}</option>`).join("")}</select>`}
+function r3(){
+ return `<div class="panel"><span class="tag">Round 3 of 3</span><h2>The water park twist</h2>
+ <div class="stake">A powerful board member (fictional) stands up: <i>"Animals lose money. A developer will pay <b>$500,000</b> if we close and let them build a water park. Let's vote."</i></div>
+ <div class="q"><b>Who could stop this plan? (check all)</b>${chk("stop",STOPPERS,"c1")}${why("c1")}</div>
+ <div class="q"><b>What are the animals owed? (check all)</b>${chk("owed",OWED,"c2")}${why("c2")}</div>
+ <div class="q"><b>Your vote:</b><br>${sel("c3",["NO — keep the sanctuary","YES — close and take the deal","DELAY — demand a full rehoming plan first"])}${why("c3")}</div>
+ <div class="q"><b>One stakeholder you protect:</b><br>${sel("c4",STAKE)}${why("c4")}</div>
+ <div class="q"><b>One stakeholder you disappoint:</b><br>${sel("c5",STAKE)}${why("c5")}</div>
+ <div class="q"><b>Final paragraph (needed to finish):</b> <i>Who should protect animals when the people in charge change their minds?</i><br><span class="muted">Use evidence from this game — at least 2 facts (e.g. the board vote, the land lease, GFAS/USDA, the budget). At least 60 words.</span>
+ <textarea id="para" style="min-height:160px" oninput="wc()">${esc(st.ans.para||"")}</textarea><span class="muted" id="wc"></span></div>
+ <p class="err" id="err"></p><button onclick="save3()">🏁 Finish the board meeting</button></div>`;
+}
+function words(s){return (s.trim().match(/\S+/g)||[]).length}
+function wc(){const n=words($("para").value);$("wc").textContent=n+" / 60 words";st.ans.para=$("para").value;persist();}
+function save3(){let m=0;[["stop","c1","Who could stop it"],["owed","c2","What animals are owed"]].forEach(([n,id,q])=>{const v=[...document.querySelectorAll(`input[name=${n}]:checked`)].map(x=>x.value).join("; ");const w=$("why_"+id).value.trim();st.ans[id]={q,choice:v,why:w};if(!v||w.length<5)m++;});
+ m+=grab(["c3","c4","c5"]);st.ans.c3.q="Vote on water park";st.ans.c4.q="Stakeholder protected";st.ans.c5.q="Stakeholder disappointed";
+ st.ans.para=$("para").value;persist();
+ if(m){$("err").textContent=`${m} item(s) still need an answer AND a 'why'.`;return;}
+ if(words(st.ans.para)<60){$("err").textContent="Your paragraph needs at least 60 words to finish.";return;}
+ st.score=score();st.runs++;st.finishedAt=new Date().toISOString();st.prevBest=st.best?Object.assign({},st.best):null;
+ if(!st.best||st.score.total>st.best.total)st.best=Object.assign({},st.score);st.step=3;persist();render();toTop();}
+
+/* ----- Score: animals kept safe + money left after 12 months ----- */
+function score(){const p=plan();let cash=SAVINGS+p.up+(p.mo-25000)*12;let safe=p.safe;const v=(st.ans.c3||{}).choice||"";
+ if(v.startsWith("YES")){cash+=500000;safe=Math.round(safe*0.5);} // rushed closing: only half find accredited homes
+ if(v.startsWith("DELAY")){cash+=0;}
+ cash=Math.round(cash);const total=safe*1000+Math.max(cash,0);return {safe,cash,total};}
+function r4(){const s=st.score,pb=st.prevBest;
+ return `<div class="panel"><span class="tag">Meeting adjourned ✅</span><h2>Board Meeting complete</h2>
+ <div class="stats"><div class="stat"><div class="k">Animals kept safe</div><div class="v">${s.safe} / ${ANIMALS}</div></div><div class="stat"><div class="k">Money left (12 mo)</div><div class="v ${s.cash<0?"bad":"good"}">${money(s.cash)}</div></div>
+ <div class="stat"><div class="k">Director score</div><div class="v">${s.total.toLocaleString()}</div></div><div class="stat"><div class="k">Your best</div><div class="v">${st.best.total.toLocaleString()}</div></div></div>
+ <p class="muted">Score = animals safe × 1,000 + money left (if above $0). ${pb?(s.total>pb.total?`<span class="good">New personal best! (old best ${pb.total.toLocaleString()})</span>`:`Your best is still ${pb.total.toLocaleString()} — try a different plan to beat it.`):"First run — this is your score to beat."}</p>
+ ${s.cash<0?`<div class="note">Savings ran out under this plan — in real life the board would have to act before then.</div>`:""}
+ ${FACTS}
+ <div class="report"><button type="button" class="rep" onclick="reportToMom(this,buildReport)">📨 Send report to Mom</button><span class="rstat" role="status" aria-live="polite"></span></div>
+ <p><button class="sec" onclick="replay()">Run the meeting again (beat your best)</button></p></div>`;}
+function replay(){if(!confirm("Start over? Your best score is kept."))return;st=fresh(st);persist();render();toTop();}
+function buildReport(){const r={},a=st.ans;let i=1;
+ Object.keys(a).filter(k=>k!=="para").forEach(k=>{r[(i++)+". "+(a[k].q||k)]=(a[k].choice||"—")+"  |  WHY: "+(a[k].why||"—");});
+ r["Final paragraph"]=a.para;r["Animals kept safe"]=st.score.safe+" / "+ANIMALS;r["Money left after 12 months (fictional)"]=money(st.score.cash);
+ r["Score"]=st.score.total;r["Personal best"]=st.best.total;r["Times played"]=st.runs;r["Help opened"]=st.helpOpened;return r;}
+
+function render(){$("hdr").textContent=["Round 1","Round 2","Round 3","Complete"][st.step];$("app").innerHTML=[r1,r2,r3,r4][st.step]();if(st.step==2)wc();
+ if(st.step==3&&!st.autoSent){st.autoSent=true;persist();const b=document.querySelector("button.rep");if(b)reportToMom(b,buildReport);}}
+
+/* ---- Report to Mom (FormSubmit AJAX) ---- */
+const MOM_EMAIL="8caedc1e9653325b52b367e2e172d2a3";
+const REPORT_URL="https://formsubmit.co/ajax/"+MOM_EMAIL;
+function nowStr(){try{return new Date().toLocaleString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short"});}catch(e){return new Date().toString();}}
+function postReport(fields){
+ const ctl=typeof AbortController!=="undefined"?new AbortController():null;
+ const t=ctl?setTimeout(()=>ctl.abort(),15000):null;
+ return fetch(REPORT_URL,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(fields),signal:ctl?ctl.signal:undefined})
+  .then(r=>r.json().catch(()=>({success:r.ok?"true":"false",message:"HTTP "+r.status})).then(j=>{j._status=r.status;return j;}))
+  .finally(()=>{if(t)clearTimeout(t);});
+}
+/*BACKUP_SENDER_v1*/
+const MOM_MAILTO="dawnclay2011@gmail.com"; // optional real address for the Email button; empty = kid's mail app asks for it
+function reportText(f){return Object.keys(f).filter(k=>k[0]!=="_").map(k=>k+": "+(typeof f[k]==="object"?JSON.stringify(f[k]):f[k])).join("\n");}
+function retryReport(fields){
+ const body=new URLSearchParams();Object.keys(fields).forEach(k=>body.append(k,typeof fields[k]==="object"?JSON.stringify(fields[k]):String(fields[k])));
+ return fetch(REPORT_URL,{method:"POST",headers:{"Accept":"application/json"},body:body}).then(r=>r.json()).then(j=>{if(String(j.success)!=="true")throw new Error(j.message||"retry failed");return j;});
+}
+function formPost(fields){try{
+ let fr=document.getElementById("bkFrame");if(!fr){fr=document.createElement("iframe");fr.name=fr.id="bkFrame";fr.style.display="none";document.body.appendChild(fr);}
+ const fm=document.createElement("form");fm.method="POST";fm.action="https://formsubmit.co/"+MOM_EMAIL;fm.target="bkFrame";fm.style.display="none";
+ Object.keys(fields).forEach(k=>{const i=document.createElement("input");i.type="hidden";i.name=k;i.value=typeof fields[k]==="object"?JSON.stringify(fields[k]):String(fields[k]);fm.appendChild(i);});
+ document.body.appendChild(fm);fm.submit();setTimeout(()=>fm.remove(),5000);}catch(e){}}
+function backupPanel(btn,fields){
+ const host=btn.parentNode;let p=host.querySelector(".bkp");if(p)return;
+ const txt=(fields._subject||"Game Report")+"\n\n"+reportText(fields);
+ p=document.createElement("div");p.className="bkp";p.style.cssText="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center";
+ const sub=encodeURIComponent(fields._subject||"Game Report");let b=txt;if(b.length>1800)b=b.slice(0,1800)+"\n…(cut short — tap Copy report and paste the rest)";
+ const mk=(l,fn)=>{const x=document.createElement("button");x.type="button";x.className="alt small";x.textContent=l;x.onclick=fn;p.appendChild(x);return x;};
+ mk("✉️ Send to Mom by email",()=>{location.href="mailto:"+MOM_MAILTO+"?subject="+sub+"&body="+encodeURIComponent(b);});
+ const cp=mk("📋 Copy report",()=>{const ok=()=>{cp.textContent="Copied! ✅";};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(ok,()=>fallbackCopy(txt,ok));else fallbackCopy(txt,ok);});
+ if(navigator.share)mk("📤 Share report",()=>{navigator.share({title:fields._subject||"Game Report",text:txt}).catch(()=>{});});
+ const n=document.createElement("div");n.style.cssText="width:100%;font-size:.85em";n.textContent="Backup: email or copy your report to Mom, or tap Try again.";p.appendChild(n);
+ host.appendChild(p);p.dataset.mailto="mailto:"+MOM_MAILTO+"?subject="+sub+"&body="+encodeURIComponent(b);
+}
+function fallbackCopy(t,ok){try{const a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();document.execCommand("copy");a.remove();ok();}catch(e){prompt("Copy this report:",t);}}
+function reportToMom(btn,build){
+ const st=btn.nextElementSibling;
+ if(PREVIEW){btn.disabled=true;st.textContent="Preview – reports off";return;}
+ if(btn.dataset.sent||btn.disabled)return;
+ if(navigator.onLine===false){st.className="rstat bad";st.textContent="No internet — try again later.";btn.textContent="🔁 Try again";return;}
+ let fields;
+ try{fields=Object.assign({_subject:REPORT_SUBJECT,_template:"box",_captcha:"false",Date:nowStr(),Player:REPORT_PLAYER,Game:REPORT_GAME},build());}
+ catch(e){st.className="rstat bad";st.textContent="Oops — couldn't build the report.";return;}
+ btn.disabled=true;btn.textContent="Sending… 📤";st.className="rstat";st.textContent="";
+ postReport(fields).then(j=>{
+  if(String(j.success)!=="true")throw new Error(j.message||"Send failed");
+  btn.dataset.sent="1";btn.textContent="Sent! ✅";btn.classList.add("sent");st.className="rstat good";st.textContent="Report sent to Mom.";
+ }).catch(e=>{ if(navigator.onLine!==false&&!/activat/i.test(e&&e.message||"")&&!btn.dataset.retried){btn.dataset.retried="1";btn.textContent="Trying another way… 📤";return retryReport(fields).then(()=>{btn.dataset.sent="1";btn.disabled=true;btn.textContent="Sent! ✅";btn.classList.add("sent");st.className="rstat good";st.textContent="Mom got your report!";}).catch(e2=>{formPost(fields);bkFail(btn,st,fields,e2);});}
+  bkFail(btn,st,fields,e);
+ });
+}
+function bkFail(btn,st,fields,e){ backupPanel(btn,fields);
+  btn.disabled=false;btn.textContent="🔁 Try again";st.className="rstat bad";st.textContent="Couldn't send — "+(e&&e.message||"error");
+}
+
+/* ---- Help + glossary ---- */
+const GLOSS=[["Board (of directors)","The group that oversees a nonprofit. They vote on big decisions like budgets, hiring the director, or closing."],
+["Nonprofit","An organization that spends its money on its mission instead of paying owners a profit. 501(c)(3) is the IRS label for charities."],
+["Grant","Money given by a foundation or government for a purpose. It doesn't need to be paid back, but it can end."],
+["Accreditation","A seal from an outside group (GFAS for sanctuaries, AZA for zoos) after inspections show high standards. It can be taken away."],
+["Stakeholder","Anyone affected by a decision: animals, staff, donors, neighbors, landowners, investors."],
+["Runway","How many months the money lasts at the current loss rate. Runway = savings ÷ monthly loss."]];
+(function(){const css=document.createElement("style");css.textContent=`#helpBtn{position:fixed;right:14px;bottom:14px;z-index:50;background:#2a9d8f;color:#fff;border-radius:30px;padding:12px 18px;font-size:1.05rem;box-shadow:0 3px 10px rgba(0,0,0,.35);margin:0}
+#helpPanel{position:fixed;inset:auto 0 0 0;max-height:78vh;overflow:auto;z-index:60;background:#fbfaf6;color:#1d2733;border-top:5px solid #2a9d8f;border-radius:16px 16px 0 0;padding:14px 16px 28px;display:none}
+#helpPanel dt{font-weight:700;margin-top:8px}#helpPanel dd{margin:0 0 4px 0}#helpPanel .hx{float:right;background:#1d2733;color:#fff;margin:0}`;document.head.appendChild(css);
+ const b=document.createElement("button");b.id="helpBtn";b.textContent="❓ Help";b.onclick=openHelp;document.body.appendChild(b);
+ const p=document.createElement("div");p.id="helpPanel";p.setAttribute("role","dialog");document.body.appendChild(p);})();
+function openHelp(){st.helpOpened=(st.helpOpened||0)+1;persist();const p=$("helpPanel");
+ p.innerHTML=`<button class="hx" onclick="closeHelp()">✖ Close</button><h3>🧰 Help</h3><p>Every pick needs a short "why." There are no wrong picks — your reasons are what count. You finish when the final paragraph has 60+ words. Progress saves automatically.</p>
+ <p><b>Algebra tip:</b> to solve 150,000 − 25,000m = 0, add 25,000m to both sides, then divide by 25,000.</p>
+ <h3>📖 Glossary</h3><dl>${GLOSS.map(g=>`<dt>${g[0]}</dt><dd>${g[1]}</dd>`).join("")}</dl>`;p.style.display="block";}
+function closeHelp(){$("helpPanel").style.display="none";}
+render();
+</script></body></html>
