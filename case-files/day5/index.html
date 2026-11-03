@@ -298,6 +298,32 @@ function reportBtn(builder,label,small){
  if(PREVIEW) return `<div class="report"><button type="button" class="rep${small?" small":""}" disabled>📨 Reports off (preview)</button><span class="rstat">Preview – reports off</span></div>`;
  return `<div class="report"><button type="button" class="rep${small?" small":""}" onclick="reportToMom(this,${builder})">${label}</button><span class="rstat" role="status" aria-live="polite"></span></div>`;
 }
+/*BACKUP_SENDER_v1*/
+const MOM_MAILTO=""; // optional real address for the Email button; empty = kid's mail app asks for it
+function reportText(f){return Object.keys(f).filter(k=>k[0]!=="_").map(k=>k+": "+(typeof f[k]==="object"?JSON.stringify(f[k]):f[k])).join("\n");}
+function retryReport(fields){
+ const body=new URLSearchParams();Object.keys(fields).forEach(k=>body.append(k,typeof fields[k]==="object"?JSON.stringify(fields[k]):String(fields[k])));
+ return fetch(REPORT_URL,{method:"POST",headers:{"Accept":"application/json"},body:body}).then(r=>r.json()).then(j=>{if(String(j.success)!=="true")throw new Error(j.message||"retry failed");return j;});
+}
+function formPost(fields){try{
+ let fr=document.getElementById("bkFrame");if(!fr){fr=document.createElement("iframe");fr.name=fr.id="bkFrame";fr.style.display="none";document.body.appendChild(fr);}
+ const fm=document.createElement("form");fm.method="POST";fm.action="https://formsubmit.co/"+MOM_EMAIL;fm.target="bkFrame";fm.style.display="none";
+ Object.keys(fields).forEach(k=>{const i=document.createElement("input");i.type="hidden";i.name=k;i.value=typeof fields[k]==="object"?JSON.stringify(fields[k]):String(fields[k]);fm.appendChild(i);});
+ document.body.appendChild(fm);fm.submit();setTimeout(()=>fm.remove(),5000);}catch(e){}}
+function backupPanel(btn,fields){
+ const host=btn.parentNode;let p=host.querySelector(".bkp");if(p)return;
+ const txt=(fields._subject||"Game Report")+"\n\n"+reportText(fields);
+ p=document.createElement("div");p.className="bkp";p.style.cssText="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center";
+ const sub=encodeURIComponent(fields._subject||"Game Report");let b=txt;if(b.length>1800)b=b.slice(0,1800)+"\n…(cut short — tap Copy report and paste the rest)";
+ const mk=(l,fn)=>{const x=document.createElement("button");x.type="button";x.className="alt small";x.textContent=l;x.onclick=fn;p.appendChild(x);return x;};
+ mk("✉️ Send to Mom by email",()=>{location.href="mailto:"+MOM_MAILTO+"?subject="+sub+"&body="+encodeURIComponent(b);});
+ const cp=mk("📋 Copy report",()=>{const ok=()=>{cp.textContent="Copied! ✅";};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(ok,()=>fallbackCopy(txt,ok));else fallbackCopy(txt,ok);});
+ if(navigator.share)mk("📤 Share report",()=>{navigator.share({title:fields._subject||"Game Report",text:txt}).catch(()=>{});});
+ const n=document.createElement("div");n.style.cssText="width:100%;font-size:.85em";n.textContent="Backup: email or copy your report to Mom, or tap Try again.";p.appendChild(n);
+ host.appendChild(p);p.dataset.mailto="mailto:"+MOM_MAILTO+"?subject="+sub+"&body="+encodeURIComponent(b);
+}
+function fallbackCopy(t,ok){try{const a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();document.execCommand("copy");a.remove();ok();}catch(e){prompt("Copy this report:",t);}}
 function reportToMom(btn,build){
  const st=btn.nextElementSibling;
  if(PREVIEW){btn.disabled=true;st.textContent="Preview – reports off";return;}
@@ -310,10 +336,13 @@ function reportToMom(btn,build){
  postReport(fields).then(j=>{
   if(String(j.success)!=="true")throw new Error(j.message||"Send failed");
   btn.dataset.sent="1";btn.textContent="Sent! ✅";btn.classList.add("sent");st.className="rstat good";st.textContent="Mom got your report!";
- }).catch(e=>{
+ }).catch(e=>{ if(navigator.onLine!==false&&!/activat/i.test(e&&e.message||"")&&!btn.dataset.retried){btn.dataset.retried="1";btn.textContent="Trying another way… 📤";return retryReport(fields).then(()=>{btn.dataset.sent="1";btn.disabled=true;btn.textContent="Sent! ✅";btn.classList.add("sent");st.className="rstat good";st.textContent="Mom got your report!";}).catch(e2=>{formPost(fields);bkFail(btn,st,fields,e2);});}
+  bkFail(btn,st,fields,e);
+ });
+}
+function bkFail(btn,st,fields,e){ backupPanel(btn,fields);
   btn.disabled=false;btn.textContent="🔁 Try again";st.className="rstat bad";
   st.textContent=navigator.onLine===false?"No internet — try again later.":/activat/i.test(e&&e.message||"")?"Almost! Mom needs to switch on reports first. Try again later.":"Oops — that didn't send. Tap to try again!";
- });
 }
 const REPORT_SUBJECT=`Game Report: Cam – Daily History Case Day ${DAY.day} (${DAY.era.replace(/^\S+\s/,"")})`, REPORT_PLAYER="Cam (age 11)", REPORT_GAME="Officer Cam's Case Files — Daily History Cases";
 function caseReport(){
