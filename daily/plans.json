@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "purpose": "One approved daily plan for both checklists. The sample object is preview only and is not an assignment. Progress is not stored in this file.",
+  "children": {
+    "cam": {
+      "firstName": "Cam",
+      "presentation": "compact"
+    },
+    "christian": {
+      "firstName": "Christian",
+      "presentation": "guided"
+    }
+  },
+  "presentations": {
+    "compact": {
+      "pageLead": "Here is the checklist for this day.",
+      "stepsIntro": "Steps",
+      "finishedHeading": "Finished means",
+      "doneLabel": "I finished this",
+      "doneHint": "Mark finished only if the finished line is true.",
+      "helpLabel": "I need help with this",
+      "noteLabel": "Add a short note (optional)",
+      "summaryLead": "here is what you marked for this day.",
+      "emptyFinished": "You have not marked anything finished yet.",
+      "preparingExtra": "When a plan is ready, each task will show steps and a finished line."
+    },
+    "guided": {
+      "pageLead": "Here is the work for this day. Follow the steps in order. Mark a task only when the finished line is true.",
+      "stepsIntro": "Do these steps in order",
+      "finishedHeading": "This is finished when",
+      "doneLabel": "I finished every step",
+      "doneHint": "Mark finished only when every step is done and the finished line is true.",
+      "helpLabel": "I need help before this is finished",
+      "noteLabel": "Add a short note if you want (optional)",
+      "summaryLead": "here is what you marked for this day. A check means you say that task is finished.",
+      "emptyFinished": "You have not marked anything finished yet.",
+      "preparingExtra": "When a plan is ready, each task will list steps and a line that says when it is finished."
+    }
+  },
+  "days": [
+    {
+      "date": "2026-11-12",
+      "status": "preparing",
+      "message": "Your plan is being prepared."
+    }
+  ],
+  "sample": {
+    "heading": "Sample day",
+    "banner": "Preview sample. These are example tasks only. They are not a real assignment, and nothing has been marked finished for you.",
+    "materials": [
+      {
+        "label": "Sample reading card (preview only)",
+        "href": "sample-reading.html"
+      }
+    ],
+    "tasks": [
+      {
+        "id": "sample-read-card",
+        "version": 1,
+        "title": "Read the sample card out loud",
+        "instruction": "Open the sample reading card linked on this page. Read the three sentences out loud.",
+        "steps": [
+          "Open the sample reading card.",
+          "Read each sentence out loud.",
+          "If you miss a word, read that sentence again."
+        ],
+        "finishedMeans": "You have read all three sentences on the sample card out loud."
+      },
+      {
+        "id": "sample-three-sentences",
+        "version": 1,
+        "title": "Write three sentences",
+        "instruction": "On paper, write three sentences about one object you can see.",
+        "steps": [
+          "Choose one object you can see.",
+          "Write a sentence that names the object.",
+          "Write a sentence about its color or size.",
+          "Write a sentence about where it is."
+        ],
+        "finishedMeans": "The paper has three sentences about the same object."
+      },
+      {
+        "id": "sample-count-six",
+        "version": 1,
+        "title": "Count six objects",
+        "instruction": "Use six small, safe objects such as spoons or blocks.",
+        "steps": [
+          "Place exactly six objects in a line.",
+          "Touch each object as you count from one to six.",
+          "Say the last number out loud."
+        ],
+        "finishedMeans": "Six objects are in a line, and you said six."
+      }
+    ]
+  }
+}
