@@ -1,0 +1,323 @@
+:root {
+  --ink: #221e1a;
+  --muted: #3f3a34;
+  --paper: #f3efe7;
+  --card: #fffcf7;
+  --line: #e3dbd0;
+  --forest: #1f3f34;
+  --forest-soft: #e7f2ec;
+  --help: #6a4710;
+  --help-soft: #fbf3e2;
+  --info: #163e6b;
+  --info-soft: #e6eef8;
+  --focus: #1a4f8b;
+  --warning-soft: #f8efe4;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+[hidden] { display: none !important; }
+
+html { font-size: 100%; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 1.125rem;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+html[data-presentation="guided"] body { font-size: 1.25rem; }
+
+.wrap {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 16px 16px 48px;
+}
+
+.skip {
+  position: absolute;
+  left: 12px;
+  top: -48px;
+  background: #fff;
+  color: var(--ink);
+  padding: 10px 14px;
+  border-radius: 10px;
+  z-index: 2;
+}
+
+.skip:focus { top: 12px; }
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+h1, h2, h3, p { overflow-wrap: anywhere; }
+
+h1 {
+  font-size: 1.7rem;
+  line-height: 1.2;
+  margin: 4px 0 8px;
+}
+
+h2 { font-size: 1.25rem; margin: 0 0 10px; }
+
+h3 { font-size: 1.15rem; line-height: 1.3; margin: 0 0 8px; }
+
+.mast, .task, .summary, .panel, .reading {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.panel { margin: 12px 0; }
+
+.mast { margin-bottom: 16px; }
+
+.eyebrow {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--forest);
+}
+
+html[data-mode="preview"] .eyebrow,
+.eyebrow.preview { color: var(--info); }
+
+.lead { margin: 0 0 8px; }
+
+.disclaimer, .hint, footer.caveat {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.disclaimer { margin: 0; font-weight: 700; }
+
+.banner, .preparing {
+  border-radius: 14px;
+  padding: 14px;
+  margin: 12px 0;
+}
+
+.banner {
+  background: var(--info-soft);
+  border: 2px solid var(--info);
+  color: var(--ink);
+  font-weight: 650;
+}
+
+.banner.warning, .preparing {
+  background: var(--warning-soft);
+  border: 2px dashed var(--help);
+  font-weight: 500;
+}
+
+.preparing-title {
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.date-block label, .note-block label, legend {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+input[type="date"], textarea, .selectable {
+  width: 100%;
+  max-width: 100%;
+  font: inherit;
+  color: var(--ink);
+  background: #fff;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+input[type="date"] { min-height: 48px; }
+
+.day-heading { font-weight: 700; margin: 10px 0 0; }
+
+.materials { margin: 0; padding-left: 1.2rem; }
+
+.materials a, .text-link { color: var(--info); }
+
+.task { margin: 12px 0; }
+
+.task[data-mark="done"] { border-color: var(--forest); }
+.task[data-mark="help"] { border-color: var(--help); }
+
+.instruction { margin: 0 0 8px; }
+
+.steps-intro { margin: 8px 0 4px; font-weight: 700; }
+
+.steps { margin: 0 0 12px; padding-left: 1.4rem; }
+
+.steps li { margin: 6px 0; }
+
+html[data-presentation="guided"] .steps {
+  background: var(--forest-soft);
+  border-radius: 12px;
+  padding: 12px 12px 12px 2.2rem;
+  margin: 8px 0 12px;
+}
+
+html[data-presentation="guided"] .steps li { margin: 10px 0; }
+
+.finished {
+  margin: 12px 0;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--forest-soft);
+  border: 2px solid var(--forest);
+}
+
+.finished-heading {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+html[data-presentation="guided"] .finished { font-size: 1.12em; }
+
+.done-hint { margin: 0 0 10px; }
+
+fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-inline-size: 0;
+  max-width: 100%;
+}
+
+.choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 48px;
+  margin: 8px 0;
+  padding: 12px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  max-width: 100%;
+}
+
+.choice input {
+  width: 1.35rem;
+  height: 1.35rem;
+  margin-top: 0.15rem;
+  flex: 0 0 auto;
+  accent-color: var(--forest);
+}
+
+.choice.help input { accent-color: var(--help); }
+
+.choice:has(input:checked) {
+  border-color: var(--forest);
+  background: var(--forest-soft);
+}
+
+.choice.help:has(input:checked) {
+  border-color: var(--help);
+  background: var(--help-soft);
+}
+
+.badge {
+  display: inline-block;
+  margin: 8px 0 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--line);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.task[data-mark="done"] .badge { background: var(--forest-soft); color: var(--forest); }
+.task[data-mark="help"] .badge { background: var(--help-soft); color: var(--help); }
+
+.summary { margin-top: 16px; }
+
+.summary-text {
+  white-space: pre-wrap;
+  user-select: text;
+  -webkit-user-select: text;
+  margin: 0;
+}
+
+.note-block { margin-top: 16px; }
+
+.actions { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+
+button.primary, button.secondary, .link-card {
+  font: inherit;
+  font-weight: 700;
+  min-height: 48px;
+  border-radius: 12px;
+  padding: 12px 16px;
+  width: 100%;
+  text-align: center;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+button.primary {
+  background: var(--forest);
+  color: #fff;
+  border: 2px solid var(--forest);
+}
+
+button.secondary, .link-card {
+  background: var(--card);
+  color: var(--forest);
+  border: 2px solid var(--forest);
+}
+
+.link-card { display: flex; align-items: center; justify-content: center; margin: 8px 0; }
+
+button:disabled { opacity: 0.6; cursor: default; }
+
+.live { min-height: 1.5em; font-weight: 700; }
+
+.selectable { min-height: 10rem; }
+
+footer.caveat { margin-top: 24px; }
+
+footer.caveat p, .panel p { margin: 0 0 10px; }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.reading p { font-size: 1.2rem; }
+
+@media (min-width: 800px) {
+  .wrap { padding: 32px 24px 64px; }
+  .actions { flex-direction: row; flex-wrap: wrap; align-items: flex-start; }
+  button.primary, button.secondary { width: auto; flex: 1 1 14rem; }
+  #send-help, #copy-help { flex-basis: 100%; }
+}
+
+@media (forced-colors: active) {
+  .finished, .banner, .choice, button, .task, .link-card { border: 1px solid CanvasText; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { scroll-behavior: auto !important; }
+}

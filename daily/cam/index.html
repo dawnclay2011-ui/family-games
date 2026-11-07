@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<title>Cam's daily checklist</title>
+<link rel="stylesheet" href="../checklist.css">
+</head>
+<body>
+<a class="skip" href="#checklist">Skip to checklist</a>
+<main id="app" class="wrap" aria-busy="true" data-child="cam" data-mode="plan" data-plans="../plans.json">
+  <p class="loading">Loading checklist…</p>
+</main>
+<noscript><p class="wrap">This checklist needs JavaScript in the browser. It still does not send your checks anywhere.</p></noscript>
+<script type="module" src="../checklist.js"></script>
+</body>
+</html>
