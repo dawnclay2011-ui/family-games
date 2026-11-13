@@ -382,12 +382,16 @@ check("Christian's November 13 list is his own", [
   "Finish your zoo vs. sanctuary paragraph",
   "Finish your grandpa interview sheet",
   "Food Truck Shift 3: The Register Crashed",
+  "Algebra review: Review Shift: Hold the Rounding",
+  "six problems with hints",
+  "Round only at the end",
   "Optional: Thanksgiving budget, Worksheet A Steps 1-3",
   "scale the recipes for 6",
   "$50 target",
 ].every((line) => christianTodayText.includes(line)));
 check("the budget task has no link", christianToday.host.querySelector("#task-thanksgiving-budget a") == null);
 check("Christian's shift link is present", [...christianToday.host.querySelectorAll("#checklist a")].some((anchor) => anchor.href.includes("/food-truck/day3/")));
+check("Christian's review link is present", christianToday.host.querySelector("#task-hold-the-rounding a")?.href.includes("/food-truck/review/"));
 check("Christian does not see Cam's November 13 work", !/\bCam\b|woods movie|rebus|Cursive practice|Rune Stone|Salt and Gold|new laptop|case-files/.test(christianTodayText));
 christianToday.host.querySelector("#day-input").value = "2026-11-14";
 christianToday.host.querySelector("#day-input").dispatchEvent(new Event("change", { bubbles: true }));

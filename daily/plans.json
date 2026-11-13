@@ -147,6 +147,25 @@
               ]
             },
             {
+              "id": "hold-the-rounding",
+              "version": 1,
+              "title": "Algebra review: Review Shift: Hold the Rounding",
+              "instruction": "Work six problems with hints. Round only at the end. Send the report to Mom when it clears.",
+              "steps": [
+                "Open Review Shift: Hold the Rounding.",
+                "Work the six problems, using the hints.",
+                "Round only at the end.",
+                "Send the report to Mom when it clears."
+              ],
+              "finishedMeans": "You worked the six problems, rounded only at the end, and sent the report to Mom.",
+              "materials": [
+                {
+                  "label": "Review Shift: Hold the Rounding",
+                  "href": "https://dawnclay2011-ui.github.io/family-games/food-truck/review/"
+                }
+              ]
+            },
+            {
               "id": "thanksgiving-budget",
               "version": 1,
               "title": "Optional: Thanksgiving budget, Worksheet A Steps 1-3",
