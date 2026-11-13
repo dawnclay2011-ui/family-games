@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta name="robots" content="noindex">
+<title>Daily Case #11: The Missing Script Page — Officer Cam's Case Files</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Trebuchet MS",Arial,sans-serif;background:#1c2541;color:#1c1c1c;min-height:100vh}
+  header{background:#0b132b;color:#ffd166;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+  header h1{margin:0;font-size:1.3rem;letter-spacing:1px}
+  .badge{background:#ffd166;color:#0b132b;border-radius:20px;padding:4px 12px;font-weight:bold;font-size:.9rem}
+  main{max-width:860px;margin:18px auto;padding:0 12px}
+  .card{background:#fdf6e3;border-radius:12px;padding:18px;margin-bottom:16px;box-shadow:0 4px 0 #0b132b}
+  .file{background:#f4e1b0;border-left:8px solid #c0392b}
+  h2{margin-top:0;color:#0b132b}
+  h3{color:#0b132b}
+  button{font:inherit;font-weight:bold;border:none;border-radius:8px;padding:10px 16px;margin:4px;cursor:pointer;background:#3a86ff;color:#fff}
+  button:hover{filter:brightness(1.1)}
+  button.alt{background:#6c757d}
+  button.done{background:#2a9d8f}
+  button.small{font-size:.85rem;padding:7px 12px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  .suspect{background:#fff;border-radius:10px;padding:12px;border:2px solid #ddd}
+  .suspect .face{font-size:2.4rem}
+  .suspect .role{font-size:.85rem;color:#666;font-style:italic}
+  a{color:#0b132b}
+  .msg{margin-top:10px;font-weight:bold}
+  .ok{color:#2a9d8f}.bad{color:#c0392b}
+  .evidence li{margin:6px 0}
+  .hint{font-size:.9rem;color:#555;font-style:italic}
+  .stamp{display:inline-block;border:4px solid #c0392b;color:#c0392b;padding:6px 14px;font-size:1.6rem;transform:rotate(-8deg);font-weight:900;margin:10px 0}
+  .report{margin:8px 0}.rstat{display:block;margin-top:4px;font-weight:bold;font-size:.95rem}.rstat.good{color:#2a9d8f}.rstat.bad{color:#c0392b}
+  button.rep{background:#8e44ad}button.rep.sent{background:#2a9d8f}button:disabled{cursor:default;filter:none;opacity:.9}
+  button{max-width:100%;white-space:normal}
+  .opt{display:block;width:100%;text-align:left;background:#fff;color:#0b132b;border:2px solid #3a86ff;margin:8px 0;padding:12px 14px}
+  .opt.wrong{background:#fde2e1;border-color:#c0392b;color:#8a1c12;text-decoration:line-through}
+  .opt.right{background:#d8f3ee;border-color:#2a9d8f;color:#14532d}
+  .factfile{background:#e8f1ff;border-left:5px solid #3a86ff;padding:10px 12px;border-radius:8px;margin:10px 0}
+  .storynote{background:#fff;border-left:5px solid #8e44ad;padding:8px 12px;border-radius:8px}
+  .era{display:inline-block;background:#0b132b;color:#ffd166;border-radius:14px;padding:3px 10px;font-size:.85rem;font-weight:bold}
+  textarea{font:inherit;width:100%;min-height:120px;padding:10px;border-radius:8px;border:2px solid #aaa;resize:vertical;font-size:1rem}
+  .chip{background:#ffd166;color:#0b132b;font-size:.9rem;padding:7px 11px;border-radius:16px;width:auto}
+  .counter{font-size:.9rem;font-weight:bold;margin:6px 0}
+  .nextcase{background:#0b132b;color:#ffd166;border-radius:12px;padding:16px;margin-top:12px;text-align:center}
+  .nextcase a{color:#fff;font-weight:bold;font-size:1.05rem}
+  blockquote{background:#fff;border-left:5px solid #8e44ad;margin:10px 0;padding:10px 12px;white-space:pre-wrap;text-align:left}
+  table.sc{border-collapse:collapse;margin:8px auto}table.sc td{border:1px solid #bbb;padding:6px 10px;background:#fff;text-align:left}
+  summary{cursor:pointer;padding:4px 0}
+  .sources{font-size:.92rem}
+  .sources ul{padding-left:18px}
+  .sources a{word-break:break-word}
+  .blankrow{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+  .blank{min-width:36px;height:44px;padding:0 8px;border:2px solid #0b132b;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-weight:900;background:#fff;color:#0b132b;font-size:1.15rem}
+  button.blank{width:auto}
+  .blank.lock{background:#e8f6f3}
+  .letters{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
+  button.tile{width:46px;height:46px;padding:0;font-size:1.15rem}
+  .spellword{background:#fff;border-radius:10px;padding:10px;margin:10px 0}
+  .matchrow{margin:12px 0;padding-bottom:8px;border-bottom:1px solid #ead9b0}
+  #helpBtn{position:static;z-index:50;background:#2a9d8f;color:#fff;border:none;border-radius:30px;padding:8px 14px;font-size:1rem;font-weight:800;width:auto;margin:0;flex:0 0 auto}
+  #helpPanel{position:fixed;inset:auto 0 0 0;max-height:75vh;overflow:auto;z-index:60;background:#fffdf5;border-top:5px solid #2a9d8f;border-radius:16px 16px 0 0;padding:14px 16px 24px;box-shadow:0 -4px 16px rgba(0,0,0,.3);display:none}
+  #helpPanel h3{margin:6px 0;color:#0b132b}
+  #helpPanel dt{font-weight:800;margin-top:8px;color:#0b132b}
+  #helpPanel dd{margin:0 0 4px 0}
+  .gw{border-bottom:2px dotted #2a9d8f;cursor:pointer}
+  #wordPop{position:fixed;left:10px;right:10px;bottom:80px;z-index:70;background:#0b132b;color:#fff;border-radius:12px;padding:12px 14px;font-size:1.05rem;display:none;box-shadow:0 3px 12px rgba(0,0,0,.4)}
+</style>
+</head>
+<body>
+<header><h1>🚔 OFFICER CAM'S CASE FILES</h1><span class="badge" id="rank"></span></header>
+<main id="app"></main>
+<script>
+const TOTAL_DAYS = 15;
+const DAY = {"day":11,"date":"Saturday, Nov 14","dateShort":"Sat, Nov 14","topic":"Story structure (ELA)","title":"Daily Case #11: The Missing Script Page","shortTitle":"The Missing Script Page","era":"🌲 The Woods Movie","lengthNote":"Short case. A quick story check before filming day.","intro":"Tomorrow the cameras roll at Ouabache State Park. Today the last page of the script is missing, and the scene cards blew into a pile. Officer Cam has to put the story back in order and name the problem in his own woods movie.","closed":"The story is back in order. Your movie has a problem worth filming.","plan":["Spot a setting and a climax.","Put six scene cards in story order.","Practice two spelling words. Hints are free.","Write the problem of your own woods movie in one to three sentences."],"next":{"day":12,"title":"The Shot List Mix-Up","teaser":"A quick shot-list check before the cameras roll."},"help":{"hints":{"intro":"Tap Open the case file. Underlined words can be tapped for a meaning. There is no clock.","choice":"Read every answer. A wrong one stays crossed out. Use the hint sentence and try again.","order":"Tap cards to build the order. Tap a placed card to send it back. Then press Check.","match":"Match each prompt. A wrong pick is crossed out for that row only.","spell":"Tap letters to fill the boxes. Tap a box to take a letter back. The hint reveals one letter and does not change your stars.","write":"Write one to three sentences and end with a period. A yellow starter can help you begin.","civics":"Read the civics file. Say who decides the park rules, and name one rule. One to three sentences.","done":"Nice work. Your note can go to Mom. Spelling hints are in her report only."},"common":{"clue":"A fact that helps you solve a mystery.","evidence":"A clue you can show someone else."},"day":{"setting":"The place and time of a story.","character":"A person or animal the story is about.","problem":"What goes wrong and starts the adventure.","rising action":"The part where someone tries to fix the problem and things get harder.","climax":"The big turning moment, when the problem is faced head-on.","resolution":"How the story ends and the problem is settled."}},"steps":[{"type":"choice","reportLabel":"Setting","title":"Clue: Where and when","q":"Which sentence is the SETTING of this movie story?","options":["A cool November morning in the woods at Ouabache State Park.","Cam reads the last line out loud and the crew cheers.","The last page is missing, so nobody knows the ending.","The crew searches the leaves and finds torn scraps."],"a":0,"hint":"A setting is the place and the time. It is not the problem and not the big ending moment.","explain":"The setting is where and when: the woods at Ouabache State Park, on a November morning. The missing page is the problem. The search is rising action. Reading the last line out loud is the climax.","evidence":"Setting: the woods at Ouabache, on a November morning."},{"type":"choice","reportLabel":"Climax","title":"Clue: The big moment","q":"Which sentence is the CLIMAX?","options":["Cam, age 11, is the director with a red notebook.","The crew hunts through the leaves.","Cam fits the scraps together and reads the ending out loud.","The script is whole again and everyone knows the ending."],"a":2,"hint":"The climax is the big turn, not the quiet ending after it. Who does the brave thing?","explain":"The climax is the biggest moment: Cam fits the scraps together and reads the ending. The quiet part after that, when the script is whole, is the resolution. Cam with his notebook is a character. The hunt through the leaves is rising action.","evidence":"Climax: the scraps are read out loud. Resolution comes after that."},{"type":"order","reportLabel":"Scene order","title":"Put the scene cards in story order","q":"Story order is setting, character, problem, rising action, climax, resolution. The label is on each card. Put all six in that order.","cards":[{"id":"setting","text":"Setting — A November morning in the woods at Ouabache. The crew unpacks."},{"id":"character","text":"Character — Cam, age 11, is the director with a red notebook."},{"id":"problem","text":"Problem — The last script page is missing, so nobody knows the ending."},{"id":"rising","text":"Rising action — The crew searches the leaves and finds torn scraps."},{"id":"climax","text":"Climax — Cam fits the scraps together and reads the ending out loud."},{"id":"resolution","text":"Resolution — The script is whole. Everyone knows the ending."}],"order":["setting","character","problem","rising","climax","resolution"],"pile":["problem","resolution","setting","climax","character","rising"],"hint":"Start with where and when, then who, then what goes wrong.","hint2":"After the problem: the search, then the big read-aloud, then the calm ending.","explain":"A story usually walks in that order: setting, character, problem, rising action, climax, resolution. Your scene cards are a whole page again.","evidence":"The missing page is back in story order."},{"type":"spell","reportLabel":"Spelling","title":"Spelling practice","q":"Two movie words. Fill the boxes, then check. If you get stuck, reveal one letter.","fact":"You will use both words tomorrow. One is the written plan of the movie. The other is a single moment you film.","words":[{"word":"script","prompt":"Unscramble the written plan of a movie."},{"word":"scene","given":[true,false,false,true,true],"prompt":"Fill in the word for one moment you film. Some letters are locked."}],"explain":"Nice spelling. Those words stay in the case file for Mom, and they do not change your stars."},{"type":"write","reportLabel":"Movie problem","field":"report","title":"Your movie's problem","q":"In one to three sentences, what is the problem in YOUR woods movie? Say what goes wrong.","starters":["The problem in my movie is ","My main character has to "],"placeholder":"The problem in my movie is ","explain":""}]};
+const KEY = "ocamDaily";
+const DK = "d" + DAY.day;
+const HKEY = "ocamHelp";
+const PTS = {first:10, second:6, later:3, write:20};
+
+let all; try { all = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { all = {}; }
+let st = all[DK] || null;
+
+function emptyAnswer(step) {
+  if (step.type === "choice") return { tries: 0, ok: false, picked: [] };
+  if (step.type === "order") return { tries: 0, ok: false, placed: [], pool: (step.pile || []).slice() };
+  if (step.type === "match") return { tries: 0, ok: false, rows: step.pairs.map(function () { return { ok: false, picked: [] }; }) };
+  if (step.type === "spell") return { tries: 0, ok: false, words: step.words.map(initWord), msg: "" };
+  if (step.type === "write") return { tries: 0, ok: false, text: "" };
+  return { tries: 0, ok: false };
+}
+function fresh(keep) {
+  return {
+    v: 1, stage: "intro", step: 0,
+    answers: DAY.steps.map(emptyAnswer),
+    report: "", civics: "", proud: "",
+    activeSec: 0, startedAt: null, finishedAt: null,
+    score: 0, stars: 0,
+    best: keep && keep.best ? keep.best : 0,
+    plays: keep && keep.plays ? keep.plays : 0,
+    autoSent: !!(keep && keep.autoSent),
+    lastDone: keep && keep.lastDone ? keep.lastDone : null
+  };
+}
+function saveOk(s) {
+  return !!(s && s.v === 1 && Array.isArray(s.answers) && s.answers.length === DAY.steps.length);
+}
+if (!saveOk(st)) st = fresh(st);
+function persist() {
+  all[DK] = st;
+  try { localStorage.setItem(KEY, JSON.stringify(all)); } catch (e) {}
+  badge();
+}
+function badge() {
+  var el = document.getElementById("rank");
+  if (el) el.textContent = "Day " + DAY.day + " of " + TOTAL_DAYS + " • " + DAY.dateShort;
+}
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+const app = document.getElementById("app");
+function toTop() { try { window.scrollTo(0, 0); } catch (e) {} }
+setInterval(function () {
+  if (document.visibilityState === "visible" && st.stage === "play") { st.activeSec += 5; persist(); }
+}, 5000);
+
+function caseHeader(compact) {
+  var body = compact
+    ? "<details><summary class=\"hint\">Re-read the case story</summary><p>" + esc(DAY.intro) + "</p></details>"
+    : "<p>" + esc(DAY.intro) + "</p>";
+  return "<div class=\"card file\"><span class=\"era\">" + esc(DAY.era) + "</span><h2>" + esc(DAY.title) + "</h2>" + body + "</div>";
+}
+function peopleHTML() {
+  if (!DAY.storyPeople) return "";
+  return "<div class=\"card\"><h2>Story file</h2><p class=\"storynote\">" + esc(DAY.storyNote) + "</p><div class=\"grid\">" +
+    DAY.storyPeople.map(function (s) {
+      return "<div class=\"suspect\"><div class=\"face\">" + esc(s.face) + "</div><b>" + esc(s.name) + "</b><div class=\"role\">" + esc(s.role) + "</div><p>" + esc(s.note) + "</p></div>";
+    }).join("") + "</div></div>";
+}
+function evidenceHTML() {
+  var ev = [];
+  DAY.steps.forEach(function (step, i) {
+    if (step.evidence && st.answers[i] && st.answers[i].ok) ev.push(step.evidence);
+  });
+  var total = DAY.steps.filter(function (s) { return !!s.evidence; }).length;
+  return "<div class=\"card\"><h2>Evidence board (" + ev.length + "/" + total + ")</h2><ul class=\"evidence\">" +
+    (ev.map(function (e) { return "<li>" + esc(e) + "</li>"; }).join("") || "<li class='hint'>No evidence yet. Work the first clue.</li>") +
+    "</ul></div>";
+}
+function sourcesHTML() {
+  if (!DAY.sources || !DAY.sources.length) return "";
+  return "<div class=\"card sources\"><h2>Case sources</h2><ul>" + DAY.sources.map(function (s) {
+    return "<li><a href=\"" + esc(s.url) + "\" target=\"_blank\" rel=\"noopener\">" + esc(s.label) + "</a></li>";
+  }).join("") + "</ul>" + (DAY.sourceNote ? "<p>" + esc(DAY.sourceNote) + "</p>" : "") + "</div>";
+}
+function stationLink() {
+  return "<p><a href=\"../\">⬅ Station home</a></p>";
+}
+
+function intro() {
+  helpStage = "intro";
+  var items = DAY.plan.map(function (p) { return "<li>" + esc(p) + "</li>"; }).join("");
+  app.innerHTML = caseHeader(false) + peopleHTML() +
+    "<div class=\"card\"><h2>Today's assignment, Officer Cam 👮</h2>" +
+    "<p>📅 <b>" + esc(DAY.date) + "</b> — <b>" + esc(DAY.topic) + "</b></p>" +
+    "<p>" + esc(DAY.lengthNote) + "</p><ol>" + items + "</ol>" +
+    "<p>Wrong answers get a hint. You can try again. There is no clock.</p>" +
+    "<button type=\"button\" id=\"openBtn\" onclick=\"startCase()\">🔎 Open the case file</button></div>" +
+    sourcesHTML();
+}
+function startCase() {
+  if (!st.startedAt) st.startedAt = new Date().toISOString();
+  st.stage = "play";
+  persist();
+  render();
+  toTop();
+}
+function goIntro() { st.stage = "intro"; persist(); render(); toTop(); }
+
+let helpStage = "intro";
+function render() {
+  if (st.stage === "intro") return intro();
+  if (st.stage === "done") return doneScreen();
+  return stepScreen();
+}
+function stepScreen() {
+  var step = DAY.steps[st.step];
+  var rec = st.answers[st.step];
+  if (!step || !rec) {
+    st.step = 0;
+    st.stage = st.lastDone ? "done" : "intro";
+    persist();
+    return render();
+  }
+  helpStage = step.type === "write" && step.field === "civics" ? "civics" : step.type;
+  var body = "";
+  if (step.type === "choice") body = choiceHTML(step, rec);
+  else if (step.type === "order") body = orderHTML(step, rec);
+  else if (step.type === "match") body = matchHTML(step, rec);
+  else if (step.type === "spell") body = spellHTML(step, rec);
+  else if (step.type === "write") body = writeHTML(step, rec);
+  app.innerHTML = caseHeader(true) + peopleHTML() + evidenceHTML() +
+    "<div class=\"card\" id=\"cluecard\"><p class=\"hint\">Part " + (st.step + 1) + " of " + DAY.steps.length + "</p>" + body + "</div>" +
+    "<p><button type=\"button\" class=\"alt\" onclick=\"goIntro()\">⬅ Back to case cover</button></p>" +
+    stationLink() + sourcesHTML();
+  if (step.type === "write") onWrite();
+  var el = document.getElementById("cluecard");
+  if (el && el.scrollIntoView && st.step > 0) el.scrollIntoView({ block: "start" });
+}
+function nextLabel() {
+  if (st.step + 1 >= DAY.steps.length) return "Close the case ▶";
+  var n = DAY.steps[st.step + 1];
+  if (n.type === "write" && n.field === "civics") return "Open the court file ▶";
+  if (n.type === "write") return "Write your note ▶";
+  return "Next ▶";
+}
+function nextBlock(step) {
+  if (!step.explain) return "<button type=\"button\" id=\"nextBtn\" onclick=\"nextStep()\">" + nextLabel() + "</button>";
+  return "<div class=\"factfile\"><b>Fact file:</b> " + esc(step.explain) + "</div><button type=\"button\" id=\"nextBtn\" onclick=\"nextStep()\">" + nextLabel() + "</button>";
+}
+function nextStep() {
+  if (st.answers[st.step]) st.answers[st.step].ok = true;
+  st.step++;
+  if (st.step >= DAY.steps.length) { st.stage = "done"; finish(); }
+  persist();
+  render();
+  toTop();
+}
+
+function choiceHTML(step, rec) {
+  var opts = step.options.map(function (o, j) {
+    var cls = rec.ok && j === step.a ? "right" : (rec.picked.indexOf(j) >= 0 ? "wrong" : "");
+    var dis = rec.ok || rec.picked.indexOf(j) >= 0 ? " disabled" : "";
+    return "<button type=\"button\" class=\"opt " + cls + "\"" + dis + " onclick=\"pickOpt(" + j + ")\">" +
+      String.fromCharCode(65 + j) + ". " + esc(o) + "</button>";
+  }).join("");
+  var msg = !rec.ok && rec.picked.length ? "<p class=\"bad\">Not quite, Officer. " + esc(step.hint) + " You can try again.</p>" : "";
+  return "<h2>" + esc(step.title) + "</h2><p>" + esc(step.q) + "</p>" + opts + msg + (rec.ok ? nextBlock(step) : "");
+}
+function pickOpt(j) {
+  var step = DAY.steps[st.step], rec = st.answers[st.step];
+  if (!step || step.type !== "choice" || rec.ok || rec.picked.indexOf(j) >= 0) return;
+  rec.picked.push(j);
+  rec.tries++;
+  if (j === step.a) rec.ok = true;
+  persist();
+  stepScreen();
+}
+
+function cardText(step, id) {
+  for (var i = 0; i < step.cards.length; i++) if (step.cards[i].id === id) return step.cards[i].text;
+  return id;
+}
+function orderHTML(step, rec) {
+  var pool = rec.pool.map(function (id) {
+    return "<button type=\"button\" class=\"opt\" data-card-id=\"" + esc(id) + "\" onclick=\"orderAdd('" + id + "')\">" + esc(cardText(step, id)) + "</button>";
+  }).join("") || "<p class=\"hint\">All cards are in your order.</p>";
+  var placed = rec.placed.map(function (id, i) {
+    return "<button type=\"button\" class=\"opt" + (rec.ok ? " right" : "") + "\" data-placed=\"" + i + "\" onclick=\"orderRemove(" + i + ")\">" + (i + 1) + ". " + esc(cardText(step, id)) + "</button>";
+  }).join("") || "<p class=\"hint\">Tap a card to put it first.</p>";
+  var msg = "";
+  if (!rec.ok && rec.tries) {
+    msg = "<p class=\"bad\">Not quite. " + esc(step.hint) + (rec.tries >= 2 ? " " + esc(step.hint2 || "") : "") + " Tap a placed card to send it back, then try again.</p>";
+  }
+  var check = rec.ok ? "" : "<button type=\"button\" id=\"orderCheck\" onclick=\"orderCheck()\">Check this order</button>";
+  return "<h2>" + esc(step.title) + "</h2><p>" + esc(step.q) + "</p>" +
+    "<h3>Cards</h3>" + pool + "<h3>Your order</h3>" + placed + check + msg + (rec.ok ? nextBlock(step) : "");
+}
+function orderAdd(id) {
+  var rec = st.answers[st.step];
+  if (!rec || rec.ok) return;
+  var p = rec.pool.indexOf(id);
+  if (p < 0) return;
+  rec.pool.splice(p, 1);
+  rec.placed.push(id);
+  persist();
+  stepScreen();
+}
+function orderRemove(index) {
+  var rec = st.answers[st.step];
+  if (!rec || rec.ok) return;
+  var id = rec.placed.splice(index, 1)[0];
+  if (id) rec.pool.push(id);
+  persist();
+  stepScreen();
+}
+function orderCheck() {
+  var step = DAY.steps[st.step], rec = st.answers[st.step];
+  if (!rec || rec.ok) return;
+  if (rec.placed.length !== step.order.length) {
+    rec.msg = "short";
+    var m = document.getElementById("m");
+    if (!m) {
+      var host = document.getElementById("cluecard");
+      if (host) {
+        var d = document.createElement("p");
+        d.id = "m"; d.className = "bad";
+        d.textContent = "Place every card, then check.";
+        host.appendChild(d);
+      }
+    }
+    return;
+  }
+  rec.tries++;
+  var good = rec.placed.every(function (id, i) { return id === step.order[i]; });
+  if (good) rec.ok = true;
+  persist();
+  stepScreen();
+}
+
+function matchHTML(step, rec) {
+  var rows = step.pairs.map(function (pair, ri) {
+    var r = rec.rows[ri];
+    var btns = pair.options.map(function (o, j) {
+      var cls = r.ok && j === pair.a ? "right" : (r.picked.indexOf(j) >= 0 ? "wrong" : "");
+      var dis = rec.ok || r.ok || r.picked.indexOf(j) >= 0 ? " disabled" : "";
+      return "<button type=\"button\" class=\"opt " + cls + "\"" + dis + " onclick=\"matchPick(" + ri + "," + j + ")\">" + esc(o) + "</button>";
+    }).join("");
+    var note = !r.ok && r.picked.length ? "<p class=\"bad\">Not quite. " + esc(pair.hint) + "</p>" : (r.ok ? "<p class=\"ok\">" + esc(pair.why) + "</p>" : "");
+    return "<div class=\"matchrow\"><p><b>" + (ri + 1) + ". " + esc(pair.prompt) + "</b></p>" + btns + note + "</div>";
+  }).join("");
+  return "<h2>" + esc(step.title) + "</h2><p>" + esc(step.q) + "</p>" + rows + (rec.ok ? nextBlock(step) : "");
+}
+function matchPick(row, j) {
+  var step = DAY.steps[st.step], rec = st.answers[st.step];
+  if (!rec || rec.ok) return;
+  var pair = step.pairs[row], r = rec.rows[row];
+  if (r.ok || r.picked.indexOf(j) >= 0) return;
+  r.picked.push(j);
+  if (j === pair.a) r.ok = true;
+  else rec.tries++;
+  if (rec.rows.every(function (x) { return x.ok; })) rec.ok = true;
+  persist();
+  stepScreen();
+}
+
+function mixBank(arr, seed) {
+  var a = arr.slice();
+  var h = 2166136261;
+  for (var i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 16777619);
+  for (var n = a.length - 1; n > 0; n--) {
+    h = Math.imul(h ^ (n + 17), 16777619) >>> 0;
+    var j = h % (n + 1);
+    var t = a[n]; a[n] = a[j]; a[j] = t;
+  }
+  if (a.length > 1 && a.map(function (x) { return x.ch; }).join("") === arr.map(function (x) { return x.ch; }).join("")) {
+    var s = a[0]; a[0] = a[a.length - 1]; a[a.length - 1] = s;
+  }
+  return a;
+}
+function initWord(spec) {
+  var chars = spec.word.toLowerCase().split("");
+  var given = spec.given || chars.map(function () { return false; });
+  var slots = chars.map(function (ch, i) { return given[i] ? ch : ""; });
+  var locked = given.slice();
+  var bank = [];
+  chars.forEach(function (ch, i) { if (!given[i]) bank.push({ ch: ch, used: false }); });
+  return { slots: slots, locked: locked, bank: mixBank(bank, spec.word), hints: 0, tries: 0, solved: false, firstTry: false };
+}
+function freeLetter(w, ch) {
+  var b = w.bank.filter(function (x) { return x.used && x.ch === ch; })[0];
+  if (b) b.used = false;
+  else w.bank.push({ ch: ch, used: false });
+}
+function spellHTML(step, rec) {
+  var blocks = step.words.map(function (spec, wi) {
+    var w = rec.words[wi];
+    var slots = w.slots.map(function (s, si) {
+      var ch = s ? esc(s.toUpperCase()) : "&nbsp;";
+      if (w.locked[si]) return "<div class=\"blank lock\">" + ch + "</div>";
+      return "<button type=\"button\" class=\"blank\" data-spell-slot=\"" + wi + ":" + si + "\" onclick=\"spellSlot(" + wi + "," + si + ")\">" + ch + "</button>";
+    }).join("");
+    var bank = w.bank.map(function (b, bi) {
+      if (b.used) return "";
+      return "<button type=\"button\" class=\"tile\" data-spell-bank=\"" + wi + ":" + bi + "\" onclick=\"spellBank(" + wi + "," + bi + ")\">" + esc(b.ch.toUpperCase()) + "</button>";
+    }).join("");
+    var state = w.solved ? "<p class=\"ok\">Spelled it. Nice work.</p>" : "";
+    var hintBtn = w.solved ? "" : "<button type=\"button\" class=\"alt\" data-hint=\"" + wi + "\" onclick=\"spellHint(" + wi + ")\">Hint: reveal one letter</button>";
+    return "<div class=\"spellword\"><p><b>" + esc(spec.prompt) + "</b></p><div class=\"blankrow\">" + slots + "</div><div class=\"letters\">" + bank + "</div>" + hintBtn + state + "</div>";
+  }).join("");
+  var msg = !rec.ok && rec.msg ? "<p class=\"bad\">" + esc(rec.msg) + "</p>" : "";
+  var check = rec.ok ? nextBlock(step) : "<button type=\"button\" id=\"spellCheck\" onclick=\"spellCheck()\">Check spelling</button>";
+  return "<h2>" + esc(step.title) + "</h2><p>" + esc(step.q) + "</p>" +
+    (step.fact ? "<div class=\"factfile\">" + esc(step.fact) + "</div>" : "") +
+    "<p class=\"hint\">Practice only. A hint reveals one letter. Spelling does not change your stars.</p>" +
+    blocks + check + msg;
+}
+function spellBank(wi, bi) {
+  var step = DAY.steps[st.step], rec = st.answers[st.step];
+  if (!rec || rec.ok) return;
+  var w = rec.words[wi], b = w.bank[bi];
+  if (!w || w.solved || !b || b.used) return;
+  var slot = -1;
+  for (var i = 0; i < w.slots.length; i++) if (!w.locked[i] && !w.slots[i]) { slot = i; break; }
+  if (slot < 0) return;
+  w.slots[slot] = b.ch;
+  b.used = true;
+  rec.msg = "";
+  persist();
+  stepScreen();
+}
+function spellSlot(wi, si) {
+  var rec = st.answers[st.step];
+  if (!rec || rec.ok) return;
+  var w = rec.words[wi];
+  if (!w || w.solved || w.locked[si] || !w.slots[si]) return;
+  freeLetter(w, w.slots[si]);
+  w.slots[si] = "";
+  rec.msg = "";
+  persist();
+  stepScreen();
+}
+function spellHint(wi) {
+  var step = DAY.steps[st.step], rec = st.answers[st.step];
+  if (!rec || rec.ok) return;
+  var spec = step.words[wi], w = rec.words[wi];
+  if (!w || w.solved) return;
+  var chars = spec.word.toLowerCase().split("");
+  var idx = -1;
+  for (var i = 0; i < chars.length; i++) if (!w.locked[i]) { idx = i; break; }
+  if (idx < 0) return;
+  var need = chars[idx];
+  if (w.slots[idx] && w.slots[idx] !== need) {
+    freeLetter(w, w.slots[idx]);
+    w.slots[idx] = "";
+  }
+  if (w.slots[idx] !== need) {
+    var pulled = false;
+    for (var k = 0; k < w.slots.length; k++) {
+      if (k !== idx && !w.locked[k] && w.slots[k] === need) { w.slots[k] = ""; pulled = true; break; }
+    }
+    if (!pulled) {
+      var tile = w.bank.filter(function (x) { return !x.used && x.ch === need; })[0];
+      if (tile) tile.used = true;
+    }
+    w.slots[idx] = need;
+  }
+  w.locked[idx] = true;
+  w.hints++;
+  rec.msg = "";
+  persist();
+  stepScreen();
+}
+function spellCheck() {
+  var step = DAY.steps[st.step], rec = st.answers[st.step];
+  if (!rec || rec.ok) return;
+  var msg = "";
+  step.words.forEach(function (spec, wi) {
+    var w = rec.words[wi];
+    if (w.solved) return;
+    if (w.slots.some(function (s) { return !s; })) { msg = "Fill every box. The hint button can add one letter."; return; }
+    w.tries++;
+    if (w.slots.join("") === spec.word.toLowerCase()) {
+      w.solved = true;
+      w.firstTry = w.tries === 1 && w.hints === 0;
+    } else {
+      msg = "Not quite. Tap a box to take a letter back, or reveal one letter. This does not change your stars.";
+    }
+  });
+  rec.msg = msg;
+  if (step.words.every(function (s, wi) { return rec.words[wi].solved; })) rec.ok = true;
+  persist();
+  stepScreen();
+}
+
+function words(t) { return (String(t || "").trim().match(/[A-Za-z0-9'’-]+/g) || []).length; }
+function sentences(t) { return String(t || "").split(/[.!?]+/).filter(function (x) { return words(x) >= 3; }).length; }
+function writeHTML(step) {
+  var starters = (step.starters || []).map(function (s, k) {
+    return "<button type=\"button\" class=\"chip\" onclick=\"addStarter(" + k + ")\">" + esc(s.trim()) + "…</button>";
+  }).join("");
+  var fileLabel = step.field === "civics" ? "⚖️ File this answer" : (step.field === "proud" ? "🌟 File my note" : "📁 File my note");
+  return "<h2>" + esc(step.title) + "</h2>" +
+    (step.file ? "<div class=\"factfile\"><b>" + esc(step.fileTitle || "File") + ":</b> " + esc(step.file) + "</div>" : "") +
+    "<p>" + esc(step.q) + "</p><div>" + starters + "</div>" +
+    "<textarea id=\"rep\" placeholder=\"" + esc(step.placeholder || "Write 1 to 3 sentences.") + "\" oninput=\"onWrite()\">" + esc(st[step.field] || "") + "</textarea>" +
+    "<div class=\"counter\" id=\"cnt\"></div>" +
+    "<button type=\"button\" class=\"done\" id=\"fileBtn\" onclick=\"fileWrite()\">" + fileLabel + "</button><div class=\"msg\" id=\"m\"></div>";
+}
+function addStarter(k) {
+  var step = DAY.steps[st.step];
+  var ta = document.getElementById("rep");
+  if (!ta) return;
+  var t = ta.value.replace(/\s+$/, "");
+  var bit = step.starters[k];
+  t += (t && !/[.!?]$/.test(t) ? ". " : (t ? " " : "")) + bit;
+  ta.value = t;
+  try { ta.focus(); ta.setSelectionRange(t.length, t.length); } catch (e) {}
+  onWrite();
+}
+function onWrite() {
+  var step = DAY.steps[st.step];
+  var ta = document.getElementById("rep");
+  if (!ta || !step) return;
+  st[step.field] = ta.value;
+  persist();
+  var w = words(ta.value), s = sentences(ta.value);
+  var cnt = document.getElementById("cnt");
+  if (!cnt) return;
+  var enough = s >= 1 && w >= 5;
+  cnt.innerHTML = "<span class=\"" + (s >= 1 ? "ok" : "bad") + "\">Sentences: " + s + " (1 to 3 is plenty)</span> &nbsp;•&nbsp; <span class=\"" + (w >= 5 ? "ok" : "bad") + "\">Words: " + w + "</span>" +
+    (s > 3 ? " <span class=\"hint\">More than 3 is all right.</span>" : "");
+  cnt.dataset.enough = enough ? "1" : "0";
+}
+function fileWrite() {
+  var step = DAY.steps[st.step];
+  var ta = document.getElementById("rep");
+  var m = document.getElementById("m");
+  var t = (ta ? ta.value : "").trim();
+  if (sentences(t) < 1 || words(t) < 5) {
+    if (m) { m.className = "msg bad"; m.textContent = "Write at least one full sentence and end it with a period. One to three sentences is the goal."; }
+    return;
+  }
+  st[step.field] = t;
+  st.answers[st.step].text = t;
+  st.answers[st.step].ok = true;
+  nextStep();
+}
+
+function wrongCount(step, rec) {
+  if (!rec) return 0;
+  if (step.type === "choice") return Math.max(0, rec.picked.length - (rec.ok ? 1 : 0));
+  if (step.type === "match") return rec.tries || 0;
+  if (step.type === "order") return rec.ok ? Math.max(0, rec.tries - 1) : (rec.tries || 0);
+  return 0;
+}
+function firstTry(step, rec) {
+  if (!rec || !rec.ok) return false;
+  if (step.type === "choice") return rec.picked.length === 1 && rec.picked[0] === step.a;
+  if (step.type === "match") return rec.tries === 0;
+  if (step.type === "order") return rec.tries === 1;
+  return false;
+}
+function scoreNow() {
+  var s = 0;
+  DAY.steps.forEach(function (step, i) {
+    if (step.type === "spell") return;
+    if (step.type === "write") { s += PTS.write; return; }
+    var wrong = wrongCount(step, st.answers[i]);
+    s += wrong === 0 ? PTS.first : wrong === 1 ? PTS.second : PTS.later;
+  });
+  return s;
+}
+function maxScore() {
+  var s = 0;
+  DAY.steps.forEach(function (step) {
+    if (step.type === "spell") return;
+    s += step.type === "write" ? PTS.write : PTS.first;
+  });
+  return s;
+}
+function finish() {
+  st.finishedAt = new Date().toISOString();
+  st.score = scoreNow();
+  var max = maxScore();
+  st.stars = st.score >= Math.round(max * 0.9) ? 3 : st.score >= Math.round(max * 0.7) ? 2 : 1;
+  st.plays = (st.plays || 0) + 1;
+  if (st.score > st.best) st.best = st.score;
+  st.lastDone = {
+    score: st.score, stars: st.stars, max: max,
+    answers: JSON.parse(JSON.stringify(st.answers)),
+    report: st.report, civics: st.civics, proud: st.proud,
+    activeSec: st.activeSec, startedAt: st.startedAt, finishedAt: st.finishedAt,
+    play: st.plays, best: st.best,
+    firstTry: DAY.steps.filter(function (step, i) { return step.type !== "spell" && step.type !== "write" && firstTry(step, st.answers[i]); }).length,
+    graded: DAY.steps.filter(function (step) { return step.type !== "spell" && step.type !== "write"; }).length
+  };
+}
+function mins(sec) { return "about " + Math.max(1, Math.round((sec || 0) / 60)) + " min"; }
+function starPhrase(n) {
+  if (n >= 3) return "Outstanding work, Officer Cam!";
+  if (n === 2) return "Strong case work, Officer Cam!";
+  return "Case closed, Officer Cam. You stuck with it.";
+}
+function nextLinkHTML() {
+  if (!DAY.next) {
+    return "<div class=\"nextcase\">🎬 <b>Premiere night is ready.</b><br>That's the end of The Woods Movie Case Files.<br><br><a href=\"../\">Back to the station</a></div>";
+  }
+  return "<div class=\"nextcase\">▶ <b>Next case is open</b><br><a href=\"../day" + DAY.next.day + "/\">Day " + DAY.next.day + ": " + esc(DAY.next.title) + "</a><br>" + esc(DAY.next.teaser) + "</div>";
+}
+function doneScreen() {
+  helpStage = "done";
+  var L = st.lastDone;
+  if (!L) { st.stage = "intro"; return render(); }
+  var note = L.proud || L.report || "";
+  app.innerHTML = "<div class=\"card\" style=\"text-align:center\"><span class=\"stamp\">CASE CLOSED</span>" +
+    "<h2>" + starPhrase(L.stars) + " " + "⭐".repeat(L.stars) + "</h2>" +
+    "<p>" + esc(DAY.closed) + "</p>" +
+    "<table class=\"sc\"><tr><td>Clues right on the first try</td><td>" + L.firstTry + " of " + L.graded + "</td></tr>" +
+    "<tr><td>Spelling practice</td><td>Done</td></tr></table>" +
+    (L.civics ? "<h3 style=\"text-align:left\">⚖️ Who decides?</h3><blockquote>" + esc(L.civics) + "</blockquote>" : "") +
+    (note ? "<h3 style=\"text-align:left\">Your note</h3><blockquote>" + esc(note) + "</blockquote>" : "") +
+    reportBtn("caseReport", "📨 Send my case report to Mom") +
+    nextLinkHTML() +
+    "<p><button type=\"button\" class=\"alt\" onclick=\"replay()\">🔁 Play this case again</button></p></div>" +
+    sourcesHTML();
+  if (!st.autoSent) {
+    st.autoSent = true;
+    persist();
+    var b = document.querySelector("button.rep");
+    if (b) reportToMom(b, caseReport);
+  }
+}
+function replay() {
+  if (!confirm("Play this case again from the start?")) return;
+  st = fresh(st);
+  persist();
+  render();
+  toTop();
+}
+
+const MOM_EMAIL = "8caedc1e9653325b52b367e2e172d2a3";
+const REPORT_URL = "https://formsubmit.co/ajax/" + MOM_EMAIL;
+const MOM_MAILTO = "dawnclay2011@gmail.com";
+const REPORT_SUBJECT = "Game Report: Cam – Woods Movie Case Day " + DAY.day + " (" + DAY.shortTitle + ")";
+const REPORT_PLAYER = "Cam (age 11)";
+const REPORT_GAME = "Officer Cam's Case Files — The Woods Movie Case Files";
+function nowStr() { try { return new Date().toLocaleString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" }); } catch (e) { return new Date().toString(); } }
+function fmtTime(iso) { if (!iso) return "—"; try { return new Date(iso).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" }); } catch (e) { return iso; } }
+function postReport(fields) {
+  var ctl = typeof AbortController !== "undefined" ? new AbortController() : null;
+  var t = ctl ? setTimeout(function () { ctl.abort(); }, 15000) : null;
+  return fetch(REPORT_URL, { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" }, body: JSON.stringify(fields), signal: ctl ? ctl.signal : undefined })
+    .then(function (r) { return r.json().catch(function () { return { success: r.ok ? "true" : "false", message: "HTTP " + r.status }; }).then(function (j) { j._status = r.status; return j; }); })
+    .finally(function () { if (t) clearTimeout(t); });
+}
+function reportBtn(builder, label) {
+  return "<div class=\"report\"><button type=\"button\" class=\"rep\" onclick=\"reportToMom(this," + builder + ")\">" + label + "</button><span class=\"rstat\" role=\"status\" aria-live=\"polite\"></span></div>";
+}
+function reportText(f) {
+  return Object.keys(f).filter(function (k) { return k.charAt(0) !== "_"; }).map(function (k) {
+    return k + ": " + (typeof f[k] === "object" ? JSON.stringify(f[k]) : f[k]);
+  }).join("\n");
+}
+function retryReport(fields) {
+  var body = new URLSearchParams();
+  Object.keys(fields).forEach(function (k) { body.append(k, typeof fields[k] === "object" ? JSON.stringify(fields[k]) : String(fields[k])); });
+  return fetch(REPORT_URL, { method: "POST", headers: { "Accept": "application/json" }, body: body }).then(function (r) { return r.json(); }).then(function (j) {
+    if (String(j.success) !== "true") throw new Error(j.message || "retry failed");
+    return j;
+  });
+}
+function formPost(fields) {
+  try {
+    var fr = document.getElementById("bkFrame");
+    if (!fr) { fr = document.createElement("iframe"); fr.name = fr.id = "bkFrame"; fr.style.display = "none"; document.body.appendChild(fr); }
+    var fm = document.createElement("form");
+    fm.method = "POST"; fm.action = "https://formsubmit.co/" + MOM_EMAIL; fm.target = "bkFrame"; fm.style.display = "none";
+    Object.keys(fields).forEach(function (k) {
+      var i = document.createElement("input"); i.type = "hidden"; i.name = k;
+      i.value = typeof fields[k] === "object" ? JSON.stringify(fields[k]) : String(fields[k]);
+      fm.appendChild(i);
+    });
+    document.body.appendChild(fm); fm.submit();
+    setTimeout(function () { fm.remove(); }, 5000);
+  } catch (e) {}
+}
+function backupPanel(btn, fields) {
+  var host = btn.parentNode, p = host.querySelector(".bkp");
+  if (p) return;
+  var txt = (fields._subject || "Game Report") + "\n\n" + reportText(fields);
+  p = document.createElement("div"); p.className = "bkp";
+  p.style.cssText = "margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center";
+  var sub = encodeURIComponent(fields._subject || "Game Report");
+  var b = txt;
+  if (b.length > 1800) b = b.slice(0, 1800) + "\n…(cut short — tap Copy report and paste the rest)";
+  function mk(l, fn) { var x = document.createElement("button"); x.type = "button"; x.className = "alt small"; x.textContent = l; x.onclick = fn; p.appendChild(x); return x; }
+  mk("✉️ Send to Mom by email", function () { location.href = "mailto:" + MOM_MAILTO + "?subject=" + sub + "&body=" + encodeURIComponent(b); });
+  var cp = mk("📋 Copy report", function () {
+    var ok = function () { cp.textContent = "Copied! ✅"; };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, function () { fallbackCopy(txt, ok); });
+    else fallbackCopy(txt, ok);
+  });
+  if (navigator.share) mk("📤 Share report", function () { navigator.share({ title: fields._subject || "Game Report", text: txt }).catch(function () {}); });
+  var n = document.createElement("div");
+  n.style.cssText = "width:100%;font-size:.85em";
+  n.textContent = "Backup: email or copy your report to Mom, or tap Try again.";
+  p.appendChild(n);
+  host.appendChild(p);
+}
+function fallbackCopy(t, ok) {
+  try { var a = document.createElement("textarea"); a.value = t; document.body.appendChild(a); a.select(); document.execCommand("copy"); a.remove(); ok(); }
+  catch (e) { prompt("Copy this report:", t); }
+}
+function reportToMom(btn, build) {
+  var stat = btn.nextElementSibling;
+  if (btn.dataset.sent || btn.disabled) return;
+  if (navigator.onLine === false) { stat.className = "rstat bad"; stat.textContent = "No internet — try again later."; btn.textContent = "🔁 Try again"; return; }
+  var fields;
+  try { fields = Object.assign({ _subject: REPORT_SUBJECT, _template: "box", _captcha: "false", Date: nowStr(), Player: REPORT_PLAYER, Game: REPORT_GAME }, build()); }
+  catch (e) { stat.className = "rstat bad"; stat.textContent = "Oops — couldn't build the report."; return; }
+  btn.disabled = true; btn.textContent = "Sending… 📤"; stat.className = "rstat"; stat.textContent = "";
+  postReport(fields).then(function (j) {
+    if (String(j.success) !== "true") throw new Error(j.message || "Send failed");
+    btn.dataset.sent = "1"; btn.textContent = "Sent! ✅"; btn.classList.add("sent"); stat.className = "rstat good"; stat.textContent = "Mom got your report!";
+  }).catch(function (e) {
+    if (navigator.onLine !== false && !/activat/i.test(e && e.message || "") && !btn.dataset.retried) {
+      btn.dataset.retried = "1"; btn.textContent = "Trying another way… 📤";
+      return retryReport(fields).then(function () {
+        btn.dataset.sent = "1"; btn.disabled = true; btn.textContent = "Sent! ✅"; btn.classList.add("sent"); stat.className = "rstat good"; stat.textContent = "Mom got your report!";
+      }).catch(function (e2) { formPost(fields); bkFail(btn, stat, fields, e2); });
+    }
+    bkFail(btn, stat, fields, e);
+  });
+}
+function bkFail(btn, stat, fields, e) {
+  backupPanel(btn, fields);
+  btn.disabled = false; btn.textContent = "🔁 Try again"; stat.className = "rstat bad";
+  stat.textContent = navigator.onLine === false ? "No internet — try again later." : /activat/i.test(e && e.message || "") ? "Almost! Mom needs to switch on reports first. Try again later." : "Oops — that didn't send. Tap to try again!";
+}
+
+function pad(n) { return (n < 10 ? "0" : "") + n; }
+function spellingHow(spec, w) {
+  if (!w || !w.solved) return spec.word + ": not finished";
+  if (w.firstTry) return spec.word + ": first try";
+  if (w.hints > 0) return spec.word + ": needed a hint (" + w.hints + " letter" + (w.hints === 1 ? "" : "s") + " revealed" + (w.tries > 1 ? ", " + w.tries + " checks" : "") + ")";
+  return spec.word + ": correct after " + w.tries + " checks, no hint";
+}
+function answerLine(step, rec) {
+  if (step.type === "choice") {
+    var chosen = rec.picked.map(function (j) { return String.fromCharCode(65 + j) + ". " + step.options[j]; }).join(" | ");
+    var right = String.fromCharCode(65 + step.a) + ". " + step.options[step.a];
+    return "Q: " + step.q + " || Cam picked: " + (chosen || "—") + " || Correct: " + right + " || " + (firstTry(step, rec) ? "first try" : "got it after " + rec.picked.length + " tries");
+  }
+  if (step.type === "order") {
+    var got = rec.placed.map(function (id) { return cardText(step, id); }).join(" → ");
+    return "Q: " + step.q + " || Cam's order: " + got + " || " + (firstTry(step, rec) ? "first try" : "got it after " + rec.tries + " checks");
+  }
+  if (step.type === "match") {
+    var bits = step.pairs.map(function (pair, ri) {
+      var r = rec.rows[ri];
+      var pick = r.picked.map(function (j) { return pair.options[j]; }).join(" | ");
+      return pair.prompt + " → picked [" + pick + "] correct [" + pair.options[pair.a] + "]";
+    }).join(" || ");
+    return bits + " || " + (firstTry(step, rec) ? "first try" : rec.tries + " wrong taps before it was done");
+  }
+  if (step.type === "spell") {
+    return step.words.map(function (spec, wi) { return spellingHow(spec, rec.words[wi]); }).join(" || ");
+  }
+  if (step.type === "write") {
+    var text = rec.text || "";
+    return "Prompt: " + step.q + " || Cam wrote: " + text + " || " + words(text) + " words, " + sentences(text) + " sentences";
+  }
+  return "";
+}
+function caseReport() {
+  var L = st.lastDone;
+  var f = {
+    "Report type": "Woods Movie Case File — Day " + DAY.day + " of " + TOTAL_DAYS,
+    "Day & topic": "Day " + DAY.day + " (" + DAY.date + ") — " + DAY.topic,
+    "Case": DAY.title,
+    "Theme": "The Woods Movie Case Files",
+    "Length": DAY.lengthNote,
+    "Solved": "Yes ✅",
+    "Score": L.score + " of " + L.max + " (" + "⭐".repeat(L.stars) + " " + L.stars + " of 3)" + (L.best > L.score ? " — best on this case: " + L.best : ""),
+    "Clues right on first try": L.firstTry + " of " + L.graded + " (spelling practice is not scored)",
+    "Time on case": mins(L.activeSec) + " of active time (started " + fmtTime(L.startedAt) + ", finished " + fmtTime(L.finishedAt) + ")",
+    "Play": L.play > 1 ? "Replay #" + L.play : "First play"
+  };
+  DAY.steps.forEach(function (step, i) {
+    f["Answer " + pad(i + 1) + " — " + step.reportLabel] = answerLine(step, L.answers[i]);
+  });
+  var spellBits = [];
+  DAY.steps.forEach(function (step, i) {
+    if (step.type !== "spell") return;
+    step.words.forEach(function (spec, wi) { spellBits.push(spellingHow(spec, L.answers[i].words[wi])); });
+  });
+  f["Spelling (no penalty, Mom note)"] = spellBits.join(" | ");
+  if (DAY.steps.some(function (s) { return s.field === "civics"; })) {
+    var cq = DAY.steps.filter(function (s) { return s.field === "civics"; })[0];
+    f["Civics question"] = cq.q;
+    f["Cam's civics answer"] = L.civics || "";
+  }
+  var wstep = DAY.steps.filter(function (s) { return s.type === "write" && s.field !== "civics"; })[0];
+  var wtext = (wstep && wstep.field === "proud") ? (L.proud || "") : (L.report || "");
+  f["Written prompt"] = wstep ? wstep.q : "";
+  f["Cam's written response"] = wtext;
+  f["Report length"] = words(wtext) + " words, " + sentences(wtext) + " sentences";
+  f["Help words looked up"] = hl.words.length ? hl.words.join(", ") : "None";
+  f["Help button opened"] = hl.hints + (hl.hints === 1 ? " time" : " times");
+  return f;
+}
+
+const HELPDATA = DAY.help;
+let HLOG; try { HLOG = JSON.parse(localStorage.getItem(HKEY) || "{}") || {}; } catch (e) { HLOG = {}; }
+const hl = HLOG[DK] || (HLOG[DK] = { words: [], hints: 0 });
+function hsave() { try { localStorage.setItem(HKEY, JSON.stringify(HLOG)); } catch (e) {} }
+hsave();
+const GLOSS = Object.assign({}, HELPDATA.common || {}, HELPDATA.day || {});
+const GKEYS = Object.keys(GLOSS).sort(function (a, b) { return b.length - a.length; });
+const GRE = new RegExp("\\b(" + GKEYS.map(function (k) { return k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }).join("|") + ")(s|es)?\\b", "gi");
+function gfind(w) {
+  w = w.toLowerCase();
+  return GKEYS.filter(function (k) { return k.toLowerCase() === w; })[0] ||
+    GKEYS.filter(function (k) { return w === k.toLowerCase() + "s" || w === k.toLowerCase() + "es"; })[0];
+}
+function logWord(k) { if (hl.words.indexOf(k) < 0) { hl.words.push(k); hsave(); } }
+(function () {
+  var b = document.createElement("button");
+  b.id = "helpBtn"; b.type = "button"; b.textContent = "❓ Help"; b.onclick = openHelp;
+  var header = document.querySelector("header");
+  if (header) header.appendChild(b);
+  else document.body.appendChild(b);
+  var p = document.createElement("div");
+  p.id = "helpPanel"; p.setAttribute("role", "dialog");
+  document.body.appendChild(p);
+  var w = document.createElement("div");
+  w.id = "wordPop"; w.onclick = function () { w.style.display = "none"; };
+  document.body.appendChild(w);
+})();
+function openHelp() {
+  var p = document.getElementById("helpPanel");
+  var step = st.stage === "play" ? DAY.steps[st.step] : null;
+  var hint = (step && step.help) || (HELPDATA.hints && HELPDATA.hints[helpStage]) || "";
+  var dayKeys = Object.keys(HELPDATA.day || {});
+  var comKeys = Object.keys(HELPDATA.common || {});
+  p.innerHTML = "<button type=\"button\" class=\"alt\" style=\"float:right;width:auto\" onclick=\"closeHelp()\">✖ Close</button>" +
+    "<h3>🆘 Help, Officer Cam</h3><div class=\"hint\">💡 <b>Hint:</b> " + esc(hint) + "</div>" +
+    "<h3>📖 Today's words</h3><dl>" + dayKeys.map(function (k) { return "<dt>" + esc(k) + "</dt><dd>" + esc(GLOSS[k]) + "</dd>"; }).join("") + "</dl>" +
+    "<h3>🕵️ Detective words</h3><dl>" + comKeys.map(function (k) { return "<dt>" + esc(k) + "</dt><dd>" + esc(GLOSS[k]) + "</dd>"; }).join("") + "</dl>";
+  p.style.display = "block";
+  hl.hints++;
+  hsave();
+}
+function closeHelp() { document.getElementById("helpPanel").style.display = "none"; }
+function showWord(k) {
+  var w = document.getElementById("wordPop");
+  w.innerHTML = "<b>" + esc(k) + "</b>: " + esc(GLOSS[k]) + " <span style=\"opacity:.7\">(tap to close)</span>";
+  w.style.display = "block";
+  logWord(k);
+}
+document.addEventListener("click", function (e) {
+  var g = e.target.closest && e.target.closest(".gw");
+  if (!g) return;
+  e.preventDefault();
+  e.stopPropagation();
+  var k = gfind(g.dataset.w) || g.dataset.w;
+  if (GLOSS[k]) showWord(k);
+}, true);
+var SKIP = { BUTTON: 1, TEXTAREA: 1, INPUT: 1, SCRIPT: 1, STYLE: 1, SVG: 1, A: 1, SELECT: 1, OPTION: 1 };
+function glossify(root) {
+  if (!GKEYS.length) return;
+  var tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: function (n) {
+    for (var p = n.parentNode; p && p !== root; p = p.parentNode) {
+      if (SKIP[p.nodeName] || (p.classList && p.classList.contains("gw"))) return NodeFilter.FILTER_REJECT;
+    }
+    GRE.lastIndex = 0;
+    return GRE.test(n.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+  } });
+  var nodes = [];
+  while (tw.nextNode()) nodes.push(tw.currentNode);
+  nodes.forEach(function (n) {
+    var f = document.createDocumentFragment();
+    var last = 0, s = n.nodeValue, m;
+    GRE.lastIndex = 0;
+    while ((m = GRE.exec(s))) {
+      f.appendChild(document.createTextNode(s.slice(last, m.index)));
+      var sp = document.createElement("span");
+      sp.className = "gw"; sp.dataset.w = m[1]; sp.textContent = m[0];
+      f.appendChild(sp);
+      last = m.index + m[0].length;
+    }
+    f.appendChild(document.createTextNode(s.slice(last)));
+    n.parentNode.replaceChild(f, n);
+  });
+}
+var gObs = new MutationObserver(function () {
+  gObs.disconnect();
+  try { glossify(app); } catch (e) {}
+  gObs.observe(app, { childList: true, subtree: true });
+});
+gObs.observe(app, { childList: true, subtree: true });
+badge();
+render();
+
+</script>
+</body>
+</html>
