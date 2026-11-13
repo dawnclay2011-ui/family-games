@@ -103,6 +103,21 @@ function rank(){
 const app=document.getElementById("app");
 let cur=null, progress=[], wrong=0, tries=0, wrongArrests=0, lastCase=null;
 
+function woodsState(n){
+  try{var a=JSON.parse(localStorage.getItem("ocamDaily")||"{}"); return !!(a["d"+n]&&a["d"+n].lastDone);}catch(e){return false;}
+}
+function woodsHTML(){
+  var days=[
+    [11,"Sat, Nov 14","The Missing Script Page","Short case · story structure"],
+    [12,"Sun, Nov 15","The Shot List Mix-Up","Short case · shot list before filming"],
+    [13,"Mon, Nov 16","Tracks in the Mud","Longer case · trees, tracks, and woods safety"],
+    [14,"Tue, Nov 17","The Old Park Mystery","Short case · Ouabache State Park history"],
+    [15,"Wed, Nov 18","Premiere Night","Longer case · editing, park rules, and the show"]
+  ];
+  return `<div class="card file"><h2>🌲 The Woods Movie Case Files</h2>
+  <p>This week Cam is filming a short movie in the woods at Ouabache State Park. These five cases are open.</p>
+  <div class="grid">${days.map(function(d){return `<div class="card"><h2>Day ${d[0]} · ${d[1]}</h2><p><b>${d[2]}</b></p><p class="hint">${d[3]}</p><p>${woodsState(d[0])?"Solved ✅":"Status: OPEN"}</p><button type="button" onclick="location.href='day${d[0]}/'">Open case</button></div>`;}).join("")}</div></div>`;
+}
 function home(){
   app.innerHTML=`<div class="card"><h2>Welcome to the station, Officer Cam! 👮</h2>
   <p>Crimes are happening all over Huntertown. Each case has <b>3 clues</b>. Solve the math and reading puzzles to unlock evidence, then make your arrest. Get it right on the first try for ⭐⭐⭐!</p></div>
@@ -111,6 +126,7 @@ function home(){
    <p>${save.solved[c.id]?`<span class="stamp">SOLVED</span>`:"Status: OPEN"}</p>
    <button onclick="openCase(${i})">${save.solved[c.id]?"Replay case":"Open case file"}</button></div>`).join("")}
   </div>
+  ${woodsHTML()}
   <div class="card" style="text-align:center">${reportBtn("progressReport","📨 Send progress report to Mom",true)}</div>
   <p style="text-align:center"><button class="alt" onclick="if(confirm('Reset all progress?')){localStorage.removeItem('ocam');location.reload()}">Reset progress</button></p>`;
 }
