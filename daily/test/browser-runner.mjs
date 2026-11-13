@@ -294,7 +294,7 @@ async function main() {
       scroll: document.documentElement.scrollWidth,
       width: window.innerWidth
     }))()`);
-    expect("Cam November 13 shows his plan only", camNov13.width === 360 && camNov13.scroll <= camNov13.width + 1 && camNov13.text.includes("Finish script planning for your woods movie") && camNov13.text.includes("rebus puzzles, pages 1-5") && camNov13.text.includes("Cursive practice") && camNov13.text.includes("Daily Case #9: The Rune Stone Riddle") && !camNov13.text.includes("Cracked Tablet") && camNov13.text.includes("Optional: help set up the new laptop") && camNov13.hrefs.some((href) => href.includes("/case-files/day9/")) && !camNov13.hrefs.some((href) => href.includes("/case-files/day6/")) && !/\bChristian\b|zoo vs|Food Truck|Thanksgiving/.test(camNov13.text));
+    expect("Cam November 13 shows his plan only", camNov13.width === 360 && camNov13.scroll <= camNov13.width + 1 && camNov13.text.includes("Finish script planning for your woods movie") && camNov13.text.includes("rebus puzzles, pages 1-5") && camNov13.text.includes("Cursive practice") && camNov13.text.includes("Daily Case #10: The Salt and Gold Mystery") && !camNov13.text.includes("Cracked Tablet") && !camNov13.text.includes("Rune Stone") && camNov13.text.includes("Optional: help set up the new laptop") && camNov13.hrefs.some((href) => href.includes("/case-files/day10/")) && !camNov13.hrefs.some((href) => /\/case-files\/day[69]\//.test(href)) && !/\bChristian\b|zoo vs|Food Truck|Thanksgiving/.test(camNov13.text));
     await shot("cam_nov13_mobile_360.png");
     await setDate("2026-11-14");
     const camNov14 = await evaluate("document.body.innerText");
