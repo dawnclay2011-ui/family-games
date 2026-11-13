@@ -88,24 +88,6 @@
               "finishedMeans": "You have practiced the cursive letters on today's page."
             },
             {
-              "id": "salt-gold",
-              "version": 1,
-              "title": "Today's case: Daily Case #10: The Salt and Gold Mystery",
-              "instruction": "Open Daily Case #10: The Salt and Gold Mystery and work through today's case.",
-              "steps": [
-                "Open Daily Case #10: The Salt and Gold Mystery.",
-                "Follow the case from the start.",
-                "Finish the case."
-              ],
-              "finishedMeans": "You have finished Daily Case #10: The Salt and Gold Mystery.",
-              "materials": [
-                {
-                  "label": "Daily Case #10: The Salt and Gold Mystery",
-                  "href": "https://dawnclay2011-ui.github.io/family-games/case-files/day10/"
-                }
-              ]
-            },
-            {
               "id": "laptop-setup",
               "version": 1,
               "title": "Optional: help set up the new laptop",
