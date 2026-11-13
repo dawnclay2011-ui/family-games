@@ -147,20 +147,20 @@
               "finishedMeans": "Your grandpa interview sheet is finished and turned in to Mom."
             },
             {
-              "id": "daily-shift-4",
+              "id": "register-shift",
               "version": 1,
-              "title": "Today's shift: Food Truck Daily Shift 4: Fall Festival Weekend",
-              "instruction": "Open Food Truck Daily Shift 4: Fall Festival Weekend and work through today's shift.",
+              "title": "Today's shift: Food Truck Shift 3: The Register Crashed",
+              "instruction": "Open Food Truck Shift 3: The Register Crashed and work through today's shift.",
               "steps": [
-                "Open Food Truck Daily Shift 4: Fall Festival Weekend.",
+                "Open Food Truck Shift 3: The Register Crashed.",
                 "Follow the shift from the start.",
                 "Finish the shift."
               ],
-              "finishedMeans": "You have finished Food Truck Daily Shift 4: Fall Festival Weekend.",
+              "finishedMeans": "You have finished Food Truck Shift 3: The Register Crashed.",
               "materials": [
                 {
-                  "label": "Food Truck Daily Shift 4: Fall Festival Weekend",
-                  "href": "https://dawnclay2011-ui.github.io/family-games/food-truck/day4/"
+                  "label": "Food Truck Shift 3: The Register Crashed",
+                  "href": "https://dawnclay2011-ui.github.io/family-games/food-truck/day3/"
                 }
               ]
             },

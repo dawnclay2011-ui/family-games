@@ -382,14 +382,13 @@ const christianTodayText = text(christianToday.host);
 check("Christian's November 13 list is his own", [
   "Finish your zoo vs. sanctuary paragraph",
   "Finish your grandpa interview sheet",
-  "Food Truck Daily Shift 4: Fall Festival Weekend",
+  "Food Truck Shift 3: The Register Crashed",
   "Optional: Thanksgiving budget, Worksheet A Steps 1-3",
   "scale the recipes for 6",
   "$50 target",
 ].every((line) => christianTodayText.includes(line)));
 check("the budget task has no link", christianToday.host.querySelector("#task-thanksgiving-budget a") == null);
-check("Christian's shift link is present", [...christianToday.host.querySelectorAll("#checklist a")].some((anchor) => anchor.href.includes("/food-truck/day4/")));
-check("Christian November 13 does not keep Shift 3", !text(christianToday.host).includes("Register Crashed") && ![...christianToday.host.querySelectorAll("#checklist a")].some((anchor) => anchor.href.includes("/food-truck/day3/")));
+check("Christian's shift link is present", [...christianToday.host.querySelectorAll("#checklist a")].some((anchor) => anchor.href.includes("/food-truck/day3/")));
 check("Christian does not see Cam's November 13 work", !/\bCam\b|woods movie|rebus|Cursive practice|Cracked Tablet|new laptop/.test(christianTodayText));
 christianToday.host.querySelector("#day-input").value = "2026-11-14";
 christianToday.host.querySelector("#day-input").dispatchEvent(new Event("change", { bubbles: true }));
