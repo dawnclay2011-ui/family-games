@@ -348,6 +348,54 @@ check("the standing offline explanation remains", text(offline.host).includes("d
 
 const card = previewCam.host.querySelector("#materials a");
 check("sample card resolves next to the plan file", card?.href.endsWith("/daily/sample-reading.html") === true);
+
+const camToday = await mount({
+  childId: "cam",
+  mode: "plan",
+  plan: real,
+  storage: createMemoryStorage(),
+  now: () => new Date(2026, 10, 13, 9, 0, 0),
+  share: null,
+  clipboard: null,
+});
+const camTodayText = text(camToday.host);
+check("Cam's November 13 list is his own", [
+  "Finish script planning for your woods movie",
+  "Word puzzles: rebus puzzles, pages 1-5",
+  "Cursive practice",
+  "The Cracked Tablet",
+  "Optional: help set up the new laptop",
+].every((line) => camTodayText.includes(line)));
+check("Cam's case link is on his task", [...camToday.host.querySelectorAll("a")].some((anchor) => anchor.href.endsWith("/case-files/day6/")));
+check("Cam does not see Christian's November 13 work", !/Christian|zoo vs|Food Truck|Thanksgiving|grandpa/i.test(camTodayText));
+
+const christianToday = await mount({
+  childId: "christian",
+  mode: "plan",
+  plan: real,
+  storage: createMemoryStorage(),
+  now: () => new Date(2026, 10, 13, 9, 0, 0),
+  share: null,
+  clipboard: null,
+});
+const christianTodayText = text(christianToday.host);
+check("Christian's November 13 list is his own", [
+  "Finish your zoo vs. sanctuary paragraph",
+  "Finish your grandpa interview sheet",
+  "Food Truck Shift 3: The Register Crashed",
+  "Optional: Thanksgiving budget, Worksheet A Steps 1-3",
+  "scale the recipes for 6",
+  "$50 target",
+].every((line) => christianTodayText.includes(line)));
+check("the budget task has no link", christianToday.host.querySelector("#task-thanksgiving-budget a") == null);
+check("Christian's shift link is present", [...christianToday.host.querySelectorAll("#checklist a")].some((anchor) => anchor.href.includes("/food-truck/day3/")));
+check("Christian does not see Cam's November 13 work", !/\bCam\b|woods movie|rebus|Cursive practice|Cracked Tablet|new laptop/.test(christianTodayText));
+christianToday.host.querySelector("#day-input").value = "2026-11-14";
+christianToday.host.querySelector("#day-input").dispatchEvent(new Event("change", { bubbles: true }));
+check("Christian November 14 is still being prepared", text(christianToday.host).includes("Your plan is being prepared.") && !text(christianToday.host).includes("Woods movie"));
+camToday.host.querySelector("#day-input").value = "2026-11-14";
+camToday.host.querySelector("#day-input").dispatchEvent(new Event("change", { bubbles: true }));
+check("Cam November 14 is only the woods movie step", text(camToday.host).includes("Woods movie: today's step") && text(camToday.host).includes("prep for filming") && !text(camToday.host).includes("rebus"));
 check("no form is added", document.querySelector("form") == null);
 
 document.querySelector("#app").dataset.ready = "true";

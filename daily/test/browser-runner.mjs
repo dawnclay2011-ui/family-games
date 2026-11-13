@@ -249,6 +249,16 @@ async function main() {
     expect("each sample task keeps its own steps", cam.text.indexOf("Write a sentence that names the object.") > cam.text.indexOf("Write three sentences") && cam.text.indexOf("Place exactly six objects in a line.") > cam.text.indexOf("Count six objects"));
     await shot("cam_preview_mobile_360.png");
 
+    async function setDate(value) {
+      return evaluate(`(() => {
+        const input = document.querySelector("#day-input");
+        const set = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+        set.call(input, ${JSON.stringify(value)});
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+        return input.value;
+      })()`);
+    }
+
     await open(`${origin}/daily/christian/`, 360, 900, true);
     const today = await evaluate(`(() => ({
       scroll: document.documentElement.scrollWidth,
@@ -256,18 +266,39 @@ async function main() {
       text: document.body.innerText,
       date: document.querySelector("#day-input")?.value || ""
     }))()`);
-    expect("today's real page fits and is being prepared", today.width === 360 && today.scroll <= today.width + 1 && today.text.includes("Your plan is being prepared.") && !today.text.includes("Read the sample card out loud") && today.date === "2026-11-07");
-    await shot("christian_preparing_mobile_360.png");
-    await evaluate(`(() => {
-      const input = document.querySelector("#day-input");
-      const set = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-      set.call(input, "2026-11-12");
-      input.dispatchEvent(new Event("change", { bubbles: true }));
-      return input.value;
-    })()`);
+    expect("today's real page fits and hides the sample", today.width === 360 && today.scroll <= today.width + 1 && !today.text.includes("Read the sample card out loud") && /^\d{4}-\d{2}-\d{2}$/.test(today.date));
+    await setDate("2026-11-13");
+    const christianNov13 = await evaluate(`(() => ({
+      text: document.body.innerText,
+      hrefs: [...document.querySelectorAll("#checklist a")].map((anchor) => anchor.href),
+      budgetLinks: document.querySelectorAll("#task-thanksgiving-budget a").length,
+      scroll: document.documentElement.scrollWidth,
+      width: window.innerWidth
+    }))()`);
+    expect("Christian November 13 shows his four tasks", christianNov13.width === 360 && christianNov13.scroll <= christianNov13.width + 1 && christianNov13.text.includes("Finish your zoo vs. sanctuary paragraph") && christianNov13.text.includes("Finish your grandpa interview sheet") && christianNov13.text.includes("Food Truck Shift 3: The Register Crashed") && christianNov13.text.includes("Optional: Thanksgiving budget, Worksheet A Steps 1-3") && christianNov13.text.includes("scale the recipes for 6") && christianNov13.text.includes("$50 target"));
+    expect("Christian November 13 links the shift only", christianNov13.hrefs.some((href) => href.includes("/food-truck/day3/")) && christianNov13.budgetLinks === 0 && !/\bCam\b|woods movie|rebus|overdue|\blate\b/.test(christianNov13.text));
+    await shot("christian_nov13_mobile_360.png");
+    await setDate("2026-11-12");
     const nov12 = await evaluate("document.body.innerText");
     expect("November 12 has no sample tasks and no overdue list", nov12.includes("Thursday, November 12, 2026") && nov12.includes("Your plan is being prepared.") && !nov12.includes("Read the sample card out loud") && !/overdue/i.test(nov12));
     await shot("christian_nov12_preparing_mobile_360.png");
+    await setDate("2026-11-14");
+    const christianNov14 = await evaluate("document.body.innerText");
+    expect("Christian November 14 is still being prepared", christianNov14.includes("Your plan is being prepared.") && !christianNov14.includes("Woods movie") && !christianNov14.includes("Thanksgiving"));
+
+    await open(`${origin}/daily/cam/`, 360, 900, true);
+    await setDate("2026-11-13");
+    const camNov13 = await evaluate(`(() => ({
+      text: document.body.innerText,
+      hrefs: [...document.querySelectorAll("a")].map((anchor) => anchor.href),
+      scroll: document.documentElement.scrollWidth,
+      width: window.innerWidth
+    }))()`);
+    expect("Cam November 13 shows his plan only", camNov13.width === 360 && camNov13.scroll <= camNov13.width + 1 && camNov13.text.includes("Finish script planning for your woods movie") && camNov13.text.includes("rebus puzzles, pages 1-5") && camNov13.text.includes("Cursive practice") && camNov13.text.includes("The Cracked Tablet") && camNov13.text.includes("Optional: help set up the new laptop") && camNov13.hrefs.some((href) => href.includes("/case-files/day6/")) && !/\bChristian\b|zoo vs|Food Truck|Thanksgiving/.test(camNov13.text));
+    await shot("cam_nov13_mobile_360.png");
+    await setDate("2026-11-14");
+    const camNov14 = await evaluate("document.body.innerText");
+    expect("Cam November 14 is only today's woods movie step", camNov14.includes("Woods movie: today's step") && camNov14.includes("prep for filming") && !camNov14.includes("rebus"));
 
     await open(`${origin}/daily/`, 360, 900, true);
     const index = await evaluate("document.body.innerText");

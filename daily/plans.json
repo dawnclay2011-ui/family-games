@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "purpose": "One approved daily plan for both checklists. The sample object is preview only and is not an assignment. Progress is not stored in this file.",
+  "purpose": "Daily plans for the checklists. A day can include one shared list and an optional plan for each child. The sample object is preview only and is not an assignment. Progress is not stored in this file.",
   "children": {
     "cam": {
       "firstName": "Cam",
@@ -42,6 +42,264 @@
       "date": "2026-11-12",
       "status": "preparing",
       "message": "Your plan is being prepared."
+    },
+    {
+      "date": "2026-11-13",
+      "status": "preparing",
+      "message": "Your plan is being prepared.",
+      "children": {
+        "cam": {
+          "status": "ready",
+          "tasks": [
+            {
+              "id": "woods-script",
+              "version": 1,
+              "title": "Finish script planning for your woods movie",
+              "instruction": "Today's movie step is to finish the script plan for your woods movie.",
+              "steps": [
+                "Open your script notes.",
+                "Finish the plan for what happens in the woods movie.",
+                "Read the plan once from the start."
+              ],
+              "finishedMeans": "The script plan for your woods movie is finished."
+            },
+            {
+              "id": "rebus-puzzles",
+              "version": 1,
+              "title": "Word puzzles: rebus puzzles, pages 1-5",
+              "instruction": "Do the rebus puzzles on pages 1-5 of your puzzle packet.",
+              "steps": [
+                "Open your puzzle packet to the rebus puzzles.",
+                "Complete pages 1-5.",
+                "Look over pages 1-5 once more."
+              ],
+              "finishedMeans": "Rebus puzzle pages 1-5 are complete."
+            },
+            {
+              "id": "cursive-practice",
+              "version": 1,
+              "title": "Cursive practice",
+              "instruction": "Practice your cursive letters.",
+              "steps": [
+                "Get your cursive page and a pencil.",
+                "Practice the letters on the page.",
+                "Read the letters you wrote."
+              ],
+              "finishedMeans": "You have practiced the cursive letters on today's page."
+            },
+            {
+              "id": "cracked-tablet",
+              "version": 1,
+              "title": "Today's case: Day 6: The Cracked Tablet (Mesopotamia)",
+              "instruction": "Open today's case, Day 6: The Cracked Tablet, about Mesopotamia.",
+              "steps": [
+                "Open Day 6: The Cracked Tablet.",
+                "Follow the case about Mesopotamia.",
+                "Finish the case."
+              ],
+              "finishedMeans": "You have finished Day 6: The Cracked Tablet.",
+              "materials": [
+                {
+                  "label": "Day 6: The Cracked Tablet (Mesopotamia)",
+                  "href": "https://dawnclay2011-ui.github.io/family-games/case-files/day6/"
+                }
+              ]
+            },
+            {
+              "id": "laptop-setup",
+              "version": 1,
+              "title": "Optional: help set up the new laptop",
+              "instruction": "If you want to, help set up the new laptop. This task is optional.",
+              "steps": [
+                "Ask if it is a good time to help.",
+                "Help with one part of the laptop setup.",
+                "Stop when that part is done."
+              ],
+              "finishedMeans": "You helped with one part of setting up the new laptop."
+            }
+          ]
+        },
+        "christian": {
+          "status": "ready",
+          "tasks": [
+            {
+              "id": "zoo-sanctuary",
+              "version": 1,
+              "title": "Finish your zoo vs. sanctuary paragraph",
+              "instruction": "This paragraph goes with last night's speech. Finish it in your own words.",
+              "steps": [
+                "Read the zoo vs. sanctuary paragraph you started.",
+                "Write the rest of the paragraph.",
+                "Read the whole paragraph from the start."
+              ],
+              "finishedMeans": "Your zoo vs. sanctuary paragraph is finished."
+            },
+            {
+              "id": "grandpa-interview",
+              "version": 1,
+              "title": "Finish your grandpa interview sheet",
+              "instruction": "Finish your grandpa interview sheet and turn it in to Mom.",
+              "steps": [
+                "Open your grandpa interview sheet.",
+                "Fill in the rest of the sheet.",
+                "Turn the sheet in to Mom."
+              ],
+              "finishedMeans": "Your grandpa interview sheet is finished and turned in to Mom."
+            },
+            {
+              "id": "register-shift",
+              "version": 1,
+              "title": "Today's shift: Food Truck Shift 3: The Register Crashed",
+              "instruction": "Open Food Truck Shift 3: The Register Crashed and work through today's shift.",
+              "steps": [
+                "Open Food Truck Shift 3: The Register Crashed.",
+                "Follow the shift from the start.",
+                "Finish the shift."
+              ],
+              "finishedMeans": "You have finished Food Truck Shift 3: The Register Crashed.",
+              "materials": [
+                {
+                  "label": "Food Truck Shift 3: The Register Crashed",
+                  "href": "https://dawnclay2011-ui.github.io/family-games/food-truck/day3/"
+                }
+              ]
+            },
+            {
+              "id": "thanksgiving-budget",
+              "version": 1,
+              "title": "Optional: Thanksgiving budget, Worksheet A Steps 1-3",
+              "instruction": "This task is optional. Please scale the recipes for 6, convert units, and make a first estimate vs. the $50 target.",
+              "steps": [
+                "Open Worksheet A.",
+                "Scale the recipes for 6.",
+                "Convert the units.",
+                "Write a first estimate and set it next to the $50 target."
+              ],
+              "finishedMeans": "Worksheet A Steps 1-3 are done: the recipes are scaled for 6, the units are converted, and your first estimate is next to the $50 target."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "date": "2026-11-14",
+      "status": "preparing",
+      "message": "Your plan is being prepared.",
+      "children": {
+        "cam": {
+          "status": "ready",
+          "tasks": [
+            {
+              "id": "woods-movie",
+              "version": 1,
+              "title": "Woods movie: today's step",
+              "instruction": "Today's step is prep for filming.",
+              "steps": [
+                "Gather what you need for filming.",
+                "Lay out the scenes you plan to film.",
+                "Put your supplies where you can find them."
+              ],
+              "finishedMeans": "You finished the prep for filming."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "date": "2026-11-15",
+      "status": "preparing",
+      "message": "Your plan is being prepared.",
+      "children": {
+        "cam": {
+          "status": "ready",
+          "tasks": [
+            {
+              "id": "woods-movie",
+              "version": 1,
+              "title": "Woods movie: today's step",
+              "instruction": "Today's step is to film at Ouabache.",
+              "steps": [
+                "Go to Ouabache with your filming plan.",
+                "Film the scenes you prepared.",
+                "Check that the scenes you wanted are filmed."
+              ],
+              "finishedMeans": "You filmed your woods movie at Ouabache."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "date": "2026-11-16",
+      "status": "preparing",
+      "message": "Your plan is being prepared.",
+      "children": {
+        "cam": {
+          "status": "ready",
+          "tasks": [
+            {
+              "id": "woods-movie",
+              "version": 1,
+              "title": "Woods movie: today's step",
+              "instruction": "Today's step is to edit.",
+              "steps": [
+                "Open your woods movie footage.",
+                "Edit the parts you want to keep.",
+                "Save your edit."
+              ],
+              "finishedMeans": "You saved an edit of your woods movie."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "date": "2026-11-17",
+      "status": "preparing",
+      "message": "Your plan is being prepared.",
+      "children": {
+        "cam": {
+          "status": "ready",
+          "tasks": [
+            {
+              "id": "woods-movie",
+              "version": 1,
+              "title": "Woods movie: today's step",
+              "instruction": "Today's step is to edit.",
+              "steps": [
+                "Open your woods movie edit.",
+                "Edit the story you want to tell.",
+                "Save your edit."
+              ],
+              "finishedMeans": "You saved an edit of your woods movie."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "date": "2026-11-18",
+      "status": "preparing",
+      "message": "Your plan is being prepared.",
+      "children": {
+        "cam": {
+          "status": "ready",
+          "tasks": [
+            {
+              "id": "woods-movie",
+              "version": 1,
+              "title": "Woods movie: today's step",
+              "instruction": "Today's step is the premiere.",
+              "steps": [
+                "Get your woods movie ready to play.",
+                "Hold the premiere.",
+                "Watch the movie you made."
+              ],
+              "finishedMeans": "You held the premiere of your woods movie."
+            }
+          ]
+        }
+      }
     }
   ],
   "sample": {
