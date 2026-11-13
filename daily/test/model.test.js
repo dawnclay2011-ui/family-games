@@ -102,11 +102,10 @@ test("each page uses that child's plan and falls back to the shared day", () => 
     "Finish script planning for your woods movie",
     "Word puzzles: rebus puzzles, pages 1-5",
     "Cursive practice",
-    "Today's case: Daily Case #10: The Salt and Gold Mystery",
     "Optional: help set up the new laptop",
   ]);
-  assert.equal(cam13.tasks[3].materials[0].href, "https://dawnclay2011-ui.github.io/family-games/case-files/day10/");
-  assert.equal(/Cracked Tablet|Rune Stone|case-files\/day6|case-files\/day9/.test(JSON.stringify(cam13)), false);
+  assert.equal(cam13.tasks.length, 4);
+  assert.equal(/case|Cracked Tablet|Rune Stone|Salt and Gold|case-files/i.test(JSON.stringify(cam13)), false);
   assert.equal(JSON.stringify(cam13).includes(".pdf"), false);
   assert.equal(/\b(Christian|zoo|grandpa|sanctuary)\b|food truck|food-truck|Thanksgiving/i.test(JSON.stringify(cam13)), false);
 
