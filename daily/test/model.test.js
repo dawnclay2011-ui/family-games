@@ -115,14 +115,19 @@ test("each page uses that child's plan and falls back to the shared day", () => 
     "Finish your zoo vs. sanctuary paragraph",
     "Finish your grandpa interview sheet",
     "Today's shift: Food Truck Shift 3: The Register Crashed",
+    "Algebra review: Review Shift: Hold the Rounding",
     "Optional: Thanksgiving budget, Worksheet A Steps 1-3",
   ]);
-  const budget = christian13.tasks[3];
+  const budget = christian13.tasks[4];
   assert.deepEqual(budget.materials, []);
   assert.match(budget.instruction, /scale the recipes for 6/);
   assert.match(budget.instruction, /convert units/);
   assert.match(budget.instruction, /first estimate vs\. the \$50 target/);
   assert.equal(christian13.tasks[2].materials[0].href, "https://dawnclay2011-ui.github.io/family-games/food-truck/day3/");
+  assert.equal(christian13.tasks[3].materials[0].href, "https://dawnclay2011-ui.github.io/family-games/food-truck/review/");
+  assert.match(christian13.tasks[3].instruction, /six problems with hints/);
+  assert.match(christian13.tasks[3].instruction, /Round only at the end/);
+  assert.match(christian13.tasks[3].instruction, /Send the report to Mom when it clears/);
   const christianText = JSON.stringify(christian13);
   assert.equal(/\bCam\b|woods movie|rebus|cursive|Mesopotamia|laptop|case-files/i.test(christianText), false);
   assert.equal(/\b(answer|score|overdue|behind)\b|\blate\b/i.test(`${christianText}\n${JSON.stringify(cam13)}`), false);
