@@ -134,21 +134,50 @@ test("each page uses that child's plan and falls back to the shared day", () => 
   assert.equal(getDayContent(parsed.plan, "plan", "2026-11-13").phase, "preparing");
 
   const movieDays = {
-    "2026-11-14": /prep for filming/,
-    "2026-11-15": /Ouabache/,
-    "2026-11-16": /\bedit\b/,
-    "2026-11-17": /\bedit\b/,
-    "2026-11-18": /premiere/,
+    "2026-11-14": {
+      movie: /prep for filming/,
+      title: "Today's case: Daily Case #11: The Missing Script Page",
+      href: "https://dawnclay2011-ui.github.io/family-games/case-files/day11/",
+      short: true,
+    },
+    "2026-11-15": {
+      movie: /Ouabache/,
+      title: "Today's case: Daily Case #12: The Shot List Mix-Up",
+      href: "https://dawnclay2011-ui.github.io/family-games/case-files/day12/",
+      short: true,
+    },
+    "2026-11-16": {
+      movie: /\bedit\b/,
+      title: "Today's case: Daily Case #13: Tracks in the Mud",
+      href: "https://dawnclay2011-ui.github.io/family-games/case-files/day13/",
+      short: false,
+    },
+    "2026-11-17": {
+      movie: /\bedit\b/,
+      title: "Today's case: Daily Case #14: The Old Park Mystery",
+      href: "https://dawnclay2011-ui.github.io/family-games/case-files/day14/",
+      short: true,
+    },
+    "2026-11-18": {
+      movie: /premiere/,
+      title: "Today's case: Daily Case #15: Premiere Night",
+      href: "https://dawnclay2011-ui.github.io/family-games/case-files/day15/",
+      short: false,
+    },
   };
-  for (const [date, pattern] of Object.entries(movieDays)) {
+  for (const [date, expected] of Object.entries(movieDays)) {
     const cam = getDayContent(parsed.plan, "plan", date, "cam");
     const christian = getDayContent(parsed.plan, "plan", date, "christian");
-    assert.equal(cam.tasks.length, 1, date);
+    assert.equal(cam.tasks.length, 2, date);
     assert.equal(cam.tasks[0].title, "Woods movie: today's step");
-    assert.match(cam.tasks[0].instruction, pattern);
+    assert.match(cam.tasks[0].instruction, expected.movie);
+    assert.equal(cam.tasks[1].title, expected.title);
+    assert.equal(cam.tasks[1].materials[0].href, expected.href);
+    assert.equal(/short case/.test(cam.tasks[1].instruction), expected.short, date);
     assert.equal(christian.phase, "preparing", date);
     assert.equal(christian.message, "Your plan is being prepared.");
     assert.deepEqual(christian.tasks, []);
+    assert.equal(/\bChristian\b|case files/i.test(JSON.stringify(cam.tasks)), false);
   }
 
   const previewChristian = getDayContent(parsed.plan, "preview", "2026-11-13", "christian");
