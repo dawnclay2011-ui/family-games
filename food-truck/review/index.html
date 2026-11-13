@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta name="robots" content="noindex">
+<title>Review Shift: Hold the Rounding — Startup Tycoon: Food Truck Season</title>
+<style>
+ *{box-sizing:border-box}
+ body{margin:0;font-family:system-ui,Segoe UI,Arial,sans-serif;background:#0f1115;color:#e8e8e8}
+ header{padding:14px 18px;background:#151922;border-bottom:1px solid #2a2f3a;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center}
+ h1{margin:0;font-size:1.2rem;color:#f4a261;letter-spacing:.5px}
+ h2{margin-top:0}
+ main{max-width:900px;margin:16px auto;padding:0 12px 96px}
+ .panel{background:#171b24;border:1px solid #2a2f3a;border-radius:10px;padding:16px;margin-bottom:14px}
+ .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+ .stat{background:#1e2330;border-radius:8px;padding:10px}
+ .stat .k{font-size:.75rem;color:#9aa3b2;text-transform:uppercase}
+ .stat .v{font-size:1.3rem;font-weight:700}
+ button{font:inherit;font-weight:600;background:#f4a261;color:#111;border:none;border-radius:8px;padding:10px 16px;cursor:pointer;margin:4px 4px 0 0}
+ button.sec{background:#2a2f3a;color:#e8e8e8}
+ .good{color:#7bd389}.bad{color:#ef6f6c}.muted{color:#9aa3b2;font-size:.9rem}
+ table{width:100%;border-collapse:collapse;font-size:.9rem}td,th{padding:6px;border-bottom:1px solid #2a2f3a;text-align:right}td:first-child,th:first-child{text-align:left}
+ .report{margin:10px 0}.rstat{display:block;margin-top:4px;font-weight:600;font-size:.95rem}
+ button.rep{background:#7bd389}button.rep.small{font-size:.85rem;padding:7px 12px}button.rep.sent{background:#2a9d8f;color:#fff}button:disabled{cursor:default;opacity:.9}
+ button{max-width:100%;white-space:normal}
+ .tag{display:inline-block;background:#2a2f3a;color:#f4a261;border-radius:6px;padding:3px 8px;font-size:.8rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+ .stake{border-left:3px solid #f4a261;padding:6px 10px;color:#c9cfd9;background:#1b202b;border-radius:0 6px 6px 0;margin:10px 0}
+ .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}
+ .row .pre{font-weight:700;font-size:1.1rem;color:#f4a261}
+ input.ans{font:inherit;font-size:1.05rem;padding:10px;border-radius:8px;border:1px solid #39404f;background:#0f1115;color:#e8e8e8;flex:1;min-width:150px;max-width:460px}
+ .note{background:#1e2330;border:1px solid #39404f;border-radius:8px;padding:10px 12px;margin-top:10px}
+ .ledger td:nth-child(2),.ledger th:nth-child(2){text-align:left}
+ .nextshift{background:#1e2330;border:1px solid #f4a261;border-radius:10px;padding:14px;margin-top:12px}
+ .nextshift a{color:#f4a261;font-weight:700;word-break:break-all}
+ .datatable td,.datatable th{text-align:center}
+ .choice{background:#1e2330;border:1px solid #39404f;border-radius:8px;padding:12px;margin:8px 0;cursor:pointer}
+ .choice:hover{border-color:#f4a261}
+</style>
+</head>
+<body>
+<header><h1>🚚 STARTUP TYCOON — Food Truck Season</h1><span class="muted" id="best"></span></header>
+<main id="app"></main>
+<script type="text/plain" id="game">
+/* Review shift — same report sender, help panel, and expression checker as the daily shifts.
+   Retry rule is the review rule: unlimited tries, and the shift clears only when every line is right.
+   Save key is separate from d1–d10, tycoonBest, and tycoonLast. */
+const KEY = PREVIEW ? "tycoonDailyPreview" : "tycoonDaily";
+const DK = "review-rounding";
+const MAX_TASKS = DAY.tasks.reduce((a,t)=>a+t.value,0);
+const MAX_EVENT = 0;
+const MAX_PROFIT = MAX_TASKS + MAX_EVENT;
+let all; try{all=JSON.parse(localStorage.getItem(KEY)||"{}")||{};}catch(e){all={};}
+let st = all[DK] || null;
+function fresh(keep){ return {stage:"brief", idx:0, results:DAY.tasks.map(()=>({tries:0,ok:false,answers:[],earned:0,closed:false,hintOpen:false,note:""})), activeSec:0, startedAt:null, finishedAt:null,
+  best:keep?keep.best:null, plays:keep?keep.plays:0, autoSent:keep?keep.autoSent:false, lastDone:keep?keep.lastDone:null, v:1}; }
+if(!st || st.v!==1 || !Array.isArray(st.results) || st.results.length!==DAY.tasks.length) st=fresh(st && st.v?st:null);
+function persist(){ all[DK]=st; try{localStorage.setItem(KEY,JSON.stringify(all));}catch(e){} showBest(); }
+function money(n){ n=Math.round(n); return (n<0?"−$":"$")+Math.abs(n).toLocaleString(); }
+function showBest(){
+  const cleared=st.results.filter(r=>r.ok).length;
+  document.getElementById("best").textContent = `Review shift · ${cleared} of ${DAY.tasks.length} clear`;
+}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+const app=document.getElementById("app");
+const toTop=()=>{ try{window.scrollTo(0,0);}catch(e){} };
+setInterval(()=>{ if(document.visibilityState==="visible" && st.stage==="tasks"){ st.activeSec+=5; persist(); } },5000);
+
+/* ---------- answer checking (daily-shift checker, plus review rules) ---------- */
+function clean(s){ return String(s).toLowerCase().replace(/[−–—]/g,"-").replace(/[×·]/g,"*").replace(/÷/g,"/").replace(/≥/g,">=").replace(/≤/g,"<=").replace(/=>/g,">=").replace(/=</g,"<=").replace(/\$/g,"").replace(/,/g,"").replace(/\s+/g,""); }
+const SUP={"⁰":"0","¹":"1","²":"2","³":"3","⁴":"4","⁵":"5","⁶":"6","⁷":"7","⁸":"8","⁹":"9","⁻":"-","⁺":"+","ᵃ":"a","ᵇ":"b","ᶜ":"c","ᵈ":"d","ᵉ":"e","ᶠ":"f","ᵍ":"g","ʰ":"h","ⁱ":"i","ʲ":"j","ᵏ":"k","ˡ":"l","ᵐ":"m","ⁿ":"n","ᵒ":"o","ᵖ":"p","ʳ":"r","ˢ":"s","ᵗ":"t","ᵘ":"u","ᵛ":"v","ʷ":"w","ˣ":"x","ʸ":"y","ᶻ":"z"};
+const SUP_RE=new RegExp("["+Object.keys(SUP).join("")+"]+","g");
+function normalize(raw){
+  SUP_RE.lastIndex=0;
+  return String(raw)
+    .replace(SUP_RE, m=>"^"+[...m].map(c=>SUP[c]||"").join(""))
+    .replace(/\*\*/g,"^")
+    .replace(/ˆ/g,"^")
+    .replace(/[{}]/g,"")
+    .replace(/\.(?=\s*$)/,"");
+}
+function compile(expr, vars){
+  if(!expr) return null;
+  if(!/^[0-9.+\-*/()a-z^]+$/.test(expr)) return null;
+  const letters = expr.match(/[a-z]/g)||[];
+  if(letters.some(l=>!vars.includes(l))) return null;
+  let e = expr.replace(/(\d|\))(?=[a-z(])/g,"$1*").replace(/([a-z])(?=[a-z0-9(])/g,"$1*").replace(/\)(?=[0-9a-z(])/g,")*").replace(/\^/g,"**").replace(/(^|\()-/g,(m,a)=>a+"0-");
+  try{ const f=new Function(...vars, "return ("+e+");"); f(...vars.map(()=>1.37)); return f; }catch(err){ return null; }
+}
+function num(s){ const c=String(s).replace(/[−–—]/g,"-").replace(/[^0-9.\-]/g,""); if(!/\d/.test(c)) return NaN; return parseFloat(c); }
+function roundTo(v, place){
+  const f = 10 ** place;
+  return Math.round(Number((v * f).toFixed(6))) / f;
+}
+const near=(a,b)=>Math.abs(a-b) <= 1e-6*Math.max(1,Math.abs(b));
+function exprWhy(t,f){
+  if(!(t.start>0)) return t.miss;
+  let a,b,c;
+  try{ a=f(0); b=f(1); c=f(2); }catch(err){ return t.miss; }
+  if(!isFinite(a)||!isFinite(b)||!isFinite(c)) return t.miss;
+  if(Math.abs(a-t.start) > Math.max(0.5, t.start*0.01)) return "The starting amount is off. At year 0 the value is the price you paid.";
+  if(a===0) return t.miss;
+  const ratio=b/a;
+  if(Number.isFinite(t.loss) && Math.abs(ratio-t.loss)<0.02) return "That base is the percent you lose. Use the percent that stays: 1 minus the loss, as a decimal.";
+  if(Number.isFinite(t.keep) && Math.abs(ratio-t.keep)<0.02 && Math.abs((c/b)-t.keep)>0.02) return "Year 1 matches, but every later year has to multiply by that same factor. Put the year in the exponent.";
+  return t.miss;
+}
+function check(t, raw){
+  if(t.type==="num"){
+    if(!String(raw).trim()) return {empty:true};
+    const v=num(raw);
+    if(isNaN(v)) return {invalid:"Enter a number."};
+    if(t.place!=null && roundTo(v, t.place)===roundTo(t.a, t.place)) return {ok:true};
+    if(t.place==null && Math.abs(v-t.a)<=0.011) return {ok:true};
+    let early="";
+    if(t.traps){
+      for(const tr of t.traps){
+        const tol=tr.tol==null?0.02:tr.tol;
+        if(Math.abs(v-tr.v)<=tol){ early=tr.msg; break; }
+      }
+    }
+    return {ok:false, early:early||t.miss};
+  }
+  const s=clean(normalize(raw));
+  if(!s) return {empty:true};
+  if(t.type==="expr"){
+    let e=s;
+    if(e.includes("=")){
+      const p=e.split("=");
+      if(p.length!==2) return {invalid:"Use one = sign at most."};
+      const lhsRe=/^[a-z](\([a-z]\))?$/;
+      if(lhsRe.test(p[0]) && !t.vars.includes(p[0])) e=p[1];
+      else if(lhsRe.test(p[1]) && !t.vars.includes(p[1])) e=p[0];
+      else return {invalid:`Write it as ${t.prefix} (an expression in ${t.vars.join(", ")}).`};
+    }
+    const hasExp=/\^/.test(e);
+    const f=compile(e, t.vars);
+    if(!f) return {invalid:`I couldn't read that. Use numbers, ${t.vars.join(", ")}, and ^ for the exponent. A superscript is fine too.`};
+    if(t.requireExp && !hasExp) return {ok:false, early:"The exponent is missing. Write the whole model, like 40000(0.85)^t."};
+    const key=compile(String(t.key).replace(/\s/g,""), t.vars);
+    const pts=[0,1,2.5,7,40,140,333];
+    if(key && pts.every(x=>near(f(x), key(x)))) return {ok:true};
+    return {ok:false, early:exprWhy(t,f)};
+  }
+  return {invalid:"?"};
+}
+
+/* ---------- screens ---------- */
+function profitNow(){ return st.results.reduce((a,r)=>a+r.earned,0); }
+function firstTry(){ return st.results.filter(r=>r.ok&&r.tries===1).length; }
+function statsHTML(){
+  const done=st.results.filter(r=>r.ok).length, p=profitNow();
+  return `<div class="stats">
+   <div class="stat"><div class="k">Shift total</div><div class="v">${money(p)}</div></div>
+   <div class="stat"><div class="k">Lines cleared</div><div class="v">${done} / ${DAY.tasks.length}</div></div>
+   <div class="stat"><div class="k">Right first time</div><div class="v">${firstTry()}</div></div>
+   <div class="stat"><div class="k">Shift best</div><div class="v">${st.best!=null?money(st.best):"—"}</div></div></div>`;
+}
+function brief(){
+  app.innerHTML=`<div class="panel"><span class="tag">Review · ${esc(DAY.date)}</span><h2 style="margin-top:8px">${esc(DAY.title)}</h2>
+  <p class="muted">${esc(DAY.client)}</p><p>${esc(DAY.brief)}</p>
+  <ul><li><b>${DAY.tasks.length} lines</b>, <b>${money(MAX_PROFIT)}</b> on the packet. It clears only when every line is right.</li>
+  <li>Unlimited tries. A miss stays on that line. The answer is not shown until it's right.</li>
+  <li>Every line has a hint. Open it when you want it.</li>
+  <li>Calculator's fine. Write down every digit. Round once — at the end.</li></ul>
+  <button onclick="startShift()">Open the books ▶</button></div>`;
+}
+function startShift(){ if(!st.startedAt) st.startedAt=new Date().toISOString(); st.stage="tasks"; persist(); render(); toTop(); }
+function render(){ if(st.stage==="brief") return brief(); if(st.stage==="tasks") return task(); if(st.stage==="done") return done(); }
+function task(){
+  const i=st.idx, t=DAY.tasks[i], r=st.results[i];
+  const last=r.answers[r.answers.length-1];
+  let fb="";
+  if(r.closed){
+    fb=`<div class="note"><b class="good">✅ Booked. +${money(t.value)}</b>${r.tries>1?` <span class="muted">(${r.tries} tries)</span>`:""}<br><span class="muted">Key: ${esc(t.show)}</span></div>`;
+  } else if(r.tries){
+    fb=`<div class="note"><b class="bad">Not yet.</b> ${esc(r.note||t.miss)}<br><span class="muted">Unlimited tries. This line stays open until it's right.</span></div>`;
+  }
+  const hint=r.hintOpen?`<div class="note" id="hintbox"><b>Hint:</b> ${esc(t.hint)}</div>`:"";
+  const fmt=t.type==="expr"?"Use ^ for the exponent, like 40000(0.85)^t. Spaces, commas, and a superscript t are fine.":"Type the final number. $ signs, commas, and words are fine. Round only at the end.";
+  app.innerHTML=`<div class="panel">${statsHTML()}</div>
+  <div class="panel"><details ${i===0&&!r.tries?"open":""}><summary style="cursor:pointer"><b>📋 Shift brief</b> <span class="muted">— tap for the story</span></summary><p>${esc(DAY.brief)}</p></details></div>
+  <div class="panel" id="taskp"><span class="tag">Line ${i+1} of ${DAY.tasks.length} · ${esc(t.title)}</span>
+   <p style="font-size:1.05rem">${esc(t.q)}</p>
+   <div class="stake">💼 <b>On the line (${money(t.value)}):</b> ${esc(t.stake)}</div>
+   ${r.closed?`<p>Your answer: <b>${esc(last||"")}</b></p>`:`<div class="row">${t.prefix?`<span class="pre">${esc(t.prefix)}</span>`:""}<input class="ans" id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${esc(t.ph||"your answer")}" onkeydown="if(event.key==='Enter')commit()"><button onclick="commit()">Commit</button><button class="sec" type="button" onclick="toggleHint()">${r.hintOpen?"Hide hint":"Hint"}</button></div>
+   <div class="muted" id="m" style="margin-top:6px">${fmt}</div>`}
+   ${hint}
+   ${fb}
+   ${r.closed?`<button onclick="nextTask()">${i+1<DAY.tasks.length?"Next line ▶":"Close out the shift ▶"}</button>`:""}
+  </div>`;
+  const el=document.getElementById("taskp"); if(el&&(r.tries||r.closed)&&el.scrollIntoView) el.scrollIntoView({block:"start"});
+  const inp=document.getElementById("ans"); if(inp&&r.tries) inp.focus();
+}
+function toggleHint(){
+  const r=st.results[st.idx];
+  const draft=document.getElementById("ans");
+  const keep=draft?draft.value:"";
+  r.hintOpen=!r.hintOpen;
+  if(r.hintOpen) hpush(hl.hintQs, "Q"+(st.idx+1)+" "+DAY.tasks[st.idx].title);
+  persist(); task();
+  const inp=document.getElementById("ans");
+  if(inp){ inp.value=keep; if(keep) inp.focus(); }
+}
+function commit(){
+  const i=st.idx, t=DAY.tasks[i], r=st.results[i];
+  if(r.closed) return;
+  const raw=document.getElementById("ans").value.trim(), m=document.getElementById("m");
+  const res=check(t,raw);
+  if(res.empty) return;
+  if(res.invalid){ m.className="bad"; m.textContent=res.invalid; return; }
+  r.tries++; r.answers.push(raw);
+  if(res.ok){ r.ok=true; r.closed=true; r.earned=t.value; r.note=""; }
+  else { r.note=res.early||t.miss; }
+  persist(); task();
+  if(!res.ok){
+    const inp=document.getElementById("ans");
+    if(inp){ inp.value=raw; inp.focus(); }
+  }
+}
+function nextTask(){
+  if(!st.results[st.idx] || !st.results[st.idx].ok) return;
+  if(st.idx+1<DAY.tasks.length) st.idx++; else finish();
+  persist(); render(); toTop();
+}
+function finish(){
+  if(st.results.some(r=>!r.ok)) return;
+  st.stage="done"; st.finishedAt=new Date().toISOString();
+  const p=profitNow(); const prevBest=st.best; st.plays=(st.plays||0)+1;
+  const nb = prevBest==null || p>prevBest; if(nb) st.best=p;
+  st.lastDone={profit:p, newBest:nb && prevBest!=null, prevBest, firstTry:firstTry(), activeSec:st.activeSec, startedAt:st.startedAt, finishedAt:st.finishedAt, play:st.plays,
+    results:st.results.map(r=>({tries:r.tries,ok:r.ok,answers:r.answers.slice(),earned:r.earned}))};
+}
+function grade(){ return "Packet's clean — Rosa can resend it"; }
+function mins(sec){ return `about ${Math.max(1,Math.round(sec/60))} min`; }
+function ledger(L){
+  return `<table class="ledger"><tr><th>#</th><th>Line</th><th>Result</th><th>P&amp;L</th></tr>${DAY.tasks.map((t,i)=>{const r=L.results[i];
+   return `<tr><td>${i+1}</td><td>${esc(t.title)}</td><td>${r.ok?(r.tries===1?"✅ 1st try":"✅ try "+r.tries):"not cleared"}</td><td class="good">${money(r.earned)}</td></tr>`;}).join("")}
+   <tr><th></th><th>Shift total</th><th></th><th class="good">${money(L.profit)}</th></tr></table>`;
+}
+function nextHTML(){
+  return `<div class="nextshift">Rosa can resend the packet. The exponent stays on, and the rounding waits until the end.<br><br><a href="../">Back to the main game (Food Truck Season)</a></div>`;
+}
+function done(){
+  const L=st.lastDone; if(!L){ st.stage="brief"; return render(); }
+  app.innerHTML=`<div class="panel">${statsHTML()}</div>
+  <div class="panel"><h2>🏁 Review clear — Hold the Rounding</h2>
+  <p>All ${DAY.tasks.length} lines are right. Shift total: <b class="good" style="font-size:1.3rem">${money(L.profit)}</b> of ${money(MAX_PROFIT)} — <b>${grade()}</b></p>
+  ${L.newBest?`<p class="good"><b>New shift best!</b> Previous: ${money(L.prevBest)}</p>`:(st.best!=null&&st.best>L.profit?`<p class="muted">Shift best: ${money(st.best)}</p>`:"")}
+  <p class="muted">Right the first time: ${L.firstTry} of ${DAY.tasks.length} · Time: ${mins(L.activeSec)}</p>
+  ${ledger(L)}
+  ${reportBtn("shiftReport","📨 Send shift report to Mom")}
+  ${nextHTML()}
+  <p><button class="sec" onclick="replay()">Run this shift again</button></p></div>`;
+  if(!PREVIEW && !st.autoSent){ st.autoSent=true; persist(); const b=document.querySelector("button.rep"); if(b) reportToMom(b,shiftReport); }
+}
+function replay(){ if(!confirm("Run this shift again? Your shift best is kept.")) return; st=fresh(st); persist(); render(); toTop(); }
+
+/* ---- Report to Mom (FormSubmit AJAX) — same mechanism as the main games ---- */
+const MOM_EMAIL="8caedc1e9653325b52b367e2e172d2a3"; // FormSubmit alias (hides Mom's address)
+const REPORT_URL="https://formsubmit.co/ajax/"+MOM_EMAIL;
+function nowStr(){try{return new Date().toLocaleString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short"});}catch(e){return new Date().toString();}}
+function fmtTime(iso){ if(!iso) return "—"; try{return new Date(iso).toLocaleString("en-US",{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short"});}catch(e){return iso;} }
+function postReport(fields){
+ const ctl=typeof AbortController!=="undefined"?new AbortController():null;
+ const t=ctl?setTimeout(()=>ctl.abort(),15000):null;
+ return fetch(REPORT_URL,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(fields),signal:ctl?ctl.signal:undefined})
+  .then(r=>r.json().catch(()=>({success:r.ok?"true":"false",message:"HTTP "+r.status})).then(j=>{j._status=r.status;return j;}))
+  .finally(()=>{if(t)clearTimeout(t);});
+}
+function reportBtn(builder,label,small){
+ if(PREVIEW) return `<div class="report"><button type="button" class="rep${small?" small":""}" disabled>📨 Reports off (preview)</button><span class="rstat">Preview – reports off</span></div>`;
+ return `<div class="report"><button type="button" class="rep${small?" small":""}" onclick="reportToMom(this,${builder})">${label}</button><span class="rstat" role="status" aria-live="polite"></span></div>`;
+}
+/*BACKUP_SENDER_v1*/
+const MOM_MAILTO="dawnclay2011@gmail.com"; // optional real address for the Email button; empty = kid's mail app asks for it
+function reportText(f){return Object.keys(f).filter(k=>k[0]!=="_").map(k=>k+": "+(typeof f[k]==="object"?JSON.stringify(f[k]):f[k])).join("\n");}
+function retryReport(fields){
+ const body=new URLSearchParams();Object.keys(fields).forEach(k=>body.append(k,typeof fields[k]==="object"?JSON.stringify(fields[k]):String(fields[k])));
+ return fetch(REPORT_URL,{method:"POST",headers:{"Accept":"application/json"},body:body}).then(r=>r.json()).then(j=>{if(String(j.success)!=="true")throw new Error(j.message||"retry failed");return j;});
+}
+function formPost(fields){try{
+ let fr=document.getElementById("bkFrame");if(!fr){fr=document.createElement("iframe");fr.name=fr.id="bkFrame";fr.style.display="none";document.body.appendChild(fr);}
+ const fm=document.createElement("form");fm.method="POST";fm.action="https://formsubmit.co/"+MOM_EMAIL;fm.target="bkFrame";fm.style.display="none";
+ Object.keys(fields).forEach(k=>{const i=document.createElement("input");i.type="hidden";i.name=k;i.value=typeof fields[k]==="object"?JSON.stringify(fields[k]):String(fields[k]);fm.appendChild(i);});
+ document.body.appendChild(fm);fm.submit();setTimeout(()=>fm.remove(),5000);}catch(e){}}
+function backupPanel(btn,fields){
+ const host=btn.parentNode;let p=host.querySelector(".bkp");if(p)return;
+ const txt=(fields._subject||"Game Report")+"\n\n"+reportText(fields);
+ p=document.createElement("div");p.className="bkp";p.style.cssText="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center";
+ const sub=encodeURIComponent(fields._subject||"Game Report");let b=txt;if(b.length>1800)b=b.slice(0,1800)+"\n…(cut short — tap Copy report and paste the rest)";
+ const mk=(l,fn)=>{const x=document.createElement("button");x.type="button";x.className="alt small";x.textContent=l;x.onclick=fn;p.appendChild(x);return x;};
+ mk("✉️ Send to Mom by email",()=>{location.href="mailto:"+MOM_MAILTO+"?subject="+sub+"&body="+encodeURIComponent(b);});
+ const cp=mk("📋 Copy report",()=>{const ok=()=>{cp.textContent="Copied! ✅";};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(ok,()=>fallbackCopy(txt,ok));else fallbackCopy(txt,ok);});
+ if(navigator.share)mk("📤 Share report",()=>{navigator.share({title:fields._subject||"Game Report",text:txt}).catch(()=>{});});
+ const n=document.createElement("div");n.style.cssText="width:100%;font-size:.85em";n.textContent="Backup: email or copy your report to Mom, or tap Try again.";p.appendChild(n);
+ host.appendChild(p);p.dataset.mailto="mailto:"+MOM_MAILTO+"?subject="+sub+"&body="+encodeURIComponent(b);
+}
+function fallbackCopy(t,ok){try{const a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();document.execCommand("copy");a.remove();ok();}catch(e){prompt("Copy this report:",t);}}
+function reportToMom(btn,build){
+ const st=btn.nextElementSibling;
+ if(PREVIEW){btn.disabled=true;st.textContent="Preview – reports off";return;}
+ if(btn.dataset.sent||btn.disabled)return;
+ if(navigator.onLine===false){st.className="rstat bad";st.textContent="No internet — try again later.";btn.textContent="🔁 Try again";return;}
+ let fields;
+ try{fields=Object.assign({_subject:REPORT_SUBJECT,_template:"box",_captcha:"false",Date:nowStr(),Player:REPORT_PLAYER,Game:REPORT_GAME},build());}
+ catch(e){st.className="rstat bad";st.textContent="Oops — couldn't build the report.";return;}
+ btn.disabled=true;btn.textContent="Sending… 📤";st.className="rstat";st.textContent="";
+ postReport(fields).then(j=>{
+  if(String(j.success)!=="true")throw new Error(j.message||"Send failed");
+  btn.dataset.sent="1";btn.textContent="Sent! ✅";btn.classList.add("sent");st.className="rstat good";st.textContent="Report sent to Mom.";
+ }).catch(e=>{ if(navigator.onLine!==false&&!/activat/i.test(e&&e.message||"")&&!btn.dataset.retried){btn.dataset.retried="1";btn.textContent="Trying another way… 📤";return retryReport(fields).then(()=>{btn.dataset.sent="1";btn.disabled=true;btn.textContent="Sent! ✅";btn.classList.add("sent");st.className="rstat good";st.textContent="Mom got your report!";}).catch(e2=>{formPost(fields);bkFail(btn,st,fields,e2);});}
+  bkFail(btn,st,fields,e);
+ });
+}
+function bkFail(btn,st,fields,e){ backupPanel(btn,fields);
+  btn.disabled=false;btn.textContent="🔁 Try again";st.className="rstat bad";
+  st.textContent=navigator.onLine===false?"No internet — try again later.":/activat/i.test(e&&e.message||"")?"Reports aren't switched on yet. Try again later.":"That didn't send. Tap to try again.";
+}
+const REPORT_SUBJECT="Game Report: Christian – Food Truck Review Shift (Hold the Rounding)", REPORT_PLAYER="Christian (age 14)", REPORT_GAME="Startup Tycoon: Food Truck Season — Review Shift";
+function shiftReport(){
+  const L=st.lastDone;
+  const f={
+   "Report type":"Review shift — hold the rounding, and write the exponent (the two Shift 9 misses)",
+   "Day & topic":`Review (${DAY.date}) — ${DAY.topic}`,
+   "Shift":DAY.title,
+   "Cleared":`${L.results.filter(r=>r.ok).length} of ${DAY.tasks.length} (this shift completes only when every answer is right)`,
+   "Shift total":`${money(L.profit)} of ${money(MAX_PROFIT)} — ${grade()}`,
+   "Correct on first try":`${L.firstTry} of ${DAY.tasks.length}`,
+   "Needed more than one try":String(L.results.filter(r=>r.ok && r.tries>1).length),
+   "Time on shift":`${mins(L.activeSec)} of active time (started ${fmtTime(L.startedAt)}, finished ${fmtTime(L.finishedAt)})`,
+   "Play":L.play>1?`Replay #${L.play}`:"First play",
+   "Mid-shift event (stoic moment)":"None on this review shift."
+  };
+  DAY.tasks.forEach((t,i)=>{ const r=L.results[i];
+    f[`Q${i+1} ${t.title}`]=`${r.tries===1?"✅ first try":"✅ try "+r.tries} — his answer${r.answers.length>1?"s":""}: ${r.answers.map(a=>'"'+a+'"').join(" then ")} • key: ${t.show}`; });
+  return f;
+}
+/* ==== TRUCK HELP add-on (build3) ==== */
+const HELPDATA = {"common": {"variable": "A letter (like x) that stands for a number you don't know yet or that can change.", "expression": "A math phrase with numbers, letters, and operations but no equals sign, like 4x + 120.", "equation": "Two expressions set equal with =. Solving it means finding the value that makes both sides match.", "coefficient": "The number multiplied by a variable. In 6x, the coefficient is 6.", "constant": "A number by itself that doesn't change, like the 120 in 4x + 120.", "profit": "Money left after costs: Profit = Revenue − Cost.", "revenue": "All the money that comes in from sales: price × number sold."}, "day": {"exponential growth": "Multiplying by the same factor each step (y = a·bˣ with b > 1). It speeds up over time.", "exponential decay": "Multiplying by the same factor less than 1 each step, so it shrinks.", "growth factor": "What you multiply by each step. +5% means × 1.05; −20% means × 0.80.", "initial value": "The starting amount, the a in y = a·bˣ.", "linear": "Adding the same amount each step (a straight-line pattern).", "exponent": "The small raised power. In 500(1.1)^3 the exponent is 3. In a(b)^t, t is the exponent. Leaving it off is a different model."}, "refresh": [["Round only at the end", "Do every multiply with the full number. Round one time, at the very end, to the place the question asks for. Rounding 1.21 to 1.2 in the middle changes the answer."], ["Writing a decay model", "Losing 12% leaves 88%, which is 0.88. The model is V(t) = a(b)^t. a is the initial value, b is the factor you keep, and t has to be the exponent."], ["Percents & decimals", "Percent means 'out of 100'. 15% = 0.15. To find 15% of 80, do 0.15 × 80 = 12. A 20% increase means multiply by 1.20. A 20% decrease means multiply by 0.80."], ["Exponent rules", "Multiply same base: add the exponents (x³·x⁴ = x⁷). Divide: subtract them (x⁶ ÷ x² = x⁴). Power of a power: multiply them ((x²)³ = x⁶). Anything⁰ = 1. 10³ = 1,000, so the exponent counts the zeros."]], "typehint": {"expr": "Type the exponent with ^, like 40000(0.85)^t. A superscript t works too. Commas in the starting number are fine.", "eq2": "Write the whole equation with both letters and an = sign, like 10b + 20t = 300.", "ineq": "Use >= for 'at least' and <= for 'at most', like 6x - 300 >= 500.", "num": "Type the final number. $ signs, commas, and words are fine. Round only at the last step, to the place the question asks for."}};
+const HKEY = (PREVIEW?"tycoonHelpPreview":"tycoonHelp");
+let HLOG; try{HLOG=JSON.parse(localStorage.getItem(HKEY)||"{}")||{};}catch(e){HLOG={};}
+const hl = HLOG[DK] || (HLOG[DK]={opened:0,hintQs:[],words:[],refreshers:[]});
+function hsave(){ try{localStorage.setItem(HKEY,JSON.stringify(HLOG));}catch(e){} }
+function hpush(arr,v){ if(!arr.includes(v)){arr.push(v);hsave();} }
+const GLOSS = Object.assign({}, HELPDATA.common, HELPDATA.day);
+const GKEYS = Object.keys(GLOSS).sort((a,b)=>b.length-a.length);
+const GRE = new RegExp("\\b(" + GKEYS.map(k=>k.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|") + ")(s|es)?\\b","gi");
+function gfind(w){ w=w.toLowerCase(); return GKEYS.find(k=>k.toLowerCase()===w) || GKEYS.find(k=>w===k.toLowerCase()+"s"||w===k.toLowerCase()+"es"); }
+(function(){
+  const css=document.createElement("style");
+  css.textContent=`#helpBtn{position:fixed;right:14px;bottom:14px;z-index:50;background:#2a9d8f;color:#fff;border:none;border-radius:30px;padding:12px 18px;font-size:1.05rem;font-weight:700;box-shadow:0 3px 10px rgba(0,0,0,.35);width:auto;margin:0}
+  #helpPanel{position:fixed;inset:auto 0 0 0;max-height:78vh;overflow:auto;z-index:60;background:#fbfaf6;color:#1d2733;border-top:5px solid #2a9d8f;border-radius:16px 16px 0 0;padding:14px 16px 28px;box-shadow:0 -4px 16px rgba(0,0,0,.35);display:none;text-align:left}
+  #helpPanel h3{margin:10px 0 6px;color:#1d2733}#helpPanel dt{font-weight:700;margin-top:8px}#helpPanel dd{margin:0 0 4px 0}
+  #helpPanel .hint{background:#e6f4f1;border-radius:10px;padding:10px;margin:8px 0}
+  #helpPanel details{background:#f0eee6;border-radius:10px;padding:8px 10px;margin:6px 0}#helpPanel summary{cursor:pointer;font-weight:700}
+  #helpPanel button.hx{float:right;width:auto;margin:0;background:#1d2733;color:#fff;border:none;border-radius:8px;padding:6px 12px}
+  .gw{border-bottom:2px dotted #2a9d8f;cursor:pointer}
+  #wordPop{position:fixed;left:10px;right:10px;bottom:80px;z-index:70;background:#1d2733;color:#fff;border-radius:12px;padding:12px 14px;font-size:1.02rem;display:none;box-shadow:0 3px 12px rgba(0,0,0,.4)}`;
+  document.head.appendChild(css);
+  const b=document.createElement("button"); b.id="helpBtn"; b.type="button"; b.textContent="❓ Help"; b.onclick=openHelp; document.body.appendChild(b);
+  const p=document.createElement("div"); p.id="helpPanel"; p.setAttribute("role","dialog"); document.body.appendChild(p);
+  const w=document.createElement("div"); w.id="wordPop"; w.onclick=()=>w.style.display="none"; document.body.appendChild(w);
+})();
+function currentHint(){
+  if(st.stage==="brief") return {label:"Getting started", text:"Read the shift brief, then open for business. Every decision has a hint here, and you can check the words and refreshers below any time."};
+  if(st.stage==="done") return {label:"Shift finished", text:"Nice work getting through the shift. The refreshers below are good to skim before the next one."};
+  if(st.ev && st.ev.active && !st.ev.done){
+    if(st.ev.stage==="math") return {label:"Mid-shift math", text:"Write down what each number means first. If two plans are compared, set them equal and solve. Read the question again: what is it asking for, and in what units?", q:"event"};
+    return {label:"Mid-shift event", text:"There's no time limit. Think about what each choice does to your numbers before you pick."};
+  }
+  const t=DAY.tasks[st.idx];
+  return {label:`Line ${st.idx+1}: ${t.title}`, text:t.hint, fmt:HELPDATA.typehint[t.type]||"", q:"Q"+(st.idx+1)+" "+t.title};
+}
+function openHelp(){
+  const p=document.getElementById("helpPanel"), h=currentHint();
+  hl.opened++; if(h.q) hpush(hl.hintQs,h.q); hsave();
+  const dayKeys=Object.keys(HELPDATA.day), comKeys=Object.keys(HELPDATA.common);
+  p.innerHTML=`<button type="button" class="hx" onclick="closeHelp()">✖ Close</button>
+   <h3>🧰 Help</h3><p style="margin:0">Using help is part of how good business owners work. Take your time.</p>
+   <div class="hint">💡 <b>${esc(h.label)}</b><br>${esc(h.text)}${h.fmt?`<br><span style="opacity:.8">✏️ ${esc(h.fmt)}</span>`:""}</div>
+   <h3>🔧 Quick refreshers</h3><p style="margin:0 0 4px">Short reviews of skills today's shift uses. Tap one to open it.</p>
+   ${HELPDATA.refresh.map((r,i)=>`<details ontoggle="if(this.open)logRef(${i})"><summary>${esc(r[0])}</summary><p>${esc(r[1])}</p></details>`).join("")}
+   <h3>📖 Today's words</h3><dl>${dayKeys.map(k=>`<dt>${esc(k)}</dt><dd>${esc(GLOSS[k])}</dd>`).join("")}</dl>
+   <h3>📘 Everyday algebra words</h3><dl>${comKeys.map(k=>`<dt>${esc(k)}</dt><dd>${esc(GLOSS[k])}</dd>`).join("")}</dl>
+   <p style="opacity:.75">Tip: underlined words on the page can be tapped for a quick meaning.</p>`;
+  p.style.display="block"; p.scrollTop=0;
+}
+function logRef(i){ hpush(hl.refreshers,HELPDATA.refresh[i][0]); }
+function closeHelp(){ document.getElementById("helpPanel").style.display="none"; }
+function showWord(k){ const w=document.getElementById("wordPop"); w.innerHTML=`<b>${esc(k)}</b>: ${esc(GLOSS[k])} <span style="opacity:.7">(tap to close)</span>`; w.style.display="block"; hpush(hl.words,k); }
+document.addEventListener("click",e=>{ const g=e.target.closest&&e.target.closest(".gw"); if(g){ e.preventDefault(); e.stopPropagation(); const k=gfind(g.dataset.w)||g.dataset.w; if(GLOSS[k]) showWord(k);} },true);
+const SKIP={BUTTON:1,TEXTAREA:1,INPUT:1,SCRIPT:1,STYLE:1,SVG:1,svg:1,text:1,A:1,SELECT:1,OPTION:1,SUMMARY:1,TABLE:1};
+function glossify(root){
+  const tw=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode(n){ for(let p=n.parentNode;p&&p!==root;p=p.parentNode){ if(SKIP[p.nodeName]||(p.classList&&p.classList.contains("gw"))) return NodeFilter.FILTER_REJECT; } GRE.lastIndex=0; return GRE.test(n.nodeValue)?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT; }});
+  const nodes=[]; while(tw.nextNode()) nodes.push(tw.currentNode);
+  nodes.forEach(n=>{ const f=document.createDocumentFragment(); let last=0; const s=n.nodeValue; GRE.lastIndex=0; let m;
+    while((m=GRE.exec(s))){ f.appendChild(document.createTextNode(s.slice(last,m.index))); const sp=document.createElement("span"); sp.className="gw"; sp.dataset.w=m[1]; sp.textContent=m[0]; f.appendChild(sp); last=m.index+m[0].length; }
+    f.appendChild(document.createTextNode(s.slice(last))); n.parentNode.replaceChild(f,n); });
+}
+const gObs=new MutationObserver(()=>{ gObs.disconnect(); try{glossify(app);}catch(e){} gObs.observe(app,{childList:true,subtree:true}); });
+gObs.observe(app,{childList:true,subtree:true});
+const _shiftReport = shiftReport;
+shiftReport = function(){
+  const r=_shiftReport();
+  r["Help button opened"] = hl.opened + (hl.opened===1?" time":" times");
+  r["Hints viewed for"] = hl.hintQs.length ? hl.hintQs.map(q=>q==="event"?"mid-shift math":q).join(", ") : "None";
+  r["Refreshers opened"] = hl.refreshers.length ? hl.refreshers.join(", ") : "None";
+  r["Words looked up"] = hl.words.length ? hl.words.join(", ") : "None";
+  return r;
+};
+
+/* ==== end truck add-on ==== */
+showBest(); render();
+</script>
+<script>
+/* ---- Date lock + hidden preview. Unlock = midnight America/New_York, stored as an absolute UTC instant. ---- */
+var META = {"game": "truck", "day": "review", "date": "After Shift 9", "dateShort": "Review", "unlock": 0, "era": "", "lockRank": "Review shift · Hold the Rounding"};
+var PAYLOAD = "eyJkYXkiOiB7InJldmlldyI6IHRydWUsICJkYXkiOiAiUiIsICJ0b3BpYyI6ICJSZXZpZXc6IGRvbid0IHJvdW5kIGVhcmx5LCBhbmQgd3JpdGUgdGhlIGV4cG9uZW50IiwgInRpdGxlIjogIlJldmlldyBTaGlmdDogSG9sZCB0aGUgUm91bmRpbmciLCAiY2xpZW50IjogIlJvc2EsIHlvdXIgYm9va2tlZXBlciDigJQgdGhlIGJhbmsgc2VudCBTaGlmdCA5IGJhY2siLCAiZGF0ZSI6ICJBZnRlciBTaGlmdCA5IiwgImJyaWVmIjogIlJvc2EgcHVsbGVkIHR3byBsaW5lcyBvdXQgb2YgdGhlIGJhbmsgcGFja2V0LiBUaGUgU2F0dXJkYXkgZ3Jvd3RoIHRvdGFsIHdhcyByb3VuZGVkIGJlZm9yZSB0aGUgbGFzdCBtdWx0aXBseSwgYW5kIHRoZSBleHBvbmVudGlhbCBkZWNheSBtb2RlbCB3YXMgbWlzc2luZyBpdHMgZXhwb25lbnQuIFNpeCBuZXcgbGluZXMsIHNhbWUgdHJ1Y2suIEEgZ3Jvd3RoIGZhY3RvciBzdGF5cyBleGFjdCB1bnRpbCB0aGUgZmluYWwgc3RlcC4gQW4gZXhwb25lbnRpYWwgZGVjYXkgbW9kZWwgaXMgdGhlIGluaXRpYWwgdmFsdWUgdGltZXMgdGhlIGZhY3RvciB5b3Uga2VlcCwgd2l0aCB0aGUgeWVhciBpbiB0aGUgZXhwb25lbnQuIiwgInRhc2tzIjogW3siaWQiOiAicmVndWxhcnMiLCAidGl0bGUiOiAiVGhyZWUgd2Vla3Mgb2YgcmVndWxhcnMiLCAidHlwZSI6ICJudW0iLCAicSI6ICJTYXR1cmRheSByZWd1bGFycyBzdGFydCBhdCA2NDAgcGVvcGxlIGFuZCBncm93IGJ5IDEwJSBldmVyeSB3ZWVrLiBIb3cgbWFueSByZWd1bGFycyBhZnRlciAzIHdlZWtzPyBOZWFyZXN0IHRlbnRoLiBSb3VuZCBvbmNlLCBhdCB0aGUgZW5kLiIsICJzdGFrZSI6ICJUaGUgYmFuayBib3VuY2VkIHRoaXMga2luZCBvZiBsaW5lIGxhc3Qgc2hpZnQuIiwgInZhbHVlIjogMTAwLCAibWlzcyI6ICJOb3QgdGhlIG5lYXJlc3QgdGVudGggb2YgdGhlIGZ1bGwgcHJvZHVjdC4gS2VlcCBldmVyeSBkZWNpbWFsIHVudGlsIHRoZSBsYXN0IHN0ZXAuIiwgImhpbnQiOiAiVGhlIGdyb3d0aCBmYWN0b3IgaXMgMS4xMC4gTXVsdGlwbHkgNjQwIMOXIDEuMTAgw5cgMS4xMCDDlyAxLjEwIGFuZCBrZWVwIGV2ZXJ5IGRlY2ltYWwuIDEuMTAgw5cgMS4xMCBpcyAxLjIxLCBub3QgMS4yLiBSb3VuZCB0byB0aGUgbmVhcmVzdCB0ZW50aCBvbmx5IGFmdGVyIHRoZSBsYXN0IG11bHRpcGx5LiIsICJzaG93IjogIjg1MS44IiwgImEiOiA4NTEuODQsICJwbGFjZSI6IDEsICJwaCI6ICJuZWFyZXN0IHRlbnRoIiwgInRyYXBzIjogW3sidiI6IDg0NC44LCAidG9sIjogMC4wNSwgIm1zZyI6ICI4NDQuOCBpcyB3aGF0IHlvdSBnZXQgaWYgMS4yMSB3YXMgcm91bmRlZCB0byAxLjIgYmVmb3JlIHRoZSBsYXN0IG11bHRpcGx5LiBLZWVwIDEuMjEuIn0sIHsidiI6IDg1MS40LCAidG9sIjogMC4wNSwgIm1zZyI6ICI4NTEuNCBpcyB3aGF0IHlvdSBnZXQgaWYgNzc0LjQgd2FzIGN1dCB0byA3NzQgYmVmb3JlIHRoZSBsYXN0IMOXIDEuMTAuIEtlZXAgdGhlIC40LiJ9LCB7InYiOiA4NTIsICJ0b2wiOiAwLjA1LCAibXNnIjogIlRoYXQncyByb3VuZGVkIHRvIHRoZSBuZWFyZXN0IHdob2xlIHBlcnNvbi4gVGhlIGJhbmsgd2FudHMgdGhlIG5lYXJlc3QgdGVudGguIn0sIHsidiI6IDg1MSwgInRvbCI6IDAuMDUsICJtc2ciOiAiVGhhdCdzIHRoZSB3aG9sZS1udW1iZXIgcGFydCBvbmx5LiBUaGUgYmFuayB3YW50cyBvbmUgZGVjaW1hbCBwbGFjZS4ifSwgeyJ2IjogODUwLCAidG9sIjogMC4wNSwgIm1zZyI6ICJUaGF0J3Mgcm91bmRlZCB0byB0aGUgbmVhcmVzdCB0ZW4uIFN0b3AgYXQgdGhlIG5lYXJlc3QgdGVudGguIn1dfSwgeyJpZCI6ICJib3hlcyIsICJ0aXRsZSI6ICJUaHJlZSB3ZWVrcyBvZiBib3hlcyIsICJ0eXBlIjogIm51bSIsICJxIjogIkEgbHVuY2gtY2x1YiBvcmRlciBzdGFydHMgYXQgMzIwIGJveGVzIGFuZCBncm93cyBieSAxNSUgZWFjaCB3ZWVrLiBIb3cgbWFueSBib3hlcyBhZnRlciAzIHdlZWtzPyBOZWFyZXN0IHRlbnRoLiBEb24ndCBzaG9ydGVuIHRoZSBmYWN0b3IgZWFybHkuIiwgInN0YWtlIjogIkNhdGVyaW5nIHByaW50cyB0aGUgbGFiZWxzIG9mZiB0aGlzIGNvdW50LiIsICJ2YWx1ZSI6IDEwMCwgIm1pc3MiOiAiTm90IHRoZSBuZWFyZXN0IHRlbnRoIG9mIHRoZSBmdWxsIHByb2R1Y3QuIERvbid0IHNob3J0ZW4gdGhlIGZhY3RvciBiZWZvcmUgdGhlIGxhc3QgbXVsdGlwbHkuIiwgImhpbnQiOiAiVGhlIGdyb3d0aCBmYWN0b3IgaXMgMS4xNS4gMS4xNSDDlyAxLjE1ID0gMS4zMjI1LiBLZWVwIHRoZSAyMjUg4oCUIGRvbid0IGN1dCBpdCB0byAxLjMyIGJlZm9yZSB0aGUgdGhpcmQgMS4xNSBhbmQgdGhlIDMyMC4gUm91bmQgdG8gdGhlIG5lYXJlc3QgdGVudGggYXQgdGhlIGVuZC4iLCAic2hvdyI6ICI0ODYuNyIsICJhIjogNDg2LjY4LCAicGxhY2UiOiAxLCAicGgiOiAibmVhcmVzdCB0ZW50aCIsICJ0cmFwcyI6IFt7InYiOiA0ODUuNzYsICJ0b2wiOiAwLjAzLCAibXNnIjogIlRoYXQncyB3aGF0IHlvdSBnZXQgaWYgMS4zMjI1IHdhcyBjdXQgdG8gMS4zMi4gS2VlcCB0aGUgMjI1LiJ9LCB7InYiOiA0ODUuOCwgInRvbCI6IDAuMDMsICJtc2ciOiAiVGhhdCdzIHdoYXQgeW91IGdldCBpZiAxLjMyMjUgd2FzIGN1dCB0byAxLjMyLiBLZWVwIHRoZSAyMjUuIn0sIHsidiI6IDQ4Ni40LCAidG9sIjogMC4wMywgIm1zZyI6ICI0ODYuNCB1c2VzIDEuNTIuIFRoZSBmdWxsIGZhY3RvciBpcyAxLjUyMDg3NS4gRG9uJ3QgY2hvcCBpdCBiZWZvcmUgeW91IG11bHRpcGx5IGJ5IDMyMC4ifSwgeyJ2IjogNDg2LjYsICJ0b2wiOiAwLjAzLCAibXNnIjogIjQ4Ni42IHJvdW5kcyB0aGUgd3Jvbmcgd2F5LiBLZWVwIHRoZSBmdWxsIHByb2R1Y3QsIHRoZW4gbG9vayBhdCB0aGUgaHVuZHJlZHRocyBkaWdpdC4ifSwgeyJ2IjogNDg3LCAidG9sIjogMC4wNSwgIm1zZyI6ICJUaGF0J3MgdGhlIG5lYXJlc3Qgd2hvbGUgYm94LiBTdGF5IGF0IG9uZSBkZWNpbWFsIHBsYWNlLiJ9XX0sIHsiaWQiOiAic2lnbnVwcyIsICJ0aXRsZSI6ICJGaXZlIGRheXMgb2Ygc2lnbnVwcyIsICJ0eXBlIjogIm51bSIsICJxIjogIlRoZSB0cnVjaydzIGFwcCBzdGFydHMgYXQgOTAgc2lnbnVwcyBhbmQgZ3Jvd3MgYnkgMjUlIGVhY2ggZGF5LiBIb3cgbWFueSBzaWdudXBzIGFmdGVyIDUgZGF5cz8gTmVhcmVzdCB3aG9sZSBwZXJzb24uIENhcnJ5IHRoZSBkZWNpbWFscyB1bnRpbCB0aGF0IGxhc3Qgcm91bmQuIiwgInN0YWtlIjogIlRoZSBhcHAgbGlzdGluZyBnb2VzIHVwIHRvbmlnaHQuIiwgInZhbHVlIjogMTAwLCAibWlzcyI6ICJOb3QgdGhlIG5lYXJlc3Qgd2hvbGUgcGVyc29uLiBDYXJyeSB0aGUgZGVjaW1hbHMsIHRoZW4gcm91bmQgb25jZS4iLCAiaGludCI6ICJUaGUgZ3Jvd3RoIGZhY3RvciBpcyAxLjI1LiBNdWx0aXBseSBieSBpdCBmaXZlIHRpbWVzIGFuZCBrZWVwIHRoZSBkZWNpbWFscyBhbGwgdGhlIHdheS4gUm91bmQgdG8gYSB3aG9sZSBwZXJzb24gb25seSBvbmNlLCBhdCB0aGUgZW5kLiBJZiB0aGUgZmlyc3QgZGVjaW1hbCBkaWdpdCBpcyA1IG9yIG1vcmUsIHJvdW5kIHVwLiIsICJzaG93IjogIjI3NSIsICJhIjogMjc0LjY1ODIwMzEyNSwgInBsYWNlIjogMCwgInBoIjogIndob2xlIHBlb3BsZSIsICJ0cmFwcyI6IFt7InYiOiAyNzQsICJ0b2wiOiAwLjIsICJtc2ciOiAiMjc0IGRyb3BzIHRoZSBkZWNpbWFsLiBMb29rIGF0IHRoZSBmaXJzdCBkZWNpbWFsIGRpZ2l0IGFuZCByb3VuZCB0byBhIHdob2xlIHBlcnNvbiBvbmNlLCBhdCB0aGUgZW5kLiJ9LCB7InYiOiAyNzMsICJ0b2wiOiAwLjIsICJtc2ciOiAiMjczIGlzIHNob3J0IGJlY2F1c2UgYSBkZWNpbWFsIGdvdCBjaG9wcGVkIGFsb25nIHRoZSB3YXkuIENhcnJ5IGV2ZXJ5IGRpZ2l0LiJ9LCB7InYiOiAyNzAsICJ0b2wiOiAwLjIsICJtc2ciOiAiMjcwIGlzIHdoYXQgeW91IGdldCBpZiB0aGUgZml2ZS1zdGVwIGZhY3RvciB3YXMgcm91bmRlZCB0byAzLiBLZWVwIHRoZSBmdWxsIGZhY3Rvci4ifV19LCB7ImlkIjogImdyaWxsIiwgInRpdGxlIjogIldyaXRlIHRoZSBncmlsbCBtb2RlbCIsICJ0eXBlIjogImV4cHIiLCAicSI6ICJUaGUgZmxhdC10b3AgZ3JpbGwgY29zdCAkMiw4MDAgYW5kIGxvc2VzIDEyJSBvZiBpdHMgdmFsdWUgZXZlcnkgeWVhci4gV3JpdGUgRyh0KSwgaXRzIHZhbHVlIGFmdGVyIHQgeWVhcnMuIiwgInN0YWtlIjogIlRoZSBsb2FuIGZpbGUgbmVlZHMgYSB2YWx1ZSBtb2RlbCwgbm90IGEgc2luZ2xlIG51bWJlci4iLCAidmFsdWUiOiAxMDAsICJtaXNzIjogIlRoYXQgbW9kZWwgZG9lc24ndCBtYXRjaCB0aGUgZ3JpbGwuIENoZWNrIHRoZSBzdGFydGluZyBwcmljZSwgdGhlIGZhY3RvciB5b3Uga2VlcCwgYW5kIHRoZSBleHBvbmVudC4iLCAiaGludCI6ICJMb3NpbmcgMTIlIGxlYXZlcyA4OCUsIHNvIHRoZSBmYWN0b3IgaXMgMC44OC4gV3JpdGUgdGhlIGluaXRpYWwgdmFsdWUgdGltZXMgdGhhdCBmYWN0b3IsIHdpdGggdCBpbiB0aGUgZXhwb25lbnQg4oCUIHRoZSBzYW1lIHNoYXBlIGFzIDQwMDAwKDAuODUpXnQuIERvbid0IGxlYXZlIHRoZSBleHBvbmVudCBvZmYuIiwgInNob3ciOiAiRyh0KSA9IDI4MDAoMC44OCledCIsICJ2YXJzIjogWyJ0Il0sICJrZXkiOiAiMjgwMCowLjg4XnQiLCAicHJlZml4IjogIkcodCkgPSIsICJwaCI6ICJsaWtlIDQwMDAwKDAuODUpXnQiLCAicmVxdWlyZUV4cCI6IHRydWUsICJzdGFydCI6IDI4MDAsICJrZWVwIjogMC44OCwgImxvc3MiOiAwLjEyfSwgeyJpZCI6ICJtYWNoaW5lIiwgInRpdGxlIjogIldyaXRlIHRoZSBtYWNoaW5lIG1vZGVsIiwgInR5cGUiOiAiZXhwciIsICJxIjogIlRoZSBzb2Z0LXNlcnZlIG1hY2hpbmUgY29zdCAkNiw0MDAgYW5kIGxvc2VzIDIwJSBvZiBpdHMgdmFsdWUgZXZlcnkgeWVhci4gV3JpdGUgTSh0KSwgaXRzIHZhbHVlIGFmdGVyIHQgeWVhcnMuIiwgInN0YWtlIjogIlNhbWUgbG9hbiBmaWxlLCBzZWNvbmQgbWFjaGluZS4iLCAidmFsdWUiOiAxMDAsICJtaXNzIjogIlRoYXQgbW9kZWwgZG9lc24ndCBtYXRjaCB0aGUgbWFjaGluZS4gQ2hlY2sgdGhlIHN0YXJ0aW5nIHByaWNlLCB0aGUgZmFjdG9yIHlvdSBrZWVwLCBhbmQgdGhlIGV4cG9uZW50LiIsICJoaW50IjogIkxvc2luZyAyMCUgbGVhdmVzIDgwJSwgc28gdGhlIGZhY3RvciBpcyAwLjgwLiBTYW1lIHNoYXBlOiBpbml0aWFsIHZhbHVlLCB0aGVuIHRoZSBmYWN0b3IsIHRoZW4gXnQuIiwgInNob3ciOiAiTSh0KSA9IDY0MDAoMC44MCledCIsICJ2YXJzIjogWyJ0Il0sICJrZXkiOiAiNjQwMCowLjhedCIsICJwcmVmaXgiOiAiTSh0KSA9IiwgInBoIjogImxpa2UgNDAwMDAoMC44NSledCIsICJyZXF1aXJlRXhwIjogdHJ1ZSwgInN0YXJ0IjogNjQwMCwgImtlZXAiOiAwLjgsICJsb3NzIjogMC4yfSwgeyJpZCI6ICJ5ZWFyMyIsICJ0aXRsZSI6ICJNYWNoaW5lIHZhbHVlIGFmdGVyIDMgeWVhcnMiLCAidHlwZSI6ICJudW0iLCAicSI6ICJVc2luZyB0aGF0IG1hY2hpbmUgbW9kZWwsIHdoYXQgaXMgaXQgd29ydGggYWZ0ZXIgMyB5ZWFycz8gRG9sbGFycyBhbmQgY2VudHMuIiwgInN0YWtlIjogIkluc3VyYW5jZSB3YW50cyB0aGUgeWVhci0zIHZhbHVlLCB0byB0aGUgY2VudC4iLCAidmFsdWUiOiAxMDAsICJtaXNzIjogIk5vdCB0aGUgeWVhci0zIHZhbHVlIHRvIHRoZSBuZWFyZXN0IGNlbnQuIFVzZSB0aGUgZnVsbCBmYWN0b3IgYmVmb3JlIHlvdSBtdWx0aXBseS4iLCAiaGludCI6ICJVc2UgdGhlIG1vZGVsLiAwLjgwIMOXIDAuODAgw5cgMC44MCA9IDAuNTEyLCBub3QgMC41IGFuZCBub3QgYSBzaW5nbGUgMC44MC4gTXVsdGlwbHkgNiw0MDAgYnkgMC41MTIuIFRoZSBhbnN3ZXIgYWxyZWFkeSBsYW5kcyBvbiBjZW50cywgc28gZG9uJ3Qgcm91bmQgaXQgdG8gYSB3aG9sZSBkb2xsYXIuIiwgInNob3ciOiAiJDMsMjc2LjgwIiwgImEiOiAzMjc2LjgsICJwbGFjZSI6IDIsICJwcmVmaXgiOiAiJCIsICJwaCI6ICJkb2xsYXJzIGFuZCBjZW50cyIsICJ0cmFwcyI6IFt7InYiOiAzMjAwLCAidG9sIjogMC4wMSwgIm1zZyI6ICIzLDIwMCB1c2VzIDAuNSBpbnN0ZWFkIG9mIDAuNTEyLiBEb24ndCByb3VuZCB0aGUgZmFjdG9yIGZpcnN0LiJ9LCB7InYiOiAzMjY0LCAidG9sIjogMC4wMSwgIm1zZyI6ICIzLDI2NCB1c2VzIDAuNTEuIEtlZXAgMC41MTIuIn0sIHsidiI6IDMyNzcsICJ0b2wiOiAwLjAxLCAibXNnIjogIlRoYXQncyB0aGUgbmVhcmVzdCBkb2xsYXIuIFRoZSBiYW5rIHdhbnRzIHRoZSBjZW50cy4ifSwgeyJ2IjogNTEyMCwgInRvbCI6IDAuMDEsICJtc2ciOiAiNSwxMjAgaXMgb25lIHllYXIgb25seS4gVGhlIGV4cG9uZW50IGlzIDMuIn0sIHsidiI6IDQwOTYsICJ0b2wiOiAwLjAxLCAibXNnIjogIjQsMDk2IGlzIHR3byB5ZWFycy4gWW91IG5lZWQgdGhyZWUuIn1dfV19fQ==";
+var PH = 3887916057;
+var DAY = null, MAPS = null, CHECK = null, PREVIEW = false, PREVIEW_QS = "";
+function fnv1a(s){ var h=0x811c9dc5; for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,0x01000193)>>>0; } return h>>>0; }
+try{ var _t=new URLSearchParams(location.search).get("p"); if(_t && fnv1a(_t)===PH){ PREVIEW=true; PREVIEW_QS="?p="+encodeURIComponent(_t); } }catch(e){}
+function openGame(){
+  var o=JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(PAYLOAD),function(c){return c.charCodeAt(0);})));
+  DAY=o.day; MAPS=o.maps||{}; if(o.check) CHECK=o.check;
+  if(PREVIEW){ var b=document.createElement("span"); b.className="badge"; b.id="previewBadge"; b.style.cssText="background:#8e44ad;color:#fff"; b.textContent="Preview – reports off"; document.querySelector("header").appendChild(b); }
+  var s=document.createElement("script"); s.textContent=document.getElementById("game").textContent; document.body.appendChild(s);
+}
+function countdownText(ms){
+  var s=Math.max(0,Math.floor(ms/1000)), d=Math.floor(s/86400), h=Math.floor(s%86400/3600), m=Math.floor(s%3600/60), x=s%60;
+  function p(n){return n<10?"0"+n:""+n;}
+  return (d?d+(d===1?" day ":" days "):"")+p(h)+"h "+p(m)+"m "+p(x)+"s";
+}
+function showLocked(){
+  var app=document.getElementById("app");
+  if(META.game==="cam"){
+    document.getElementById("rank").textContent=META.lockRank||("Day "+META.day+" of 5 • "+META.dateShort);
+    app.innerHTML='<div class="card file" style="text-align:center"><span class="era">'+META.era+'</span><br><span class="stamp">SEALED</span>'+
+      '<h2>Case sealed until '+META.date+'</h2><p>'+(META.lockMsg||'This case file is locked in the evidence room, Officer Cam. It opens at midnight (Eastern Time).')+'</p>'+
+      '<p style="font-size:1.6rem;font-weight:900;color:#c0392b" id="cd"></p><p class="hint">⏳ Check back on '+META.date+'!</p></div>';
+  } else {
+    document.getElementById("best").textContent=META.lockRank||("Shift "+META.day+" of 5 · "+META.date);
+    app.innerHTML='<div class="panel" style="text-align:center"><span class="tag">'+(META.lockTag||('Shift '+META.day+' · Closed'))+'</span>'+
+      '<h2 style="margin-top:10px">'+(META.lockH2||'Shift opens')+' '+META.date+'</h2><p class="muted">'+(META.lockMsg||'The truck is parked. This shift opens at midnight Eastern Time.')+'</p>'+
+      '<p style="font-size:1.6rem;font-weight:700;color:#f4a261" id="cd"></p><p class="muted">Come back on '+META.date+'.</p></div>';
+  }
+  var cd=document.getElementById("cd");
+  function tick(){ var left=META.unlock-Date.now(); if(left<=0){ clearInterval(iv); app.innerHTML=""; openGame(); return; } cd.textContent=countdownText(left); }
+  var iv=setInterval(tick,1000); tick();
+}
+if(PREVIEW || Date.now()>=META.unlock) openGame(); else showLocked();
+</script>
+
+</body>
+</html>
