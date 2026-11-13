@@ -88,20 +88,20 @@
               "finishedMeans": "You have practiced the cursive letters on today's page."
             },
             {
-              "id": "cracked-tablet",
+              "id": "rune-stone",
               "version": 1,
-              "title": "Today's case: Day 6: The Cracked Tablet (Mesopotamia)",
-              "instruction": "Open today's case, Day 6: The Cracked Tablet, about Mesopotamia.",
+              "title": "Today's case: Daily Case #9: The Rune Stone Riddle",
+              "instruction": "Open Daily Case #9: The Rune Stone Riddle and work through today's case.",
               "steps": [
-                "Open Day 6: The Cracked Tablet.",
-                "Follow the case about Mesopotamia.",
+                "Open Daily Case #9: The Rune Stone Riddle.",
+                "Follow the case from the start.",
                 "Finish the case."
               ],
-              "finishedMeans": "You have finished Day 6: The Cracked Tablet.",
+              "finishedMeans": "You have finished Daily Case #9: The Rune Stone Riddle.",
               "materials": [
                 {
-                  "label": "Day 6: The Cracked Tablet (Mesopotamia)",
-                  "href": "https://dawnclay2011-ui.github.io/family-games/case-files/day6/"
+                  "label": "Daily Case #9: The Rune Stone Riddle",
+                  "href": "https://dawnclay2011-ui.github.io/family-games/case-files/day9/"
                 }
               ]
             },

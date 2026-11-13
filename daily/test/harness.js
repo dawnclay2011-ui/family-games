@@ -363,10 +363,11 @@ check("Cam's November 13 list is his own", [
   "Finish script planning for your woods movie",
   "Word puzzles: rebus puzzles, pages 1-5",
   "Cursive practice",
-  "The Cracked Tablet",
+  "The Rune Stone Riddle",
   "Optional: help set up the new laptop",
 ].every((line) => camTodayText.includes(line)));
-check("Cam's case link is on his task", [...camToday.host.querySelectorAll("a")].some((anchor) => anchor.href.endsWith("/case-files/day6/")));
+check("Cam's case link is on his task", [...camToday.host.querySelectorAll("a")].some((anchor) => anchor.href.endsWith("/case-files/day9/")));
+check("Cam November 13 does not keep Day 6", !text(camToday.host).includes("Cracked Tablet") && ![...camToday.host.querySelectorAll("a")].some((anchor) => anchor.href.includes("/case-files/day6/")));
 check("Cam does not see Christian's November 13 work", !/Christian|zoo vs|Food Truck|Thanksgiving|grandpa/i.test(camTodayText));
 
 const christianToday = await mount({
@@ -389,7 +390,7 @@ check("Christian's November 13 list is his own", [
 ].every((line) => christianTodayText.includes(line)));
 check("the budget task has no link", christianToday.host.querySelector("#task-thanksgiving-budget a") == null);
 check("Christian's shift link is present", [...christianToday.host.querySelectorAll("#checklist a")].some((anchor) => anchor.href.includes("/food-truck/day3/")));
-check("Christian does not see Cam's November 13 work", !/\bCam\b|woods movie|rebus|Cursive practice|Cracked Tablet|new laptop/.test(christianTodayText));
+check("Christian does not see Cam's November 13 work", !/\bCam\b|woods movie|rebus|Cursive practice|Rune Stone|new laptop/.test(christianTodayText));
 christianToday.host.querySelector("#day-input").value = "2026-11-14";
 christianToday.host.querySelector("#day-input").dispatchEvent(new Event("change", { bubbles: true }));
 check("Christian November 14 is still being prepared", text(christianToday.host).includes("Your plan is being prepared.") && !text(christianToday.host).includes("Woods movie"));

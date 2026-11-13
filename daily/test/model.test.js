@@ -102,10 +102,11 @@ test("each page uses that child's plan and falls back to the shared day", () => 
     "Finish script planning for your woods movie",
     "Word puzzles: rebus puzzles, pages 1-5",
     "Cursive practice",
-    "Today's case: Day 6: The Cracked Tablet (Mesopotamia)",
+    "Today's case: Daily Case #9: The Rune Stone Riddle",
     "Optional: help set up the new laptop",
   ]);
-  assert.equal(cam13.tasks[3].materials[0].href, "https://dawnclay2011-ui.github.io/family-games/case-files/day6/");
+  assert.equal(cam13.tasks[3].materials[0].href, "https://dawnclay2011-ui.github.io/family-games/case-files/day9/");
+  assert.equal(/Cracked Tablet|case-files\/day6/.test(JSON.stringify(cam13)), false);
   assert.equal(JSON.stringify(cam13).includes(".pdf"), false);
   assert.equal(/\b(Christian|zoo|grandpa|sanctuary)\b|food truck|food-truck|Thanksgiving/i.test(JSON.stringify(cam13)), false);
 
