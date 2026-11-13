@@ -298,7 +298,7 @@ async function main() {
     await shot("cam_nov13_mobile_360.png");
     await setDate("2026-11-14");
     const camNov14 = await evaluate("document.body.innerText");
-    expect("Cam November 14 is only today's woods movie step", camNov14.includes("Woods movie: today's step") && camNov14.includes("prep for filming") && !camNov14.includes("rebus"));
+    expect("Cam November 14 shows the movie step then Daily Case 11", camNov14.includes("Woods movie: today's step") && camNov14.includes("prep for filming") && camNov14.indexOf("Woods movie: today's step") < camNov14.indexOf("Daily Case #11: The Missing Script Page") && !camNov14.includes("rebus"));
 
     await open(`${origin}/daily/`, 360, 900, true);
     const index = await evaluate("document.body.innerText");

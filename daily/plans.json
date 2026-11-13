@@ -201,6 +201,24 @@
                 "Put your supplies where you can find them."
               ],
               "finishedMeans": "You finished the prep for filming."
+            },
+            {
+              "id": "missing-script-page",
+              "version": 1,
+              "title": "Today's case: Daily Case #11: The Missing Script Page",
+              "instruction": "Open Daily Case #11: The Missing Script Page and work through today's case. This one is a short case.",
+              "steps": [
+                "Open Daily Case #11: The Missing Script Page.",
+                "Follow the case from the start.",
+                "Finish the case."
+              ],
+              "finishedMeans": "You have finished Daily Case #11: The Missing Script Page.",
+              "materials": [
+                {
+                  "label": "Daily Case #11: The Missing Script Page",
+                  "href": "https://dawnclay2011-ui.github.io/family-games/case-files/day11/"
+                }
+              ]
             }
           ]
         }
@@ -225,6 +243,24 @@
                 "Check that the scenes you wanted are filmed."
               ],
               "finishedMeans": "You filmed your woods movie at Ouabache."
+            },
+            {
+              "id": "shot-list",
+              "version": 1,
+              "title": "Today's case: Daily Case #12: The Shot List Mix-Up",
+              "instruction": "Open Daily Case #12: The Shot List Mix-Up and work through today's case. This one is a short case.",
+              "steps": [
+                "Open Daily Case #12: The Shot List Mix-Up.",
+                "Follow the case from the start.",
+                "Finish the case."
+              ],
+              "finishedMeans": "You have finished Daily Case #12: The Shot List Mix-Up.",
+              "materials": [
+                {
+                  "label": "Daily Case #12: The Shot List Mix-Up",
+                  "href": "https://dawnclay2011-ui.github.io/family-games/case-files/day12/"
+                }
+              ]
             }
           ]
         }
@@ -249,6 +285,24 @@
                 "Save your edit."
               ],
               "finishedMeans": "You saved an edit of your woods movie."
+            },
+            {
+              "id": "tracks-in-the-mud",
+              "version": 1,
+              "title": "Today's case: Daily Case #13: Tracks in the Mud",
+              "instruction": "Open Daily Case #13: Tracks in the Mud and work through today's case.",
+              "steps": [
+                "Open Daily Case #13: Tracks in the Mud.",
+                "Follow the case from the start.",
+                "Finish the case."
+              ],
+              "finishedMeans": "You have finished Daily Case #13: Tracks in the Mud.",
+              "materials": [
+                {
+                  "label": "Daily Case #13: Tracks in the Mud",
+                  "href": "https://dawnclay2011-ui.github.io/family-games/case-files/day13/"
+                }
+              ]
             }
           ]
         }
@@ -273,6 +327,24 @@
                 "Save your edit."
               ],
               "finishedMeans": "You saved an edit of your woods movie."
+            },
+            {
+              "id": "old-park",
+              "version": 1,
+              "title": "Today's case: Daily Case #14: The Old Park Mystery",
+              "instruction": "Open Daily Case #14: The Old Park Mystery and work through today's case. This one is a short case.",
+              "steps": [
+                "Open Daily Case #14: The Old Park Mystery.",
+                "Follow the case from the start.",
+                "Finish the case."
+              ],
+              "finishedMeans": "You have finished Daily Case #14: The Old Park Mystery.",
+              "materials": [
+                {
+                  "label": "Daily Case #14: The Old Park Mystery",
+                  "href": "https://dawnclay2011-ui.github.io/family-games/case-files/day14/"
+                }
+              ]
             }
           ]
         }
@@ -297,6 +369,24 @@
                 "Watch the movie you made."
               ],
               "finishedMeans": "You held the premiere of your woods movie."
+            },
+            {
+              "id": "premiere-night",
+              "version": 1,
+              "title": "Today's case: Daily Case #15: Premiere Night",
+              "instruction": "Open Daily Case #15: Premiere Night and work through today's case.",
+              "steps": [
+                "Open Daily Case #15: Premiere Night.",
+                "Follow the case from the start.",
+                "Finish the case."
+              ],
+              "finishedMeans": "You have finished Daily Case #15: Premiere Night.",
+              "materials": [
+                {
+                  "label": "Daily Case #15: Premiere Night",
+                  "href": "https://dawnclay2011-ui.github.io/family-games/case-files/day15/"
+                }
+              ]
             }
           ]
         }

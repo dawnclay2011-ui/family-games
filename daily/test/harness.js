@@ -398,7 +398,8 @@ christianToday.host.querySelector("#day-input").dispatchEvent(new Event("change"
 check("Christian November 14 is still being prepared", text(christianToday.host).includes("Your plan is being prepared.") && !text(christianToday.host).includes("Woods movie"));
 camToday.host.querySelector("#day-input").value = "2026-11-14";
 camToday.host.querySelector("#day-input").dispatchEvent(new Event("change", { bubbles: true }));
-check("Cam November 14 is only the woods movie step", text(camToday.host).includes("Woods movie: today's step") && text(camToday.host).includes("prep for filming") && !text(camToday.host).includes("rebus"));
+check("Cam November 14 shows the movie step then the case", text(camToday.host).includes("Woods movie: today's step") && text(camToday.host).includes("prep for filming") && text(camToday.host).indexOf("Woods movie: today's step") < text(camToday.host).indexOf("Daily Case #11: The Missing Script Page") && !text(camToday.host).includes("rebus"));
+check("Cam's November 14 case link is day 11", [...camToday.host.querySelectorAll("a")].some((anchor) => anchor.href.endsWith("/case-files/day11/")));
 check("no form is added", document.querySelector("form") == null);
 
 document.querySelector("#app").dataset.ready = "true";
