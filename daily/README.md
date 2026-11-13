@@ -27,11 +27,13 @@ Cam's page does not link to Christian's page. Christian's page does not link to 
 
 A real date with `"status": "preparing"` — including **2026-11-12** — shows **Your plan is being prepared.** It does not show the sample tasks. A date that is missing from `days` shows that same sentence. Nothing is carried forward from an earlier day, and nothing is marked late.
 
-Add real tasks only after the lesson and the print packet are approved. Put them in `days` once. Both child links read that same list. Do not keep a second copy in the HTML.
+Each page reads that child's entry for the date when one is present, and otherwise uses the shared day. A shared preparing day can still hold a ready plan for one child. The other page keeps the preparing sentence. Add real tasks only after the work is approved. Put them in `days` in this file. Do not keep a second copy in the HTML.
 
 ## How to add an approved day
 
 Edit only `daily/plans.json`.
+
+Use a shared ready day when both children have the same work.
 
 1. Find the date in `days`, or add one object to that array.
 2. Set `"status": "ready"`.
@@ -39,7 +41,7 @@ Edit only `daily/plans.json`.
 4. Add the shared `tasks` array.
 5. Leave `sample` as the preview. Do not copy it into `days`.
 
-Shape of a ready day (this skeleton is not loaded by the page):
+Shape of a shared ready day (this skeleton is not loaded by the page):
 
 ```json
 {
@@ -61,11 +63,41 @@ Shape of a ready day (this skeleton is not loaded by the page):
 }
 ```
 
-A preparing day must not include `tasks` or `materials`:
+A shared preparing day must not include shared `tasks` or `materials`:
 
 ```json
 { "date": "YYYY-MM-DD", "status": "preparing", "message": "Your plan is being prepared." }
 ```
+
+To give one child a plan while the other page stays on that preparing sentence, add an optional `children` object on the day. Each page uses its own child's entry first. If that child has no entry, the page uses the shared day.
+
+```json
+{
+  "date": "YYYY-MM-DD",
+  "status": "preparing",
+  "message": "Your plan is being prepared.",
+  "children": {
+    "cam": {
+      "status": "ready",
+      "tasks": [
+        {
+          "id": "short-id",
+          "version": 1,
+          "title": "Approved task title",
+          "instruction": "What to do, in one short paragraph.",
+          "steps": ["First concrete step."],
+          "finishedMeans": "What is true when the task is finished.",
+          "materials": [
+            { "label": "Approved page", "href": "https://example.com/approved-page" }
+          ]
+        }
+      ]
+    }
+  }
+}
+```
+
+A child entry uses the same status rules as a shared day. A preparing child entry has no `tasks` and no `materials`. A ready child entry replaces the shared day for that child only, including materials. Put a link that belongs to one task on that task's `materials`. Leave `sample` unchanged.
 
 ### Fields
 
@@ -75,8 +107,10 @@ A preparing day must not include `tasks` or `materials`:
 | `children.cam` / `children.christian` | First name and which presentation to use. |
 | `presentations.compact` / `presentations.guided` | Page wording. Same tasks, different layout and labels. Do not rank the two presentations against each other. |
 | `days` | The only calendar plan. One object per date. |
-| `days[].status` | `preparing` or `ready`. |
+| `days[].status` | Shared `preparing` or `ready`. This is what a page uses when that child has no entry for the date. |
+| `days[].children.cam` / `days[].children.christian` | Optional plan for that child on that date. The matching page uses this entry instead of the shared day. |
 | `days[].materials` | Shared links for a ready day. Safe `http:` or `https:` URLs, or a path relative to the `daily/` folder such as `packet.pdf`. No parent-folder paths, no script links, and no mail or phone links. |
+| `tasks[].materials` | Optional links for that task only. Same address rules as day materials. |
 | `tasks[].id` | Stable id, lowercase letters, numbers, and hyphens. |
 | `tasks[].version` | Integer starting at 1. |
 | `tasks[].steps` | At least one concrete step. Both pages show the steps. The guided page gives them more room. |
@@ -91,7 +125,7 @@ Raise `version` by 1 when the work or the finished line changes. The old check s
 
 ### What does not belong in this file
 
-Do not put checks, notes, results, birthdates, full names, addresses, schedules, or private progress here. The file is the plan, and the repository is public. Task text is shown on both child links, so do not write about one child inside a task.
+Do not put checks, notes, results, birthdates, full names, addresses, schedules, or private progress here. The file is the plan, and the repository is public. Shared task text is shown on every page that uses that day. A child entry is shown only on that child's page. Do not name the other child in either place. Keep the wording encouraging. Do not say the work is late, and do not say a child is behind. Do not include answers.
 
 ## What the child pages store
 

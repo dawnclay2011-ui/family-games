@@ -279,6 +279,50 @@ function readTasks(list, errors) {
   return tasks;
 }
 
+function readChildEntry(entry, errors) {
+  if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+    pushError(errors, "child_day");
+    return { status: "", heading: null, message: null, materials: [], tasks: [] };
+  }
+  const status = entry.status;
+  if (status !== "preparing" && status !== "ready") pushError(errors, "child_day_status");
+  const heading = entry.heading == null ? null : readText(entry.heading, 80, errors, "day_heading");
+  const message = entry.message == null ? null : readText(entry.message, 180, errors, "day_message");
+  if (status === "preparing") {
+    if (Object.prototype.hasOwnProperty.call(entry, "tasks")) pushError(errors, "preparing_has_tasks");
+    if (Object.prototype.hasOwnProperty.call(entry, "materials")) pushError(errors, "preparing_has_materials");
+    return { status: "preparing", heading, message, materials: [], tasks: [] };
+  }
+  if (status === "ready") {
+    return {
+      status: "ready",
+      heading,
+      message,
+      materials: readMaterials(entry.materials, errors),
+      tasks: readTasks(entry.tasks, errors),
+    };
+  }
+  return { status: "", heading, message, materials: [], tasks: [] };
+}
+
+function readDayChildren(day, errors) {
+  if (!Object.prototype.hasOwnProperty.call(day, "children")) return {};
+  const source = day.children;
+  if (!source || typeof source !== "object" || Array.isArray(source)) {
+    pushError(errors, "child_day");
+    return {};
+  }
+  const children = {};
+  for (const id of Object.keys(source)) {
+    if (id !== "cam" && id !== "christian") {
+      pushError(errors, "child_day");
+      continue;
+    }
+    children[id] = readChildEntry(source[id], errors);
+  }
+  return children;
+}
+
 function readPresentation(value, errors) {
   const presentation = { id: "" };
   for (const field of PRESENTATION_FIELDS) {
@@ -338,10 +382,11 @@ export function parsePlan(data) {
     if (status !== "preparing" && status !== "ready") pushError(errors, "day_status");
     const heading = day?.heading == null ? null : readText(day.heading, 80, errors, "day_heading");
     const message = day?.message == null ? null : readText(day.message, 180, errors, "day_message");
+    const childPlans = readDayChildren(day, errors);
     if (status === "preparing") {
       if (Object.prototype.hasOwnProperty.call(day, "tasks")) pushError(errors, "preparing_has_tasks");
       if (Object.prototype.hasOwnProperty.call(day, "materials")) pushError(errors, "preparing_has_materials");
-      days[date] = { date, status: "preparing", heading, message, materials: [], tasks: [] };
+      days[date] = { date, status: "preparing", heading, message, materials: [], tasks: [], children: childPlans };
     } else if (status === "ready") {
       days[date] = {
         date,
@@ -350,6 +395,7 @@ export function parsePlan(data) {
         message,
         materials: readMaterials(day.materials, errors),
         tasks: readTasks(day.tasks, errors),
+        children: childPlans,
       };
     }
   }
@@ -372,7 +418,7 @@ export function parsePlan(data) {
   return { ok: true, errors: [], plan: { schemaVersion: 1, children, presentations, days, sample } };
 }
 
-export function getDayContent(plan, mode, dateKey) {
+export function getDayContent(plan, mode, dateKey, childId) {
   if (mode === "preview") {
     return {
       phase: "tasks",
@@ -385,24 +431,28 @@ export function getDayContent(plan, mode, dateKey) {
     };
   }
   const day = plan.days?.[dateKey];
-  if (!day || day.status !== "ready") {
+  const own = childId && day?.children && Object.prototype.hasOwnProperty.call(day.children, childId)
+    ? day.children[childId]
+    : null;
+  const source = own || day;
+  if (!source || source.status !== "ready") {
     return {
       phase: "preparing",
       dateKey,
-      heading: day?.heading || null,
+      heading: source?.heading || day?.heading || null,
       banner: null,
       materials: [],
       tasks: [],
-      message: day?.message || USER_COPY.preparingDefault,
+      message: (own && own.message) || day?.message || USER_COPY.preparingDefault,
     };
   }
   return {
     phase: "tasks",
     dateKey,
-    heading: day.heading,
+    heading: source.heading || day?.heading || null,
     banner: null,
-    materials: day.materials,
-    tasks: day.tasks,
+    materials: source.materials || [],
+    tasks: source.tasks,
     message: null,
   };
 }

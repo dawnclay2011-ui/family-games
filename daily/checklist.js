@@ -120,8 +120,12 @@ export async function createChecklistApp(container, options = {}) {
     storageBanner.textContent = message;
   }
 
+  function dayContent(forDate = dateKey) {
+    return getDayContent(plan, mode, forDate, childId);
+  }
+
   function summaryInput() {
-    const content = getDayContent(plan, mode, dateKey);
+    const content = dayContent();
     const heading = content.heading || formatDateHeading(content.dateKey);
     return {
       firstName: child.firstName,
@@ -172,7 +176,7 @@ export async function createChecklistApp(container, options = {}) {
 
   function applyMark(task, mark) {
     record = setMark(record, {
-      dateKey: getDayContent(plan, mode, dateKey).dateKey,
+      dateKey: dayContent().dateKey,
       taskId: task.id,
       version: task.version,
       mark,
@@ -203,6 +207,24 @@ export async function createChecklistApp(container, options = {}) {
     }
     host.append(heading, list);
     if (resolved.dropped) host.append(el("p", { class: "hint", text: USER_COPY.droppedLink }));
+  }
+
+  function renderTaskMaterials(materials) {
+    const resolved = resolveMaterials(materials, planFileUrl);
+    if (!resolved.kept.length && !resolved.dropped) return null;
+    const list = el("ul", { class: "materials" });
+    for (const item of resolved.kept) {
+      const link = el("a", {
+        href: item.href,
+        target: "_blank",
+        rel: "noopener noreferrer",
+        referrerpolicy: "no-referrer",
+      }, [item.label, el("span", { class: "sr-only", text: " (opens in a new tab)" })]);
+      list.append(el("li", {}, [link]));
+    }
+    const block = el("div", { class: "task-materials" }, [list]);
+    if (resolved.dropped) block.append(el("p", { class: "hint", text: USER_COPY.droppedLink }));
+    return block;
   }
 
   function renderTask(task, contentDate) {
@@ -238,6 +260,7 @@ export async function createChecklistApp(container, options = {}) {
     const article = el("article", { class: "task", id: `task-${task.id}`, dataset: { mark, taskId: task.id, version: String(task.version) } }, [
       el("h3", { text: task.title }),
       el("p", { class: "instruction", text: task.instruction }),
+      renderTaskMaterials(task.materials),
       el("p", { class: "steps-intro", text: presentation.stepsIntro }),
       el("ol", { class: "steps" }, task.steps.map((step) => el("li", { text: step }))),
       el("p", { class: "finished", id: finishedId }, [
@@ -256,7 +279,7 @@ export async function createChecklistApp(container, options = {}) {
   }
 
   function renderDay() {
-    const content = getDayContent(plan, mode, dateKey);
+    const content = dayContent();
     const activeDate = content.dateKey;
     const heading = content.heading || formatDateHeading(activeDate);
     container.querySelector("#day-heading").textContent = heading;
@@ -398,7 +421,7 @@ export async function createChecklistApp(container, options = {}) {
       }, { signal: ac.signal });
     }
     noteInput.addEventListener("input", () => {
-      const active = getDayContent(plan, mode, dateKey).dateKey;
+      const active = dayContent().dateKey;
       record = setNote(record, { dateKey: active, note: noteInput.value });
       persist();
       paintSummary();

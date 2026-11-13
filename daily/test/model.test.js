@@ -52,7 +52,7 @@ test("plans.json is the valid single plan", () => {
   assert.equal(nov12.status, "preparing");
   assert.equal(nov12.message, "Your plan is being prepared.");
   assert.deepEqual(nov12.tasks, []);
-  assert.equal(Object.values(parsed.plan.days).some((day) => day.status === "ready"), false);
+  assert.equal(Object.values(parsed.plan.days).every((day) => day.status === "preparing"), true);
   assert.equal(parsed.plan.sample.tasks.length >= 3, true);
   for (const task of parsed.plan.sample.tasks) {
     assert.equal(task.steps.length >= 1, true);
@@ -74,6 +74,97 @@ test("sample tasks never fill a real date", () => {
   assert.equal(preview.dateKey, "sample");
   assert.equal(preview.tasks.some((task) => task.id === "sample-read-card"), true);
   assert.match(preview.banner, /not a real assignment/i);
+});
+
+test("each page uses that child's plan and falls back to the shared day", () => {
+  const rawNov12 = plan.days.find((day) => day.date === "2026-11-12");
+  assert.deepEqual(rawNov12, {
+    date: "2026-11-12",
+    status: "preparing",
+    message: "Your plan is being prepared.",
+  });
+  assert.deepEqual(plan.sample.tasks.map((task) => task.id), [
+    "sample-read-card",
+    "sample-three-sentences",
+    "sample-count-six",
+  ]);
+
+  for (const child of ["cam", "christian"]) {
+    const nov12 = getDayContent(parsed.plan, "plan", "2026-11-12", child);
+    assert.equal(nov12.phase, "preparing");
+    assert.equal(nov12.message, "Your plan is being prepared.");
+    assert.deepEqual(nov12.tasks, []);
+  }
+
+  const cam13 = getDayContent(parsed.plan, "plan", "2026-11-13", "cam");
+  assert.equal(cam13.phase, "tasks");
+  assert.deepEqual(cam13.tasks.map((task) => task.title), [
+    "Finish script planning for your woods movie",
+    "Word puzzles: rebus puzzles, pages 1-5",
+    "Cursive practice",
+    "Today's case: Day 6: The Cracked Tablet (Mesopotamia)",
+    "Optional: help set up the new laptop",
+  ]);
+  assert.equal(cam13.tasks[3].materials[0].href, "https://dawnclay2011-ui.github.io/family-games/case-files/day6/");
+  assert.equal(JSON.stringify(cam13).includes(".pdf"), false);
+  assert.equal(/\b(Christian|zoo|grandpa|sanctuary)\b|food truck|food-truck|Thanksgiving/i.test(JSON.stringify(cam13)), false);
+
+  const christian13 = getDayContent(parsed.plan, "plan", "2026-11-13", "christian");
+  assert.equal(christian13.phase, "tasks");
+  assert.deepEqual(christian13.tasks.map((task) => task.title), [
+    "Finish your zoo vs. sanctuary paragraph",
+    "Finish your grandpa interview sheet",
+    "Today's shift: Food Truck Shift 3: The Register Crashed",
+    "Optional: Thanksgiving budget, Worksheet A Steps 1-3",
+  ]);
+  const budget = christian13.tasks[3];
+  assert.deepEqual(budget.materials, []);
+  assert.match(budget.instruction, /scale the recipes for 6/);
+  assert.match(budget.instruction, /convert units/);
+  assert.match(budget.instruction, /first estimate vs\. the \$50 target/);
+  assert.equal(christian13.tasks[2].materials[0].href, "https://dawnclay2011-ui.github.io/family-games/food-truck/day3/");
+  const christianText = JSON.stringify(christian13);
+  assert.equal(/\bCam\b|woods movie|rebus|cursive|Mesopotamia|laptop|case-files/i.test(christianText), false);
+  assert.equal(/\b(answer|score|overdue|behind)\b|\blate\b/i.test(`${christianText}\n${JSON.stringify(cam13)}`), false);
+  assert.equal(getDayContent(parsed.plan, "plan", "2026-11-13").phase, "preparing");
+
+  const movieDays = {
+    "2026-11-14": /prep for filming/,
+    "2026-11-15": /Ouabache/,
+    "2026-11-16": /\bedit\b/,
+    "2026-11-17": /\bedit\b/,
+    "2026-11-18": /premiere/,
+  };
+  for (const [date, pattern] of Object.entries(movieDays)) {
+    const cam = getDayContent(parsed.plan, "plan", date, "cam");
+    const christian = getDayContent(parsed.plan, "plan", date, "christian");
+    assert.equal(cam.tasks.length, 1, date);
+    assert.equal(cam.tasks[0].title, "Woods movie: today's step");
+    assert.match(cam.tasks[0].instruction, pattern);
+    assert.equal(christian.phase, "preparing", date);
+    assert.equal(christian.message, "Your plan is being prepared.");
+    assert.deepEqual(christian.tasks, []);
+  }
+
+  const previewChristian = getDayContent(parsed.plan, "preview", "2026-11-13", "christian");
+  assert.equal(previewChristian.dateKey, "sample");
+  assert.equal(previewChristian.tasks[0].id, "sample-read-card");
+
+  const sharedReady = structuredClone(plan);
+  sharedReady.days.push({
+    date: "2026-11-21",
+    status: "ready",
+    tasks: [parsed.plan.sample.tasks[0]],
+    children: {
+      christian: { status: "preparing", message: "Your plan is being prepared." },
+    },
+  });
+  const readyParsed = parsePlan(sharedReady);
+  assert.equal(readyParsed.ok, true, readyParsed.errors?.join(","));
+  assert.equal(getDayContent(readyParsed.plan, "plan", "2026-11-21", "cam").tasks[0].id, "sample-read-card");
+  assert.equal(getDayContent(readyParsed.plan, "plan", "2026-11-21").tasks[0].id, "sample-read-card");
+  assert.equal(getDayContent(readyParsed.plan, "plan", "2026-11-21", "christian").phase, "preparing");
+  assert.equal(getDayContent(readyParsed.plan, "plan", "2026-11-21", "christian").message, "Your plan is being prepared.");
 });
 
 test("storage is separated by child, date, and task version", () => {
@@ -231,6 +322,19 @@ test("bad plans are rejected instead of shown", () => {
   const link = structuredClone(plan);
   link.sample.materials[0].href = "javascript:alert(1)";
   assert.equal(parsePlan(link).errors.includes("material_href"), true);
+
+  const unknown = structuredClone(plan);
+  unknown.days[0].children = { alex: { status: "preparing" } };
+  assert.equal(parsePlan(unknown).errors.includes("child_day"), true);
+
+  const childTasks = structuredClone(plan);
+  childTasks.days.push({
+    date: "2026-11-20",
+    status: "preparing",
+    message: "Your plan is being prepared.",
+    children: { cam: { status: "preparing", tasks: parsed.plan.sample.tasks } },
+  });
+  assert.equal(parsePlan(childTasks).errors.includes("preparing_has_tasks"), true);
 });
 
 test("local dates do not shift through UTC", () => {
@@ -283,12 +387,35 @@ test("committed checklist copy stays free of private and unapproved topic text",
     /gtag\(/,
     /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i,
     /\b\d{3}[-.)]\d{3}[-.]\d{4}\b/,
-    /\b(easier|harder|younger|older|overdue|zoo)\b/i,
-    /food truck|food-truck|tycoon|case files/i,
     /\b(custody|birthdate|birth date|adhd|dyslexia|autism|iep)\b/i,
     /\bscore\b/i,
   ];
   for (const pattern of banned) assert.equal(pattern.test(shown), false, String(pattern));
+  const topic = /\b(easier|harder|younger|older|overdue|zoo)\b|food truck|food-truck|tycoon|case files/i;
+  const chromeText = visible
+    .filter((path) => relative(daily, path) !== "plans.json")
+    .map((path) => readFileSync(path, "utf8"))
+    .join("\n");
+  assert.equal(topic.test(chromeText), false);
+  assert.equal(topic.test(JSON.stringify(plan.sample)), false);
+  assert.equal(topic.test(JSON.stringify(plan.presentations)), false);
+  for (const day of plan.days) {
+    const shared = {
+      date: day.date,
+      status: day.status,
+      message: day.message,
+      tasks: day.tasks,
+      materials: day.materials,
+    };
+    assert.equal(topic.test(JSON.stringify(shared)), false, day.date);
+    if (day.children?.cam) assert.equal(topic.test(JSON.stringify(day.children.cam)), false, `${day.date} cam`);
+    if (day.date === "2026-11-13") {
+      assert.match(JSON.stringify(day.children.christian), /\bzoo\b/);
+      assert.match(JSON.stringify(day.children.christian), /food-truck/);
+    } else {
+      assert.equal(day.children?.christian, undefined, day.date);
+    }
+  }
   assert.match(readFileSync(join(daily, "README.md"), "utf8"), /schemaVersion/);
   assert.match(readFileSync(join(daily, "README.md"), "utf8"), /finishedMeans/);
   assert.match(readFileSync(join(daily, "README.md"), "utf8"), /plans\.json/);
