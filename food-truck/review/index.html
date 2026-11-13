@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta name="robots" content="noindex">
+<title>Review Shift: Precision and Models — Startup Tycoon: Food Truck Season</title>
+<style>
+ *{box-sizing:border-box}
+ body{margin:0;font-family:system-ui,Segoe UI,Arial,sans-serif;background:#0f1115;color:#e8e8e8}
+ header{padding:14px 18px;background:#151922;border-bottom:1px solid #2a2f3a;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center}
+ h1{margin:0;font-size:1.2rem;color:#f4a261;letter-spacing:.5px}
+ h2{margin-top:0}
+ main{max-width:900px;margin:16px auto;padding:0 12px 32px}
+ .panel{background:#171b24;border:1px solid #2a2f3a;border-radius:10px;padding:16px;margin-bottom:14px}
+ .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+ .stat{background:#1e2330;border-radius:8px;padding:10px}
+ .stat .k{font-size:.75rem;color:#9aa3b2;text-transform:uppercase}
+ .stat .v{font-size:1.3rem;font-weight:700}
+ button{font:inherit;font-weight:600;background:#f4a261;color:#111;border:none;border-radius:8px;padding:10px 16px;cursor:pointer;margin:4px 4px 0 0}
+ button.sec,button.alt{background:#2a2f3a;color:#e8e8e8}
+ .good{color:#7bd389}.bad{color:#ef6f6c}.muted{color:#9aa3b2;font-size:.9rem}
+ table{width:100%;border-collapse:collapse;font-size:.9rem}td,th{padding:6px;border-bottom:1px solid #2a2f3a;text-align:right}td:first-child,th:first-child{text-align:left}
+ .report{margin:10px 0}.rstat{display:block;margin-top:4px;font-weight:600;font-size:.95rem}
+ button.rep{background:#7bd389}button.rep.small{font-size:.85rem;padding:7px 12px}button.rep.sent{background:#2a9d8f;color:#fff}button:disabled{cursor:default;opacity:.9}
+ button{max-width:100%;white-space:normal}
+ .tag{display:inline-block;background:#2a2f3a;color:#f4a261;border-radius:6px;padding:3px 8px;font-size:.8rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+ .stake{border-left:3px solid #f4a261;padding:6px 10px;color:#c9cfd9;background:#1b202b;border-radius:0 6px 6px 0;margin:10px 0}
+ .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}
+ .row .pre{font-weight:700;font-size:1.1rem;color:#f4a261}
+ input.ans{font:inherit;font-size:1.05rem;padding:10px;border-radius:8px;border:1px solid #39404f;background:#0f1115;color:#e8e8e8;flex:1;min-width:150px;max-width:100%}
+ .note{background:#1e2330;border:1px solid #39404f;border-radius:8px;padding:10px 12px;margin-top:10px}
+ .nextshift{background:#1e2330;border:1px solid #f4a261;border-radius:10px;padding:14px;margin-top:12px}
+ .nextshift a{color:#f4a261;font-weight:700}
+ code,kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.95em}
+</style>
+</head>
+<body>
+<header><h1>🚚 STARTUP TYCOON — Food Truck Season</h1><span class="muted" id="best">Review shift · Practice</span></header>
+<main id="app"></main>
+<script id="logic">
+/* Practice review shift. Not a numbered day, not credit.
+   Answer checker is globalThis.FoodTruckReview for tests. */
+var PH = 3887916057;
+var PREVIEW = false, PREVIEW_QS = "";
+function fnv1a(s){ var h=0x811c9dc5; for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,0x01000193)>>>0; } return h>>>0; }
+try {
+  var _t = new URLSearchParams(location.search).get("p");
+  if (_t && fnv1a(_t) === PH) { PREVIEW = true; PREVIEW_QS = "?p=" + encodeURIComponent(_t); }
+} catch (e) {}
+
+var PROBLEMS = [
+  {
+    id: "crowd-model",
+    kind: "model",
+    title: "Lunch crowd model",
+    fname: "C",
+    variable: "w",
+    initial: 320,
+    factor: "1.12",
+    q: "Your weekday lunch crowd starts at 320 people. It grows by 12% each week while the new route is posted. Write C(w), the number of customers after w weeks.",
+    why: "The loan file needs the model written out, exponent included.",
+    prefix: "C(w) =",
+    ph: "starting(factor)^w",
+    hint: "A 12% increase means multiply by 1.12 each week, not by 0.12. Write the starting amount times (1.12) to the power w. The exponent has to be on the factor. Shape: 40000(0.85)^t.",
+    wrongFactors: [
+      { factor: "0.12", note: "12% growth is not a factor of 0.12. The growth factor is 1 + 0.12 = 1.12." },
+      { factor: "1.012", note: "12% is 0.12, so the growth factor is 1.12, not 1.012." },
+      { factor: "0.88", note: "0.88 would be a 12% decrease. This crowd is growing, so the factor is greater than 1." }
+    ]
+  },
+  {
+    id: "crowd-3",
+    kind: "number",
+    title: "Customers after 3 weeks",
+    initial: 320,
+    factor: "1.12",
+    steps: 3,
+    places: 1,
+    stepUnit: "weeks",
+    q: "Use C(w) = 320(1.12)^w. How many customers after 3 weeks? Keep every decimal while you multiply. Round only the final answer to the nearest tenth.",
+    why: "Saturday prep is based on this count. An early round throws the order.",
+    ph: "nearest tenth",
+    hint: "Compute 1.12 × 1.12 × 1.12 and keep the full decimal. Multiply that by 320. Then round that one number to the nearest tenth."
+  },
+  {
+    id: "grill-model",
+    kind: "model",
+    title: "Grill value model",
+    fname: "V",
+    variable: "t",
+    initial: 2400,
+    factor: "0.92",
+    q: "The flat-top grill was bought for $2,400. Each year it keeps 92% of its value. Write V(t), the value after t years.",
+    why: "Insurance wants the value model, not a single year filled in.",
+    prefix: "V(t) =",
+    ph: "starting(factor)^t",
+    hint: "Keeping 92% means the factor is 0.92. Write the starting value times (0.92) to the power t. Leaving the exponent off is not the model. Shape: 40000(0.85)^t.",
+    wrongFactors: [
+      { factor: "0.08", note: "The grill keeps 92% of its value. The factor is 0.92, not 0.08." },
+      { factor: "1.08", note: "1.08 would be growth. The grill keeps 92%, so the factor is 0.92." },
+      { factor: "1.92", note: "Don't add 92% onto 1. The factor is 0.92, the share of the value that remains." }
+    ]
+  },
+  {
+    id: "grill-3",
+    kind: "number",
+    title: "Grill after 3 years",
+    initial: 2400,
+    factor: "0.92",
+    steps: 3,
+    places: 2,
+    stepUnit: "years",
+    q: "Use V(t) = 2400(0.92)^t. What is the grill worth after 3 years? Keep full precision, then round only the final answer to the nearest cent.",
+    why: "The trade-in offer gets checked against this amount.",
+    ph: "nearest cent",
+    hint: "Multiply 0.92 × 0.92 × 0.92 without rounding. Multiply that by 2400. Round that result to the nearest cent, which is two decimal places."
+  },
+  {
+    id: "freezer-model",
+    kind: "model",
+    title: "Freezer value model",
+    fname: "F",
+    variable: "m",
+    initial: 1850,
+    factor: "0.92",
+    q: "The ice cream freezer cost $1,850. It loses 8% of its value each month. Write F(m), the value after m months.",
+    why: "The books need the monthly model, exponent included.",
+    prefix: "F(m) =",
+    ph: "starting(factor)^m",
+    hint: "Losing 8% leaves 92%, so the factor is 0.92 — not 0.08, and not 1.08. Write the starting value times (0.92) to the power m.",
+    wrongFactors: [
+      { factor: "0.08", note: "Losing 8% does not mean multiply by 0.08. The part that remains is 1 − 0.08 = 0.92." },
+      { factor: "1.08", note: "1.08 is an 8% increase. The freezer loses value, so the factor is 0.92." },
+      { factor: "0.8", note: "0.8 would be losing 20%. An 8% loss leaves 0.92." }
+    ]
+  },
+  {
+    id: "catering-4",
+    kind: "number",
+    title: "Catering after 4 months",
+    initial: 750,
+    factor: "1.06",
+    steps: 4,
+    places: 1,
+    stepUnit: "months",
+    q: "Catering orders start at 750 and grow by 6% each month. How many orders after 4 months? Use 750(1.06)^4. Keep every decimal, then round only the final answer to the nearest tenth.",
+    why: "Bun orders for month 4 come straight off this forecast.",
+    ph: "nearest tenth",
+    hint: "That is four multiplications by 1.06. Don't round the order count after month 2 or 3, and don't shorten 1.06^4 before you multiply by 750. Round once, at the end, to the nearest tenth."
+  }
+];
+
+function gcd(a, b) {
+  a = a < 0n ? -a : a;
+  b = b < 0n ? -b : b;
+  while (b) { var t = a % b; a = b; b = t; }
+  return a;
+}
+function decimalToFrac(dec) {
+  var s = String(dec), parts = s.split(".");
+  if (parts.length === 1) return [BigInt(parts[0]), 1n];
+  var num = BigInt(parts[0] + parts[1]);
+  var den = 10n ** BigInt(parts[1].length);
+  var g = gcd(num, den);
+  return [num / g, den / g];
+}
+function roundedNumber(initial, factor, steps, places) {
+  var frac = decimalToFrac(factor);
+  var num = frac[0] ** BigInt(steps);
+  var den = frac[1] ** BigInt(steps);
+  var scale = 10n ** BigInt(places);
+  var numerator = BigInt(initial) * num * scale;
+  var q = numerator / den;
+  var r = numerator % den;
+  var ip = q + (2n * r >= den ? 1n : 0n);
+  var s = ip.toString();
+  if (places === 0) return { text: s, value: Number(s) };
+  s = s.padStart(places + 1, "0");
+  var cut = s.length - places;
+  var text = s.slice(0, cut) + "." + s.slice(cut);
+  return { text: text, value: Number(text) };
+}
+function roundPlaces(x, places) {
+  var f = 10 ** places;
+  var y = x * f;
+  var n = Math.round(y);
+  if (Math.abs(y - n) < 1e-8) return n / f;
+  return Math.round(y) / f;
+}
+function roundTo(x, unit) {
+  var inv = Math.round(1 / unit);
+  if (Math.abs(inv * unit - 1) < 1e-9) return Math.round(x * inv) / inv;
+  return Math.round(x / unit) * unit;
+}
+function relDiff(a, b) {
+  return Math.abs(a - b) / Math.max(Math.abs(a), Math.abs(b), 1e-9);
+}
+function floatAt(p, steps) {
+  return p.initial * Math.pow(Number(p.factor), steps);
+}
+function ensureNumber(p) {
+  if (p.kind !== "number" || p.text != null) return p;
+  var official = roundedNumber(p.initial, p.factor, p.steps, p.places);
+  p.text = official.text;
+  p.value = official.value;
+  p.traps = earlyTrapValues(p);
+  return p;
+}
+function earlyTrapValues(p) {
+  var exact = floatAt(p, p.steps);
+  var out = [];
+  var units = [0.0001, 0.001, 0.01, 0.1, 1, 10, 100];
+  function add(val) {
+    if (!isFinite(val)) return;
+    var finals = [val, roundPlaces(val, p.places), roundPlaces(val, 0)];
+    for (var i = 0; i < finals.length; i++) {
+      var v = finals[i];
+      if (!isFinite(v)) continue;
+      if (Math.abs(v - p.value) <= 5e-4) continue;
+      if (relDiff(v, p.value) > 0.03 && Math.abs(v - p.value) > 1.5) continue;
+      if (!out.some(function (t) { return Math.abs(t - v) <= 1e-6; })) out.push(v);
+    }
+  }
+  var pow = Math.pow(Number(p.factor), p.steps);
+  units.forEach(function (unit) {
+    var rp = roundTo(pow, unit);
+    if (relDiff(rp, pow) > 0.02) return;
+    if (Math.abs(rp - pow) < 1e-12) return;
+    add(p.initial * rp);
+  });
+  for (var k = 1; k < p.steps; k++) {
+    var mid = floatAt(p, k);
+    units.forEach(function (unit) {
+      var rm = roundTo(mid, unit);
+      if (Math.abs(rm - mid) < 1e-9) return;
+      if (relDiff(rm, mid) > 0.02) return;
+      add(rm * Math.pow(Number(p.factor), p.steps - k));
+    });
+  }
+  var running = p.initial;
+  [1, 0.1, 0.01].forEach(function (unit) {
+    running = p.initial;
+    for (var step = 0; step < p.steps; step++) {
+      running = running * Number(p.factor);
+      if (step < p.steps - 1) running = roundTo(running, unit);
+    }
+    add(running);
+  });
+  return out;
+}
+function placePhrase(p) {
+  return p.places === 2 ? "the nearest cent" : "the nearest tenth";
+}
+function readNumber(raw) {
+  var s = clean(raw);
+  if (!s) return { empty: true };
+  s = s.replace(/^[+]/, "");
+  s = stripUnits(s);
+  s = s.replace(/[.?!]+$/, "");
+  if (!/^[+-]?\d+(\.\d+)?(e[+-]?\d+)?$/.test(s)) {
+    return { invalid: "Enter one number. A dollar sign, commas, and an extra trailing zero are fine, like 12.50 or 1,200.00." };
+  }
+  var v = Number(s);
+  if (!isFinite(v)) return { invalid: "Enter one number." };
+  return { value: v };
+}
+function isFiner(student, p) {
+  if (Math.abs(roundPlaces(student, p.places) - p.value) > 5e-4) return false;
+  return Math.abs(student - p.value) > 5e-4;
+}
+function isCoarser(student, p) {
+  for (var places = 0; places < p.places; places++) {
+    var c = roundedNumber(p.initial, p.factor, p.steps, places);
+    if (Math.abs(student - c.value) <= 5e-4) return true;
+  }
+  return false;
+}
+function isEarly(student, p) {
+  if (p.traps.some(function (t) { return Math.abs(student - t) <= 1e-3; })) return true;
+  return relDiff(student, p.value) <= 0.02;
+}
+function offByStep(student, p) {
+  var ks = [p.steps - 1, p.steps + 1];
+  for (var i = 0; i < ks.length; i++) {
+    var k = ks[i];
+    if (k < 1) continue;
+    var raw = floatAt(p, k);
+    var atPlace = roundedNumber(p.initial, p.factor, k, p.places).value;
+    var whole = roundedNumber(p.initial, p.factor, k, 0).value;
+    if (Math.abs(student - raw) <= 1e-2 || Math.abs(student - atPlace) <= 5e-4 || Math.abs(student - whole) <= 5e-4) return k;
+  }
+  return null;
+}
+function classifyNumber(raw, p) {
+  ensureNumber(p);
+  var read = readNumber(raw);
+  if (read.empty) return { ok: false, code: "empty", message: "Enter an answer first." };
+  if (read.invalid) return { ok: false, code: "invalid", message: read.invalid };
+  var student = read.value;
+  var phrase = placePhrase(p);
+  if (Math.abs(student - p.value) <= 5e-4) {
+    return { ok: true, code: "ok", message: "Correct. Full precision until the end, then rounded to " + phrase + ". Answer: " + p.text };
+  }
+  if (isFiner(student, p)) {
+    return { ok: false, code: "finer", message: "That still has extra decimals. Round only the final answer to " + phrase + "." };
+  }
+  if (isCoarser(student, p)) {
+    return { ok: false, code: "coarser", message: "That is rounded farther than this problem asks. Keep every decimal while you multiply, then round only the final answer to " + phrase + "." };
+  }
+  if (isEarly(student, p)) {
+    return { ok: false, code: "early", message: "That looks like rounding before the last step. Keep every decimal through the whole calculation, then round only the final answer to " + phrase + "." };
+  }
+  var step = offByStep(student, p);
+  if (step != null) {
+    return { ok: false, code: "steps", message: "Count the steps. This asks for " + p.steps + " " + p.stepUnit + ", so the factor is used " + p.steps + " times. That number matches " + step + " " + p.stepUnit + " instead." };
+  }
+  return { ok: false, code: "wrong", message: "Not yet. Check the starting amount, the factor, and how many times you multiply. Keep every decimal, then round only the final answer to " + phrase + "." };
+}
+
+var UNIT_RE = /(customers?|people|persons?|orders?|meals?|dollars?|usd|weeks?|years?|months?|value)$/;
+function clean(raw) {
+  return String(raw == null ? "" : raw).trim().toLowerCase()
+    .replace(/[−–—]/g, "-")
+    .replace(/[×·∙]/g, "*")
+    .replace(/÷/g, "/")
+    .replace(/\$/g, "")
+    .replace(/,/g, "")
+    .replace(/\s+/g, "")
+    .replace(/\*\*/g, "^");
+}
+function stripUnits(s) {
+  var prev;
+  do { prev = s; s = s.replace(UNIT_RE, ""); } while (s !== prev);
+  return s;
+}
+function replacePercents(s) {
+  return s.replace(/(\d*\.?\d+)%/g, function (_, n) {
+    var v = Number(n) / 100;
+    return String(Math.round(v * 1e10) / 1e10);
+  });
+}
+function ratePiece(factor, growth) {
+  var s = String(factor);
+  if (growth) {
+    if (s.startsWith("1.")) return "0." + s.slice(2);
+    return "";
+  }
+  if (!s.startsWith("0.")) return "";
+  var digits = s.slice(2);
+  var den = 10 ** digits.length;
+  var loss = den - Number(digits);
+  var text = (loss / den).toFixed(digits.length);
+  return text.replace(/0+$/, "").replace(/\.$/, "");
+}
+function hasCorrectFactorPiece(s, p) {
+  var fac = Number(p.factor);
+  var nums = (s.match(/\d*\.?\d+/g) || []).map(Number);
+  if (nums.some(function (n) { return Math.abs(n - fac) <= 1e-6; })) return true;
+  if (fac > 1 && s.includes("1+" + ratePiece(p.factor, true))) return true;
+  if (fac < 1 && s.includes("1-" + ratePiece(p.factor, false))) return true;
+  return false;
+}
+function compileExpr(expr, variable) {
+  if (!expr) return null;
+  if (!/^[0-9.+\-*/()a-z^]+$/.test(expr)) return null;
+  var letters = expr.match(/[a-z]/g) || [];
+  if (letters.some(function (l) { return l !== variable; })) return null;
+  var e = expr
+    .replace(/(\d|\))(?=[a-z(])/g, "$1*")
+    .replace(/([a-z])(?=[a-z0-9(])/g, "$1*")
+    .replace(/\)(?=[0-9a-z(])/g, ")*")
+    .replace(/\^/g, "**")
+    .replace(/(^|\()-/g, function (m, a) { return a + "0-"; });
+  try {
+    var f = new Function(variable, "return (" + e + ");");
+    var t = f(1.37);
+    if (typeof t !== "number" || !isFinite(t)) return null;
+    return f;
+  } catch (err) { return null; }
+}
+var MODEL_POINTS = [0, 1, 2, 3, 4, 7.5];
+function sameFn(a, b) {
+  return MODEL_POINTS.every(function (x) {
+    var av, bv;
+    try { av = a(x); bv = b(x); } catch (e) { return false; }
+    if (typeof av !== "number" || typeof bv !== "number" || !isFinite(av) || !isFinite(bv)) return false;
+    var scale = Math.max(1, Math.abs(av), Math.abs(bv));
+    return Math.abs(av - bv) <= 1e-5 * scale + 1e-6;
+  });
+}
+function canonicalFn(p) {
+  return compileExpr(String(p.initial) + "*(" + p.factor + ")^" + p.variable, p.variable);
+}
+function modelKey(p) {
+  return p.fname + "(" + p.variable + ") = " + p.initial + "(" + p.factor + ")^" + p.variable;
+}
+function exponentExample() {
+  return "An exponential model is a(b)^t — the power sits on the factor. Example: V(t) = 40000(0.85)^t.";
+}
+function looksLikeMissingExponent(s, p) {
+  if (s.includes("^")) return false;
+  var nums = (s.match(/\d*\.?\d+/g) || []).map(Number);
+  var hasInitial = nums.some(function (n) { return Math.abs(n - Number(p.initial)) <= 1e-6; });
+  var hasFactor = hasCorrectFactorPiece(s, p);
+  var wrong = (p.wrongFactors || []).some(function (w) {
+    return nums.some(function (n) { return Math.abs(n - Number(w.factor)) <= 1e-6; });
+  });
+  var hasSmall = nums.some(function (n) { return n > 0 && n < 5 && Math.abs(n - Number(p.initial)) > 1e-6; });
+  var structured = s.includes("(") || s.includes("*") || s.includes("/");
+  if (!structured && !hasFactor) return false;
+  if (!(hasInitial || hasFactor || wrong)) return false;
+  if (!(hasFactor || wrong || hasSmall)) return false;
+  return true;
+}
+function wrongFactorNote(s, p) {
+  if (hasCorrectFactorPiece(s, p)) return "";
+  var nums = (s.match(/\d*\.?\d+/g) || []).map(Number);
+  var list = p.wrongFactors || [];
+  for (var i = 0; i < list.length; i++) {
+    if (nums.some(function (n) { return Math.abs(n - Number(list[i].factor)) <= 1e-6; })) return list[i].note;
+  }
+  return "";
+}
+function percentIntegerNote(s, p) {
+  var fac = Number(p.factor);
+  var asPercent = Math.round(fac * 100);
+  if (asPercent <= 2) return "";
+  var nums = (s.match(/\d*\.?\d+/g) || []).map(Number);
+  if (!nums.some(function (n) { return Math.abs(n - asPercent) < 1e-6; })) return "";
+  if (hasCorrectFactorPiece(s, p)) return "";
+  return "Write " + asPercent + "% as the decimal factor " + p.factor + ", not " + asPercent + ".";
+}
+function exponentOnInitial(s, initial) {
+  var n = String(initial).replace(/\./g, "\\.");
+  return new RegExp("(^|[^\\d.])\\(?" + n + "\\)?\\^").test(s);
+}
+function prepareModel(raw) {
+  var s = clean(raw);
+  if (!s) return { empty: true };
+  s = stripUnits(s);
+  s = replacePercents(s);
+  s = s.replace(/[.?!]+$/, "");
+  if (s.includes("=")) {
+    var p = s.split("=");
+    if (p.length !== 2) return { invalid: "Use one = sign at most." };
+    var lhsOk = /^[a-z]+(\([a-z]\))?$/;
+    if (lhsOk.test(p[0])) s = p[1];
+    else if (lhsOk.test(p[1])) s = p[0];
+    else return { invalid: "Write the model as V(t) = (expression), or just the expression." };
+  }
+  if (!s) return { empty: true };
+  return { s: s };
+}
+var MODEL_INVALID = "I couldn't read that. Use the starting number, the factor, and ^ for the exponent. 40000(0.85)^t and 40000*0.85^t both work, with or without spaces.";
+function classifyModel(raw, p) {
+  var pre = prepareModel(raw);
+  if (pre.empty) return { ok: false, code: "empty", message: "Enter an answer first." };
+  if (pre.invalid) return { ok: false, code: "invalid", message: pre.invalid };
+  var s = pre.s;
+  var letters = [];
+  (s.match(/[a-z]/g) || []).forEach(function (l) { if (letters.indexOf(l) < 0) letters.push(l); });
+  if (letters.length === 1 && letters[0] !== p.variable) {
+    s = s.replace(new RegExp(letters[0], "g"), p.variable);
+    letters = [p.variable];
+  }
+  if (letters.some(function (l) { return l !== p.variable; })) {
+    return { ok: false, code: "invalid", message: "Use " + p.variable + " as the variable. " + MODEL_INVALID };
+  }
+  var fn = compileExpr(s, p.variable);
+  var good = canonicalFn(p);
+  if (fn && good && sameFn(fn, good)) {
+    return { ok: true, code: "ok", message: "Correct. That's the full model, exponent included. " + modelKey(p) };
+  }
+  if (looksLikeMissingExponent(s, p)) {
+    var extra = wrongFactorNote(s, p);
+    return { ok: false, code: "exponent", message: "The exponent is missing. " + exponentExample() + (extra ? " " + extra : "") };
+  }
+  if (exponentOnInitial(s, p.initial)) {
+    return { ok: false, code: "base", message: "The exponent goes on the factor, not on the starting amount alone. " + exponentExample() };
+  }
+  var note = wrongFactorNote(s, p);
+  if (!note && fn) {
+    var wrongs = p.wrongFactors || [];
+    for (var i = 0; i < wrongs.length; i++) {
+      var wf = compileExpr(String(p.initial) + "*(" + wrongs[i].factor + ")^" + p.variable, p.variable);
+      if (wf && sameFn(fn, wf)) { note = wrongs[i].note; break; }
+    }
+  }
+  if (note) return { ok: false, code: "factor", message: note };
+  var pct = percentIntegerNote(s, p);
+  if (pct) return { ok: false, code: "factor", message: pct };
+  if (!fn) return { ok: false, code: "invalid", message: MODEL_INVALID };
+  return { ok: false, code: "wrong", message: "Not the model yet. You need the starting value, the factor, and the exponent on the factor. " + exponentExample() };
+}
+function checkAnswer(problem, raw) {
+  if (problem.kind === "number") return classifyNumber(raw, problem);
+  return classifyModel(raw, problem);
+}
+function answerKey(p) {
+  if (p.kind === "number") { ensureNumber(p); return p.text; }
+  return modelKey(p);
+}
+PROBLEMS.forEach(ensureNumber);
+globalThis.FoodTruckReview = {
+  PROBLEMS: PROBLEMS,
+  checkAnswer: checkAnswer,
+  classifyNumber: classifyNumber,
+  classifyModel: classifyModel,
+  answerKey: answerKey,
+  roundedNumber: roundedNumber
+};
+
+/* ---------- page ---------- */
+var KEY = PREVIEW ? "tycoonReviewPreview" : "tycoonReview";
+var NP = PROBLEMS.length;
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];});}
+function fresh(keep) {
+  return {
+    v: 1, stage: "brief", idx: 0,
+    results: PROBLEMS.map(function () { return { tries: 0, ok: false, answers: [], hint: false, codes: [] }; }),
+    startedAt: null, finishedAt: null,
+    autoSent: keep ? !!keep.autoSent : false,
+    lastDone: keep ? keep.lastDone || null : null,
+    runs: keep ? keep.runs || 0 : 0
+  };
+}
+var st = null;
+function loadState() {
+  var saved = null;
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "null"); } catch (e) { saved = null; }
+  if (!saved || saved.v !== 1 || !saved.results || saved.results.length !== NP) st = fresh(saved);
+  else st = saved;
+}
+function persist() {
+  try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {}
+  showHead();
+}
+function showHead() {
+  var el = document.getElementById("best");
+  if (el) el.textContent = "Review shift · Practice";
+}
+var app;
+function toTop(){ try { window.scrollTo(0, 0); } catch (e) {} }
+function correctCount() { return st.results.filter(function (r) { return r.ok; }).length; }
+function render() {
+  if (st.stage === "brief") return brief();
+  if (st.stage === "work") return problem();
+  return done();
+}
+function brief() {
+  app.innerHTML = '<div class="panel"><span class="tag">Review shift · Practice</span>' +
+    '<h2 style="margin-top:8px">Keep the decimals. Write the whole model.</h2>' +
+    '<p>Two skills from Shift 9 (followers and equipment) are worth another pass. New numbers, same truck.</p>' +
+    '<ul><li><b>Precision.</b> When a quantity grows or shrinks by a percent over several steps, keep every decimal until the end. Round only the final answer.</li>' +
+    '<li><b>The model.</b> Writing an exponential model means the exponent is on the factor: a(b)^t. Example: V(t) = 40000(0.85)^t.</li></ul>' +
+    '<div class="stake"><b>Goal:</b> get all 6 problems right. Unlimited tries on each one. A hint is on every problem — open it when you want it. This is practice. It does not award credit. There is no timer.</div>' +
+    '<button id="start" type="button" onclick="startReview()">Start the review</button></div>';
+}
+function startReview() {
+  if (!st.startedAt) st.startedAt = new Date().toISOString();
+  st.stage = "work";
+  st.idx = 0;
+  persist();
+  render();
+  toTop();
+}
+function statsHTML() {
+  return '<div class="stats">' +
+    '<div class="stat"><div class="k">Correct</div><div class="v">' + correctCount() + ' / ' + NP + '</div></div>' +
+    '<div class="stat"><div class="k">Problem</div><div class="v">' + (st.idx + 1) + ' of ' + NP + '</div></div>' +
+    '<div class="stat"><div class="k">Tries</div><div class="v">Unlimited</div></div></div>' +
+    '<p class="muted" style="margin:8px 0 0">Goal: all 6 correct. Practice, not credit.</p>';
+}
+function problem() {
+  var i = st.idx, p = PROBLEMS[i], r = st.results[i];
+  var last = r.answers.length ? r.answers[r.answers.length - 1] : "";
+  var prior = "";
+  if (!r.ok && last) {
+    var again = checkAnswer(p, last);
+    if (!again.ok && again.code !== "empty") prior = again.message;
+  }
+  var note = p.kind === "model"
+    ? "Type ^ for the exponent. 40000(0.85)^t and 40000*0.85^t both work, with or without spaces."
+    : "A dollar sign, commas, and a trailing zero are fine. Round only at the end.";
+  var inputMode = p.kind === "number" ? "decimal" : "text";
+  app.innerHTML = '<div class="panel">' + statsHTML() + '</div>' +
+    '<div class="panel" id="taskp"><span class="tag">Problem ' + (i + 1) + ' of ' + NP + ' · ' + esc(p.title) + '</span>' +
+    '<p id="q" style="font-size:1.05rem">' + esc(p.q) + '</p>' +
+    '<div class="stake">' + esc(p.why) + '</div>' +
+    (r.ok
+      ? '<p>Your answer: <b>' + esc(last) + '</b></p><div class="note"><b class="good">' + esc(checkAnswer(p, last).message) + '</b></div><button id="next" type="button" onclick="nextProblem()">' + (i + 1 < NP ? "Next problem" : "Finish the review") + '</button>'
+      : '<div class="row">' + (p.prefix ? '<span class="pre">' + esc(p.prefix) + '</span>' : '') +
+        '<input class="ans" id="ans" type="text" inputmode="' + inputMode + '" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="' + esc(p.ph) + '" value="' + esc(last) + '" aria-label="Your answer" onkeydown="if(event.key===\'Enter\')commitAnswer()">' +
+        '<button id="go" type="button" onclick="commitAnswer()">Check</button></div>' +
+        '<div class="muted" id="fmt" style="margin-top:6px">' + esc(note) + '</div>' +
+        '<div class="row"><button id="hintbtn" type="button" class="sec" onclick="openHint()"' + (r.hint ? " disabled" : "") + '>' + (r.hint ? "Hint open" : "Show hint") + '</button></div>' +
+        '<div class="note" id="hintbox"' + (r.hint ? "" : " hidden") + '><b>Hint.</b> ' + esc(p.hint) + '</div>' +
+        '<div class="note" id="fb" role="status" aria-live="polite"' + (prior ? "" : " hidden") + '>' + (prior ? '<b class="bad">' + esc(prior) + '</b>' : "") + '</div>') +
+    '</div>';
+  var inp = document.getElementById("ans");
+  if (inp) inp.focus();
+}
+function openHint() {
+  var r = st.results[st.idx];
+  r.hint = true;
+  persist();
+  var box = document.getElementById("hintbox");
+  if (box) box.hidden = false;
+  var btn = document.getElementById("hintbtn");
+  if (btn) { btn.disabled = true; btn.textContent = "Hint open"; }
+}
+function showFb(message, ok) {
+  var fb = document.getElementById("fb");
+  if (!fb) return;
+  fb.hidden = false;
+  fb.innerHTML = '<b class="' + (ok ? "good" : "bad") + '">' + esc(message) + '</b>';
+}
+function commitAnswer() {
+  var i = st.idx, p = PROBLEMS[i], r = st.results[i];
+  if (r.ok) return;
+  var input = document.getElementById("ans");
+  if (!input) return;
+  var raw = input.value.trim().slice(0, 200);
+  var res = checkAnswer(p, raw);
+  if (res.code === "empty") { showFb(res.message, false); return; }
+  r.tries++;
+  r.answers.push(raw);
+  if (res.code && res.code !== "ok" && r.codes.indexOf(res.code) < 0) r.codes.push(res.code);
+  if (res.ok) {
+    r.ok = true;
+    persist();
+    problem();
+    var el = document.getElementById("taskp");
+    if (el && el.scrollIntoView) el.scrollIntoView({ block: "start" });
+    return;
+  }
+  persist();
+  showFb(res.message, false);
+}
+function nextProblem() {
+  if (!st.results[st.idx].ok) return;
+  if (st.idx + 1 < NP) { st.idx++; persist(); render(); toTop(); return; }
+  finish();
+}
+function finish() {
+  st.stage = "done";
+  st.finishedAt = new Date().toISOString();
+  st.runs = (st.runs || 0) + 1;
+  st.lastDone = {
+    startedAt: st.startedAt,
+    finishedAt: st.finishedAt,
+    run: st.runs,
+    correct: correctCount(),
+    results: st.results.map(function (r) {
+      return { tries: r.tries, ok: r.ok, answers: r.answers.slice(), hint: !!r.hint, codes: r.codes.slice() };
+    })
+  };
+  persist();
+  render();
+  toTop();
+}
+function codeLabel(code) {
+  return {
+    early: "targeted hint: rounded too early",
+    exponent: "targeted hint: missing exponent",
+    factor: "hint: check the factor (growth vs decay)",
+    base: "hint: exponent goes on the factor",
+    finer: "hint: round the final answer",
+    coarser: "hint: rounded farther than asked",
+    steps: "hint: wrong number of steps",
+    invalid: "a try could not be read",
+    wrong: "general miss"
+  }[code] || code;
+}
+function done() {
+  var L = st.lastDone;
+  if (!L) { st.stage = "brief"; return render(); }
+  var rows = PROBLEMS.map(function (p, i) {
+    var r = L.results[i];
+    return "<tr><td>" + (i + 1) + "</td><td>" + esc(p.title) + "</td><td>" + r.tries + "</td><td>" + (r.hint ? "Yes" : "—") + "</td></tr>";
+  }).join("");
+  app.innerHTML = '<div class="panel"><h2>Review complete</h2>' +
+    '<p>You got <b>all ' + NP + ' problems</b> right.</p>' +
+    '<p class="muted">This was practice. It does not award credit.</p>' +
+    '<table><tr><th>#</th><th>Problem</th><th>Tries</th><th>Hint</th></tr>' + rows + '</table>' +
+    reportBtn("reviewReport", "📨 Send review report to Mom") +
+    '<div class="nextshift">This practice review stands on its own. It does not open another shift.<br><br><a href="../' + PREVIEW_QS + '">Back to the main game (Food Truck Season)</a></div>' +
+    '<p><button class="sec" type="button" onclick="practiceAgain()">Practice this review again</button></p></div>';
+  if (!PREVIEW && !st.autoSent) {
+    st.autoSent = true;
+    persist();
+    var b = document.querySelector("button.rep");
+    if (b) reportToMom(b, reviewReport);
+  }
+}
+function practiceAgain() {
+  if (!confirm("Practice this review again? The problems start over. A report already sent stays sent.")) return;
+  st = fresh(st);
+  persist();
+  render();
+  toTop();
+}
+
+/* ---- Report to Mom (FormSubmit AJAX) — same mechanism as the daily shifts ---- */
+var MOM_EMAIL = "8caedc1e9653325b52b367e2e172d2a3";
+var REPORT_URL = "https://formsubmit.co/ajax/" + MOM_EMAIL;
+function nowStr(){try{return new Date().toLocaleString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short"});}catch(e){return new Date().toString();}}
+function fmtTime(iso){ if(!iso) return "—"; try{return new Date(iso).toLocaleString("en-US",{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short"});}catch(e){return iso;} }
+function postReport(fields){
+  var ctl=typeof AbortController!=="undefined"?new AbortController():null;
+  var t=ctl?setTimeout(function(){ctl.abort();},15000):null;
+  return fetch(REPORT_URL,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(fields),signal:ctl?ctl.signal:undefined})
+    .then(function(r){return r.json().catch(function(){return {success:r.ok?"true":"false",message:"HTTP "+r.status};}).then(function(j){j._status=r.status;return j;});})
+    .finally(function(){if(t)clearTimeout(t);});
+}
+function reportBtn(builder,label,small){
+  if(PREVIEW) return '<div class="report"><button type="button" class="rep'+(small?" small":"")+'" disabled>📨 Reports off (preview)</button><span class="rstat">Preview – reports off</span></div>';
+  return '<div class="report"><button type="button" class="rep'+(small?" small":"")+'" onclick="reportToMom(this,'+builder+')">'+label+'</button><span class="rstat" role="status" aria-live="polite"></span></div>';
+}
+/*BACKUP_SENDER_v1*/
+var MOM_MAILTO = "dawnclay2011@gmail.com";
+function reportText(f){return Object.keys(f).filter(function(k){return k[0]!=="_";}).map(function(k){return k+": "+(typeof f[k]==="object"?JSON.stringify(f[k]):f[k]);}).join("\n");}
+function retryReport(fields){
+  var body=new URLSearchParams();
+  Object.keys(fields).forEach(function(k){body.append(k,typeof fields[k]==="object"?JSON.stringify(fields[k]):String(fields[k]));});
+  return fetch(REPORT_URL,{method:"POST",headers:{"Accept":"application/json"},body:body}).then(function(r){return r.json();}).then(function(j){if(String(j.success)!=="true")throw new Error(j.message||"retry failed");return j;});
+}
+function formPost(fields){try{
+  var fr=document.getElementById("bkFrame");
+  if(!fr){fr=document.createElement("iframe");fr.name=fr.id="bkFrame";fr.style.display="none";document.body.appendChild(fr);}
+  var fm=document.createElement("form");fm.method="POST";fm.action="https://formsubmit.co/"+MOM_EMAIL;fm.target="bkFrame";fm.style.display="none";
+  Object.keys(fields).forEach(function(k){var i=document.createElement("input");i.type="hidden";i.name=k;i.value=typeof fields[k]==="object"?JSON.stringify(fields[k]):String(fields[k]);fm.appendChild(i);});
+  document.body.appendChild(fm);fm.submit();setTimeout(function(){fm.remove();},5000);
+}catch(e){}}
+function backupPanel(btn,fields){
+  var host=btn.parentNode;if(host.querySelector(".bkp"))return;
+  var txt=(fields._subject||"Game Report")+"\n\n"+reportText(fields);
+  var p=document.createElement("div");p.className="bkp";p.style.cssText="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center";
+  var sub=encodeURIComponent(fields._subject||"Game Report");var b=txt;if(b.length>1800)b=b.slice(0,1800)+"\n…(cut short — tap Copy report and paste the rest)";
+  function mk(l,fn){var x=document.createElement("button");x.type="button";x.className="alt small";x.textContent=l;x.onclick=fn;p.appendChild(x);return x;}
+  mk("✉️ Send to Mom by email",function(){location.href="mailto:"+MOM_MAILTO+"?subject="+sub+"&body="+encodeURIComponent(b);});
+  var cp=mk("📋 Copy report",function(){var ok=function(){cp.textContent="Copied! ✅";};
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(ok,function(){fallbackCopy(txt,ok);});else fallbackCopy(txt,ok);});
+  if(navigator.share)mk("📤 Share report",function(){navigator.share({title:fields._subject||"Game Report",text:txt}).catch(function(){});});
+  var n=document.createElement("div");n.style.cssText="width:100%;font-size:.85em";n.textContent="Backup: email or copy your report to Mom, or tap Try again.";p.appendChild(n);
+  host.appendChild(p);
+}
+function fallbackCopy(t,ok){try{var a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();document.execCommand("copy");a.remove();ok();}catch(e){prompt("Copy this report:",t);}}
+function reportToMom(btn,build){
+  var statusEl=btn.nextElementSibling;
+  if(PREVIEW){btn.disabled=true;statusEl.textContent="Preview – reports off";return;}
+  if(btn.dataset.sent||btn.disabled)return;
+  if(navigator.onLine===false){statusEl.className="rstat bad";statusEl.textContent="No internet — try again later.";btn.textContent="🔁 Try again";return;}
+  var fields;
+  try{fields=Object.assign({_subject:REPORT_SUBJECT,_template:"box",_captcha:"false",Date:nowStr(),Player:REPORT_PLAYER,Game:REPORT_GAME},build());}
+  catch(e){statusEl.className="rstat bad";statusEl.textContent="Oops — couldn't build the report.";return;}
+  btn.disabled=true;btn.textContent="Sending… 📤";statusEl.className="rstat";statusEl.textContent="";
+  postReport(fields).then(function(j){
+    if(String(j.success)!=="true")throw new Error(j.message||"Send failed");
+    btn.dataset.sent="1";btn.textContent="Sent! ✅";btn.classList.add("sent");statusEl.className="rstat good";statusEl.textContent="Report sent to Mom.";
+  }).catch(function(e){
+    if(navigator.onLine!==false&&!/activat/i.test(e&&e.message||"")&&!btn.dataset.retried){
+      btn.dataset.retried="1";btn.textContent="Trying another way… 📤";
+      return retryReport(fields).then(function(){
+        btn.dataset.sent="1";btn.disabled=true;btn.textContent="Sent! ✅";btn.classList.add("sent");statusEl.className="rstat good";statusEl.textContent="Mom got your report!";
+      }).catch(function(e2){formPost(fields);bkFail(btn,statusEl,fields,e2);});
+    }
+    bkFail(btn,statusEl,fields,e);
+  });
+}
+function bkFail(btn,statusEl,fields,e){
+  backupPanel(btn,fields);
+  btn.disabled=false;btn.textContent="🔁 Try again";statusEl.className="rstat bad";
+  statusEl.textContent=navigator.onLine===false?"No internet — try again later.":/activat/i.test(e&&e.message||"")?"Reports aren't switched on yet. Try again later.":"That didn't send. Tap to try again.";
+}
+var REPORT_SUBJECT = "Game Report: Christian – Food Truck Review Shift (Precision & Models)";
+var REPORT_PLAYER = "Christian (age 14)";
+var REPORT_GAME = "Startup Tycoon: Food Truck Season — Review Shift";
+function reviewReport() {
+  var L = st.lastDone;
+  var f = {
+    "Report type": "Practice review shift — not credit. Exponential precision (round only at the end) and full exponential models.",
+    "Shift": "Review: Keep the decimals. Write the whole model.",
+    "Credit": "None. This page does not award credit.",
+    "Goal": "Get all 6 problems right. Unlimited tries. No timer.",
+    "Result": L.correct + " of " + NP + " correct",
+    "Started": fmtTime(L.startedAt),
+    "Finished": fmtTime(L.finishedAt),
+    "Play": L.run > 1 ? "Practice run #" + L.run : "First completion"
+  };
+  PROBLEMS.forEach(function (p, i) {
+    var r = L.results[i];
+    var targeted = r.codes.length ? r.codes.map(codeLabel).join("; ") : "None";
+    f["Q" + (i + 1) + " " + p.title] = (r.ok ? "✅ correct" : "not correct") +
+      " in " + r.tries + (r.tries === 1 ? " try" : " tries") +
+      " — his answer" + (r.answers.length > 1 ? "s" : "") + ": " + (r.answers.length ? r.answers.map(function (a) { return '"' + a + '"'; }).join(" then ") : "(none)") +
+      " • hint opened: " + (r.hint ? "yes" : "no") +
+      " • feedback flags: " + targeted +
+      " • key: " + answerKey(p);
+  });
+  return f;
+}
+
+function bootReview() {
+  app = document.getElementById("app");
+  if (PREVIEW) {
+    var b = document.createElement("span");
+    b.id = "previewBadge";
+    b.className = "tag";
+    b.style.cssText = "background:#8e44ad;color:#fff";
+    b.textContent = "Preview – reports off";
+    document.querySelector("header").appendChild(b);
+  }
+  loadState();
+  showHead();
+  render();
+}
+if (typeof document !== "undefined" && document.getElementById && document.getElementById("app")) bootReview();
+</script>
+</body>
+</html>
