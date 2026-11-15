@@ -303,6 +303,18 @@
                   "href": "https://dawnclay2011-ui.github.io/family-games/case-files/day13/"
                 }
               ]
+            },
+            {
+              "id": "puzzle-pack-11",
+              "version": 1,
+              "title": "Word Puzzles Pack 2 (printed, do with Mom): solve puzzles 11-16 and write your answers",
+              "instruction": "Use your printed Word Puzzles Pack 2 with Mom. Solve puzzles 11-16 and write your answers on the sheet.",
+              "steps": [
+                "Get the printed Word Puzzles Pack 2.",
+                "With Mom, solve puzzles 11 through 16.",
+                "Write your answers on the sheet."
+              ],
+              "finishedMeans": "Puzzles 11-16 are solved, and your answers are written on the sheet."
             }
           ]
         }
@@ -345,6 +357,18 @@
                   "href": "https://dawnclay2011-ui.github.io/family-games/case-files/day14/"
                 }
               ]
+            },
+            {
+              "id": "puzzle-pack-17",
+              "version": 1,
+              "title": "Word Puzzles Pack 2 (printed, do with Mom): solve puzzles 17-22 and write your answers",
+              "instruction": "Use your printed Word Puzzles Pack 2 with Mom. Solve puzzles 17-22 and write your answers on the sheet.",
+              "steps": [
+                "Get the printed Word Puzzles Pack 2.",
+                "With Mom, solve puzzles 17 through 22.",
+                "Write your answers on the sheet."
+              ],
+              "finishedMeans": "Puzzles 17-22 are solved, and your answers are written on the sheet."
             }
           ]
         }

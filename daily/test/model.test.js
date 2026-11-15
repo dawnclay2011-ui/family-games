@@ -151,12 +151,14 @@ test("each page uses that child's plan and falls back to the shared day", () => 
       title: "Today's case: Daily Case #13: Tracks in the Mud",
       href: "https://dawnclay2011-ui.github.io/family-games/case-files/day13/",
       short: false,
+      puzzle: "Word Puzzles Pack 2 (printed, do with Mom): solve puzzles 11-16 and write your answers",
     },
     "2026-11-17": {
       movie: /\bedit\b/,
       title: "Today's case: Daily Case #14: The Old Park Mystery",
       href: "https://dawnclay2011-ui.github.io/family-games/case-files/day14/",
       short: true,
+      puzzle: "Word Puzzles Pack 2 (printed, do with Mom): solve puzzles 17-22 and write your answers",
     },
     "2026-11-18": {
       movie: /premiere/,
@@ -168,12 +170,17 @@ test("each page uses that child's plan and falls back to the shared day", () => 
   for (const [date, expected] of Object.entries(movieDays)) {
     const cam = getDayContent(parsed.plan, "plan", date, "cam");
     const christian = getDayContent(parsed.plan, "plan", date, "christian");
-    assert.equal(cam.tasks.length, 2, date);
+    assert.equal(cam.tasks.length, expected.puzzle ? 3 : 2, date);
     assert.equal(cam.tasks[0].title, "Woods movie: today's step");
     assert.match(cam.tasks[0].instruction, expected.movie);
     assert.equal(cam.tasks[1].title, expected.title);
     assert.equal(cam.tasks[1].materials[0].href, expected.href);
     assert.equal(/short case/.test(cam.tasks[1].instruction), expected.short, date);
+    if (expected.puzzle) {
+      assert.equal(cam.tasks[2].title, expected.puzzle);
+      assert.deepEqual(cam.tasks[2].materials, []);
+      assert.equal(/https?:|report/i.test(JSON.stringify(cam.tasks[2])), false);
+    }
     assert.equal(christian.phase, "preparing", date);
     assert.equal(christian.message, "Your plan is being prepared.");
     assert.deepEqual(christian.tasks, []);
