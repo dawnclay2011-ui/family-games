@@ -275,16 +275,22 @@
           "status": "ready",
           "tasks": [
             {
-              "id": "woods-movie",
+              "id": "shot-list",
               "version": 1,
-              "title": "Woods movie: today's step",
-              "instruction": "Today's step is to edit.",
+              "title": "Carryover: Daily Case #12: The Shot List Mix-Up",
+              "instruction": "Open Daily Case #12: The Shot List Mix-Up and work through this case. This one is a short case. It was on yesterday's list.",
               "steps": [
-                "Open your woods movie footage.",
-                "Edit the parts you want to keep.",
-                "Save your edit."
+                "Open Daily Case #12: The Shot List Mix-Up.",
+                "Follow the case from the start.",
+                "Finish the case."
               ],
-              "finishedMeans": "You saved an edit of your woods movie."
+              "finishedMeans": "You have finished Daily Case #12: The Shot List Mix-Up.",
+              "materials": [
+                {
+                  "label": "Daily Case #12: The Shot List Mix-Up",
+                  "href": "https://dawnclay2011-ui.github.io/family-games/case-files/day12/"
+                }
+              ]
             },
             {
               "id": "tracks-in-the-mud",
@@ -315,6 +321,43 @@
                 "Write your answers on the sheet."
               ],
               "finishedMeans": "Puzzles 11-16 are solved, and your answers are written on the sheet."
+            }
+          ]
+        },
+        "christian": {
+          "status": "ready",
+          "tasks": [
+            {
+              "id": "hold-the-rounding",
+              "version": 1,
+              "title": "Carryover: Algebra review: Review Shift: Hold the Rounding",
+              "instruction": "Open Review Shift: Hold the Rounding and work six problems with hints. Round only at the end. Send the report to Mom when it clears.",
+              "steps": [
+                "Open Review Shift: Hold the Rounding.",
+                "Work the six problems, using the hints.",
+                "Round only at the end.",
+                "Send the report to Mom when it clears."
+              ],
+              "finishedMeans": "You worked the six problems, rounded only at the end, and sent the report to Mom.",
+              "materials": [
+                {
+                  "label": "Review Shift: Hold the Rounding",
+                  "href": "https://dawnclay2011-ui.github.io/family-games/food-truck/review/"
+                }
+              ]
+            },
+            {
+              "id": "zoo-sanctuary",
+              "version": 1,
+              "title": "Carryover: Finish your zoo vs. sanctuary paragraph",
+              "instruction": "This paragraph goes with your already-finished speech. Ask Mom if you want help, then finish it in your own words.",
+              "steps": [
+                "Read the zoo vs. sanctuary paragraph you started.",
+                "Ask Mom for help if you want it.",
+                "Write the rest of the paragraph.",
+                "Read the whole paragraph from the start."
+              ],
+              "finishedMeans": "Your zoo vs. sanctuary paragraph is finished."
             }
           ]
         }
