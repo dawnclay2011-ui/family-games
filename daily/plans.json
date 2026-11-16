@@ -358,6 +358,25 @@
                 "Read the whole paragraph from the start."
               ],
               "finishedMeans": "Your zoo vs. sanctuary paragraph is finished."
+            },
+            {
+              "id": "fall-festival-shift",
+              "version": 1,
+              "title": "Today's shift, if there is time: Food Truck Shift 4: Fall Festival Weekend",
+              "instruction": "If you have time at the library after the review and the paragraph, open Food Truck Shift 4: Fall Festival Weekend and work through the shift. Send the report to Mom when you finish.",
+              "steps": [
+                "Open Food Truck Shift 4: Fall Festival Weekend.",
+                "Follow the shift from the start.",
+                "Finish the shift.",
+                "Send the report to Mom."
+              ],
+              "finishedMeans": "You have finished Food Truck Shift 4: Fall Festival Weekend and sent the report to Mom.",
+              "materials": [
+                {
+                  "label": "Food Truck Shift 4: Fall Festival Weekend",
+                  "href": "https://dawnclay2011-ui.github.io/family-games/food-truck/day4/"
+                }
+              ]
             }
           ]
         }
