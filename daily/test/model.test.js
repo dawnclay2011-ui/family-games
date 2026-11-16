@@ -146,13 +146,6 @@ test("each page uses that child's plan and falls back to the shared day", () => 
       href: "https://dawnclay2011-ui.github.io/family-games/case-files/day12/",
       short: true,
     },
-    "2026-11-16": {
-      movie: /\bedit\b/,
-      title: "Today's case: Daily Case #13: Tracks in the Mud",
-      href: "https://dawnclay2011-ui.github.io/family-games/case-files/day13/",
-      short: false,
-      puzzle: "Word Puzzles Pack 2 (printed, do with Mom): solve puzzles 11-16 and write your answers",
-    },
     "2026-11-17": {
       movie: /\bedit\b/,
       title: "Today's case: Daily Case #14: The Old Park Mystery",
@@ -186,6 +179,27 @@ test("each page uses that child's plan and falls back to the shared day", () => 
     assert.deepEqual(christian.tasks, []);
     assert.equal(/\bChristian\b|case files/i.test(JSON.stringify(cam.tasks)), false);
   }
+
+  const nov16 = plan.days.find((day) => day.date === "2026-11-16");
+  assert.equal(nov16.status, "preparing");
+  assert.equal(nov16.message, "Your plan is being prepared.");
+  const cam16 = getDayContent(parsed.plan, "plan", "2026-11-16", "cam");
+  const christian16 = getDayContent(parsed.plan, "plan", "2026-11-16", "christian");
+  assert.deepEqual(cam16.tasks.map((task) => task.title), [
+    "Carryover: Daily Case #12: The Shot List Mix-Up",
+    "Today's case: Daily Case #13: Tracks in the Mud",
+    "Word Puzzles Pack 2 (printed, do with Mom): solve puzzles 11-16 and write your answers",
+  ]);
+  assert.equal(cam16.tasks[0].materials[0].href, "https://dawnclay2011-ui.github.io/family-games/case-files/day12/");
+  assert.equal(cam16.tasks[1].materials[0].href, "https://dawnclay2011-ui.github.io/family-games/case-files/day13/");
+  assert.deepEqual(cam16.tasks[2].materials, []);
+  assert.equal(cam16.tasks.some((task) => task.id === "woods-movie"), false);
+  assert.deepEqual(christian16.tasks.map((task) => task.title), [
+    "Carryover: Algebra review: Review Shift: Hold the Rounding",
+    "Carryover: Finish your zoo vs. sanctuary paragraph",
+  ]);
+  assert.equal(christian16.tasks[0].materials[0].href, "https://dawnclay2011-ui.github.io/family-games/food-truck/review/");
+  assert.deepEqual(christian16.tasks[1].materials, []);
 
   const previewChristian = getDayContent(parsed.plan, "preview", "2026-11-13", "christian");
   assert.equal(previewChristian.dateKey, "sample");
@@ -450,7 +464,7 @@ test("committed checklist copy stays free of private and unapproved topic text",
     };
     assert.equal(topic.test(JSON.stringify(shared)), false, day.date);
     if (day.children?.cam) assert.equal(topic.test(JSON.stringify(day.children.cam)), false, `${day.date} cam`);
-    if (day.date === "2026-11-13") {
+    if (day.date === "2026-11-13" || day.date === "2026-11-16") {
       assert.match(JSON.stringify(day.children.christian), /\bzoo\b/);
       assert.match(JSON.stringify(day.children.christian), /food-truck/);
     } else {
