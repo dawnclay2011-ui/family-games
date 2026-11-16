@@ -197,9 +197,11 @@ test("each page uses that child's plan and falls back to the shared day", () => 
   assert.deepEqual(christian16.tasks.map((task) => task.title), [
     "Carryover: Algebra review: Review Shift: Hold the Rounding",
     "Carryover: Finish your zoo vs. sanctuary paragraph",
+    "Today's shift, if there is time: Food Truck Shift 4: Fall Festival Weekend",
   ]);
   assert.equal(christian16.tasks[0].materials[0].href, "https://dawnclay2011-ui.github.io/family-games/food-truck/review/");
   assert.deepEqual(christian16.tasks[1].materials, []);
+  assert.equal(christian16.tasks[2].materials[0].href, "https://dawnclay2011-ui.github.io/family-games/food-truck/day4/");
 
   const previewChristian = getDayContent(parsed.plan, "preview", "2026-11-13", "christian");
   assert.equal(previewChristian.dateKey, "sample");
