@@ -202,8 +202,9 @@ function eventScreen(){
     body=`<p class="muted">You chose: ${esc(c.label)}</p>${e.mathAnswer!=null?`<p>Your numbers: <b>${esc(e.mathAnswer)}</b> ${e.mathOk?"✅":"❌"}</p>`:""}
     <div class="note">${txt}<br><b class="${e.effect>=0?"good":"bad"}">Event P&amp;L: ${e.effect>=0?"+":""}${money(e.effect)}</b>${e.badge?`<br>🏅 <b>Badge unlocked: ${esc(e.badge)}</b>`:""}</div>
     <p class="quote" style="border-left:3px solid #f4a261;padding-left:10px;color:#c9cfd9;font-style:italic;margin-top:14px">${esc(EV.quote)}<br><span style="font-style:normal">${esc(EV.line)}</span></p>
-    <label class="muted" for="why" style="display:block;margin-top:10px">Why'd you pick that? (optional)</label>
-    <div class="row"><input class="ans" id="why" maxlength="300" autocomplete="off" placeholder="one line" value="${esc(e.why||"")}" style="max-width:none"></div>
+    <label class="muted" for="why" style="display:block;margin-top:10px">Why'd you pick that? (required)<span style="display:block;margin-top:4px">One real sentence is required.</span></label>
+    <div class="row"><input class="ans" id="why" maxlength="300" autocomplete="off" required aria-required="true" placeholder="one real sentence" value="${esc(e.why||"")}" style="max-width:none"></div>
+    <div id="whyMsg" role="status" aria-live="polite" style="margin-top:6px"></div>
     <button onclick="evDone()" style="margin-top:10px">Back to the shift ▶</button>`;
   }
   app.innerHTML=`<div class="panel">${statsHTML()}</div>
@@ -227,8 +228,21 @@ function evMath(){
   if(e.badge){ all.badges=all.badges||{}; all.badges[DK]=e.badge; }
   e.stage="result"; persist(); eventScreen(); toTop();
 }
+function whyReal(s){
+  const t=String(s||"").trim();
+  return t.split(/\s+/).filter(Boolean).length>=3 && t.replace(/\s/g,"").length>=10;
+}
 function evDone(){
-  const e=st.ev; const w=document.getElementById("why"); e.why=w?w.value.trim().slice(0,300):""; e.done=true; e.active=false;
+  const e=st.ev; const w=document.getElementById("why"); const text=w?w.value.trim().slice(0,300):"";
+  if(!whyReal(text)){
+    e.why=text;
+    const m=document.getElementById("whyMsg");
+    if(m){ m.className="bad"; m.textContent="Tell Mom in one sentence why that choice helps the truck — think about cost, customers, or time."; }
+    if(w){ w.setAttribute("aria-invalid","true"); w.focus(); }
+    persist();
+    return;
+  }
+  e.why=text; e.done=true; e.active=false;
   if(EV.at<DAY.tasks.length) st.idx=EV.at; else finish();
   persist(); render(); toTop();
 }
@@ -352,7 +366,7 @@ function shiftReport(){
     if(E.choice==="c") f["His math on the event"]=`"${E.mathAnswer}" ${E.mathOk?"✅ correct":"❌ incorrect"} • key: ${c.math.show}`;
     f["Event result"]=`${E.effect>=0?"+":""}${money(E.effect)} to shift profit`+(E.badge?` • badge: ${E.badge}`:"");
     f["Quote shown after he chose"]=`${EV.quote} — ${EV.line}`;
-    f["Why he picked it (his words)"]=E.why?E.why:"(skipped)";
+    f["Why he picked it (his words)"]=(E.why||"").trim();
     const b=all.badges||{}; f["Badges this week"]=`${Object.keys(b).length} of ${TOTAL_DAYS}`+(Object.keys(b).length?` (${Object.keys(b).sort().map(k=>b[k]).join(", ")})`:"");
   } else f["Mid-shift event (stoic moment)"]="Not part of this run (finished before the event was added)";
   DAY.tasks.forEach((t,i)=>{ const r=L.results[i];
