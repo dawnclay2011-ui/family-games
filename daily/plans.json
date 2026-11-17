@@ -528,22 +528,64 @@
           "status": "ready",
           "tasks": [
             {
-              "id": "premiere-night",
+              "id": "woods-case-13",
               "version": 1,
-              "title": "Today's case: Daily Case #15: Premiere Night",
-              "instruction": "Open Daily Case #15: Premiere Night and work through today's case.",
+              "title": "Finish: Officer Cam's Case Files, Case #13",
+              "instruction": "Open Case #13 and solve it. Send the report to Mom when it is solved.",
               "steps": [
-                "Open Daily Case #15: Premiere Night.",
+                "Open Case #13.",
+                "Work through the case from the start.",
+                "Send the report to Mom when it is solved."
+              ],
+              "finishedMeans": "Case #13 is solved, and the report was sent to Mom.",
+              "materials": [
+                {
+                  "label": "Case #13",
+                  "href": "https://dawnclay2011-ui.github.io/family-games/case-files/day13/"
+                }
+              ]
+            },
+            {
+              "id": "palmer-cursive",
+              "version": 1,
+              "title": "Finish: Palmer cursive practice sheet",
+              "instruction": "Finish your printed Palmer cursive sheet.",
+              "steps": [
+                "Get your printed Palmer cursive sheet.",
+                "Finish the practice on the sheet."
+              ],
+              "finishedMeans": "Your Palmer cursive sheet is finished."
+            },
+            {
+              "id": "woods-case-14",
+              "version": 1,
+              "title": "If there's time: Case #14",
+              "instruction": "If there is time, open Case #14 and work through it.",
+              "steps": [
+                "Open Case #14.",
                 "Follow the case from the start.",
                 "Finish the case."
               ],
-              "finishedMeans": "You have finished Daily Case #15: Premiere Night.",
+              "finishedMeans": "You have finished Case #14.",
               "materials": [
                 {
-                  "label": "Daily Case #15: Premiere Night",
-                  "href": "https://dawnclay2011-ui.github.io/family-games/case-files/day15/"
+                  "label": "Case #14",
+                  "href": "https://dawnclay2011-ui.github.io/family-games/case-files/day14/"
                 }
               ]
+            },
+            {
+              "id": "parachute",
+              "version": 1,
+              "title": "This afternoon: Paratrooper parachute lab with Mom",
+              "instruction": "Use your printed Paratrooper Lab sheet. Build the parachute, then test it seated. Fill in the drop table and draw your best parachute.",
+              "steps": [
+                "Use your printed Paratrooper Lab sheet.",
+                "Build the parachute, then test it seated.",
+                "Fill in the drop table.",
+                "Draw your best parachute."
+              ],
+              "finishedMeans": "The lab sheet table is filled in and you've shown Mom your best parachute."
             }
           ]
         },
@@ -551,15 +593,49 @@
           "status": "ready",
           "tasks": [
             {
-              "id": "tuesday-open",
+              "id": "hold-the-rounding",
               "version": 1,
-              "title": "Finish anything from Tuesday that is still open",
-              "instruction": "Look at Tuesday's list. Finish any task that is still open.",
+              "title": "Finish: Algebra review: Review Shift: Hold the Rounding",
+              "instruction": "Work six problems with hints. Round only at the end. Send the report to Mom when it clears.",
               "steps": [
-                "Look at Tuesday's list.",
-                "Finish any task that is still open."
+                "Open Review Shift: Hold the Rounding.",
+                "Work the six problems, using the hints.",
+                "Round only at the end.",
+                "Send the report to Mom when it clears."
               ],
-              "finishedMeans": "Anything from Tuesday that was still open is finished."
+              "finishedMeans": "You worked the six problems, and the report was sent to Mom.",
+              "materials": [
+                {
+                  "label": "Review Shift: Hold the Rounding",
+                  "href": "https://dawnclay2011-ui.github.io/family-games/food-truck/review/"
+                }
+              ]
+            },
+            {
+              "id": "zoo-sanctuary",
+              "version": 1,
+              "title": "Finish: Zoo vs. sanctuary argument paragraph",
+              "instruction": "Follow your printed lesson page. The sentences are your own.",
+              "steps": [
+                "Read the printed lesson page for the zoo vs. sanctuary argument.",
+                "Write the paragraph in your own sentences.",
+                "Read the paragraph from the start."
+              ],
+              "finishedMeans": "Your zoo vs. sanctuary argument paragraph is written in your own sentences."
+            },
+            {
+              "id": "parachute",
+              "version": 1,
+              "title": "This afternoon: Parachute engineering test (finish)",
+              "instruction": "Use your printed Parachute Test sheet. Finish the trials in the data table, work out the averages and speed, and write your conclusion in your own words. Test seated.",
+              "steps": [
+                "Use your printed Parachute Test sheet.",
+                "Finish the trials in the data table.",
+                "Work out the averages and the speed.",
+                "Write your conclusion in your own words.",
+                "Test seated."
+              ],
+              "finishedMeans": "The data table and conclusion are complete, and you've sent Mom a photo of the sheet."
             }
           ]
         }

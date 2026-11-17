@@ -160,13 +160,6 @@ test("each page uses that child's plan and falls back to the shared day", () => 
       parachute: true,
       christianReady: true,
     },
-    "2026-11-18": {
-      movie: null,
-      title: "Today's case: Daily Case #15: Premiere Night",
-      href: "https://dawnclay2011-ui.github.io/family-games/case-files/day15/",
-      short: false,
-      christianReady: true,
-    },
   };
   for (const [date, expected] of Object.entries(movieDays)) {
     const cam = getDayContent(parsed.plan, "plan", date, "cam");
@@ -225,9 +218,33 @@ test("each page uses that child's plan and falls back to the shared day", () => 
   assert.equal(/Optional|If you have time/i.test(christian17.tasks[3].title + christian17.tasks[3].instruction), false);
   assert.equal(christian17.tasks[3].materials[0].href, "https://dawnclay2011-ui.github.io/family-games/food-truck/day4/");
   const christian18 = getDayContent(parsed.plan, "plan", "2026-11-18", "christian");
-  assert.deepEqual(christian18.tasks.map((task) => task.title), [
-    "Finish anything from Tuesday that is still open",
+  assert.deepEqual(christian18.tasks.map((task) => task.id), ["hold-the-rounding", "zoo-sanctuary", "parachute"]);
+  assert.equal(christian18.tasks[0].title, "Finish: Algebra review: Review Shift: Hold the Rounding");
+  assert.deepEqual(christian18.tasks[0].steps, [
+    "Open Review Shift: Hold the Rounding.",
+    "Work the six problems, using the hints.",
+    "Round only at the end.",
+    "Send the report to Mom when it clears.",
   ]);
+  assert.equal(christian18.tasks[0].materials[0].href, "https://dawnclay2011-ui.github.io/family-games/food-truck/review/");
+  assert.equal(christian18.tasks[0].finishedMeans, "You worked the six problems, and the report was sent to Mom.");
+  assert.equal(christian18.tasks[1].title, "Finish: Zoo vs. sanctuary argument paragraph");
+  assert.equal(christian18.tasks[1].instruction, "Follow your printed lesson page. The sentences are your own.");
+  assert.deepEqual(christian18.tasks[1].materials, []);
+  assert.equal(christian18.tasks[2].title, "This afternoon: Parachute engineering test (finish)");
+  assert.match(christian18.tasks[2].finishedMeans, /photo of the sheet/);
+  const cam18 = getDayContent(parsed.plan, "plan", "2026-11-18", "cam");
+  assert.deepEqual(cam18.tasks.map((task) => task.id), ["woods-case-13", "palmer-cursive", "woods-case-14", "parachute"]);
+  assert.equal(cam18.tasks[0].title, "Finish: Officer Cam's Case Files, Case #13");
+  assert.equal(cam18.tasks[0].materials[0].href, "https://dawnclay2011-ui.github.io/family-games/case-files/day13/");
+  assert.equal(cam18.tasks[1].title, "Finish: Palmer cursive practice sheet");
+  assert.equal(cam18.tasks[1].instruction, "Finish your printed Palmer cursive sheet.");
+  assert.equal(cam18.tasks[1].finishedMeans, "Your Palmer cursive sheet is finished.");
+  assert.deepEqual(cam18.tasks[1].materials, []);
+  assert.equal(cam18.tasks[2].title, "If there's time: Case #14");
+  assert.equal(cam18.tasks[2].materials[0].href, "https://dawnclay2011-ui.github.io/family-games/case-files/day14/");
+  assert.equal(cam18.tasks[3].title, "This afternoon: Paratrooper parachute lab with Mom");
+  assert.equal(cam18.tasks.some((task) => /17-22|puzzle-pack/.test(task.id + task.title)), false);
 
   const nov16 = plan.days.find((day) => day.date === "2026-11-16");
   assert.equal(nov16.status, "preparing");
@@ -550,13 +567,15 @@ test("committed checklist copy stays free of private and unapproved topic text",
       materials: day.materials,
     };
     assert.equal(topic.test(JSON.stringify(shared)), false, day.date);
-    if (day.children?.cam) assert.equal(topic.test(JSON.stringify(day.children.cam)), false, `${day.date} cam`);
-    if (day.date === "2026-11-13" || day.date === "2026-11-16" || day.date === "2026-11-17") {
+    if (day.children?.cam) {
+      const camText = day.date === "2026-11-18"
+        ? JSON.stringify(day.children.cam).replace("Officer Cam's Case Files, Case #13", "")
+        : JSON.stringify(day.children.cam);
+      assert.equal(topic.test(camText), false, `${day.date} cam`);
+    }
+    if (day.date === "2026-11-13" || day.date === "2026-11-16" || day.date === "2026-11-17" || day.date === "2026-11-18") {
       assert.match(JSON.stringify(day.children.christian), /\bzoo\b/);
       assert.match(JSON.stringify(day.children.christian), /food-truck/);
-    } else if (day.date === "2026-11-18") {
-      assert.equal(day.children.christian.status, "ready");
-      assert.equal(day.children.christian.tasks.length, 1);
     } else {
       assert.equal(day.children?.christian, undefined, day.date);
     }
