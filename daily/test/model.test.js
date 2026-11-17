@@ -220,6 +220,9 @@ test("each page uses that child's plan and falls back to the shared day", () => 
   assert.equal(christian17.tasks[0].materials[0].href, "https://dawnclay2011-ui.github.io/family-games/food-truck/review/");
   assert.deepEqual(christian17.tasks[1].materials, []);
   assert.deepEqual(christian17.tasks[2].materials, []);
+  assert.equal(christian17.tasks[3].title, "Food Truck Shift 4: Fall Festival Weekend");
+  assert.equal(christian17.tasks[3].instruction, "Finish Shift 4 today and send the report to Mom. It isn't done until Mom has the report.");
+  assert.equal(/Optional|If you have time/i.test(christian17.tasks[3].title + christian17.tasks[3].instruction), false);
   assert.equal(christian17.tasks[3].materials[0].href, "https://dawnclay2011-ui.github.io/family-games/food-truck/day4/");
   const christian18 = getDayContent(parsed.plan, "plan", "2026-11-18", "christian");
   assert.deepEqual(christian18.tasks.map((task) => task.title), [
