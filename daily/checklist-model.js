@@ -120,7 +120,7 @@ function sanitizeDay(day) {
     const clean = {};
     for (const [version, entry] of Object.entries(versions)) {
       if (!/^[1-9][0-9]{0,2}$/.test(version)) continue;
-      const mark = entry?.mark === "done" || entry?.mark === "help" ? entry.mark : "open";
+      const mark = entry?.mark === "done" || entry?.mark === "help" || entry?.mark === "progress" ? entry.mark : "open";
       const updatedAt = typeof entry?.updatedAt === "string" ? entry.updatedAt.slice(0, 40) : "";
       clean[version] = { mark, updatedAt };
     }
@@ -156,13 +156,13 @@ export function serializeRecord(record) {
 
 export function getMark(record, dateKey, taskId, version) {
   const mark = record?.days?.[dateKey]?.tasks?.[taskId]?.[String(version)]?.mark;
-  return mark === "done" || mark === "help" ? mark : "open";
+  return mark === "done" || mark === "help" || mark === "progress" ? mark : "open";
 }
 
 export function taskMark(record, dateKey, task) {
   const stored = record?.days?.[dateKey]?.tasks?.[task?.id]?.[String(task?.version)];
-  if (stored && (stored.mark === "done" || stored.mark === "help" || stored.mark === "open")) {
-    return stored.mark === "done" || stored.mark === "help" ? stored.mark : "open";
+  if (stored && (stored.mark === "done" || stored.mark === "help" || stored.mark === "progress" || stored.mark === "open")) {
+    return stored.mark === "done" || stored.mark === "help" || stored.mark === "progress" ? stored.mark : "open";
   }
   return task?.completed === true ? "done" : "open";
 }
@@ -179,7 +179,7 @@ export function setMark(record, { dateKey, taskId, version, mark, nowIso }) {
   if (!dayKeyOk(dateKey)) throw new Error("bad date");
   if (!ID_RE.test(taskId)) throw new Error("bad task");
   if (!Number.isInteger(version) || version < 1 || version > 999) throw new Error("bad version");
-  if (mark !== "done" && mark !== "help" && mark !== "open") throw new Error("bad mark");
+  if (mark !== "done" && mark !== "help" && mark !== "progress" && mark !== "open") throw new Error("bad mark");
   const next = cloneRecord(record);
   const day = next.days[dateKey] || { note: "", tasks: {} };
   const versions = { ...(day.tasks[taskId] || {}) };
@@ -511,14 +511,19 @@ export function buildSummary(input) {
   if (input.phase === "tasks") {
     const tasks = input.tasks || [];
     const finished = tasks.filter((task) => task.mark === "done");
+    const progress = tasks.filter((task) => task.mark === "progress");
     const help = tasks.filter((task) => task.mark === "help");
-    const open = tasks.filter((task) => task.mark !== "done" && task.mark !== "help");
+    const open = tasks.filter((task) => task.mark !== "done" && task.mark !== "help" && task.mark !== "progress");
     if (finished.length === 0) {
       lines.push(input.emptyFinished);
     } else {
       lines.push("You marked finished:");
       for (const task of finished) lines.push(`- ${task.title}`);
       if (finished.length === tasks.length && tasks.length > 0) lines.push(USER_COPY.allMarked);
+    }
+    if (progress.length) {
+      lines.push("", "In progress:");
+      for (const task of progress) lines.push(`- ${task.title}`);
     }
     if (open.length) {
       lines.push("", "Still on your list:");

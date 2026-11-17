@@ -245,6 +245,23 @@ fieldset {
 
 .task[data-mark="done"] .badge { background: var(--forest-soft); color: var(--forest); }
 .task[data-mark="help"] .badge { background: var(--help-soft); color: var(--help); }
+.task[data-mark="progress"] .badge { background: #f4a261; color: #3d2208; }
+
+button.progress-toggle {
+  width: 100%;
+  min-height: 44px;
+  font: inherit;
+  font-weight: 700;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+button.progress-toggle[aria-pressed="true"] {
+  border-color: #c56a12;
+  background: #ffe8cc;
+  color: #7a3e00;
+}
 
 .summary { margin-top: 16px; }
 

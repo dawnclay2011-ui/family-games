@@ -157,7 +157,7 @@ Shape of the saved value:
 }
 ```
 
-`mark` is `done`, `help`, or `open`. The preview uses the date key `sample` instead of a calendar date.
+`mark` is `done`, `help`, `progress`, or `open`. Christian's page uses `progress` for In progress. That mark stays on the list and is not counted as finished. Cam's page does not offer that control. The preview uses the date key `sample` instead of a calendar date.
 
 The page opens on the device's local date. Another date is available from the date control, including earlier days. Saving today does not erase another day and does not move unfinished tasks onto today.
 
