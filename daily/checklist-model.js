@@ -159,6 +159,14 @@ export function getMark(record, dateKey, taskId, version) {
   return mark === "done" || mark === "help" ? mark : "open";
 }
 
+export function taskMark(record, dateKey, task) {
+  const stored = record?.days?.[dateKey]?.tasks?.[task?.id]?.[String(task?.version)];
+  if (stored && (stored.mark === "done" || stored.mark === "help" || stored.mark === "open")) {
+    return stored.mark === "done" || stored.mark === "help" ? stored.mark : "open";
+  }
+  return task?.completed === true ? "done" : "open";
+}
+
 export function getNote(record, dateKey) {
   return record?.days?.[dateKey]?.note || "";
 }
@@ -253,7 +261,7 @@ function readTask(task, errors) {
   }
   const steps = Array.isArray(task?.steps) ? task.steps.map((step) => readText(step, 200, errors, "task_steps")) : [];
   const materials = readMaterials(task?.materials, errors);
-  return {
+  const read = {
     id,
     version: Number.isInteger(version) ? version : 0,
     title,
@@ -262,6 +270,8 @@ function readTask(task, errors) {
     finishedMeans,
     materials,
   };
+  if (task?.completed === true) read.completed = true;
+  return read;
 }
 
 function readTasks(list, errors) {

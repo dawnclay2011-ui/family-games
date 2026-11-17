@@ -320,7 +320,8 @@
                 "With Mom, solve puzzles 11 through 16.",
                 "Write your answers on the sheet."
               ],
-              "finishedMeans": "Puzzles 11-16 are solved, and your answers are written on the sheet."
+              "finishedMeans": "Puzzles 11-16 are solved, and your answers are written on the sheet.",
+              "completed": true
             }
           ]
         },
@@ -391,18 +392,6 @@
           "status": "ready",
           "tasks": [
             {
-              "id": "woods-movie",
-              "version": 1,
-              "title": "Woods movie: today's step",
-              "instruction": "Today's step is to edit.",
-              "steps": [
-                "Open your woods movie edit.",
-                "Edit the story you want to tell.",
-                "Save your edit."
-              ],
-              "finishedMeans": "You saved an edit of your woods movie."
-            },
-            {
               "id": "old-park",
               "version": 1,
               "title": "Today's case: Daily Case #14: The Old Park Mystery",
@@ -444,18 +433,6 @@
         "cam": {
           "status": "ready",
           "tasks": [
-            {
-              "id": "woods-movie",
-              "version": 1,
-              "title": "Woods movie: today's step",
-              "instruction": "Today's step is the premiere.",
-              "steps": [
-                "Get your woods movie ready to play.",
-                "Hold the premiere.",
-                "Watch the movie you made."
-              ],
-              "finishedMeans": "You held the premiere of your woods movie."
-            },
             {
               "id": "premiere-night",
               "version": 1,

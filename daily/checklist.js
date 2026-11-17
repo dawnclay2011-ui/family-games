@@ -12,7 +12,6 @@ import {
   emptyRecord,
   formatDateHeading,
   getDayContent,
-  getMark,
   getNote,
   loadRecord,
   messageForCopy,
@@ -25,6 +24,7 @@ import {
   setMark,
   setNote,
   storageKey,
+  taskMark,
   todayKey,
   isValidDateKey,
 } from "./checklist-model.js";
@@ -139,7 +139,7 @@ export async function createChecklistApp(container, options = {}) {
       note: getNote(record, content.dateKey),
       tasks: content.tasks.map((task) => ({
         title: task.title,
-        mark: getMark(record, content.dateKey, task.id, task.version),
+        mark: taskMark(record, content.dateKey, task),
       })),
     };
   }
@@ -228,7 +228,7 @@ export async function createChecklistApp(container, options = {}) {
   }
 
   function renderTask(task, contentDate) {
-    const mark = getMark(record, contentDate, task.id, task.version);
+    const mark = taskMark(record, contentDate, task);
     const finishedId = `finished-${task.id}`;
     const doneId = `done-${task.id}`;
     const helpId = `help-${task.id}`;

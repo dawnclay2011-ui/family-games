@@ -111,6 +111,7 @@ A child entry uses the same status rules as a shared day. A preparing child entr
 | `days[].children.cam` / `days[].children.christian` | Optional plan for that child on that date. The matching page uses this entry instead of the shared day. |
 | `days[].materials` | Shared links for a ready day. Safe `http:` or `https:` URLs, or a path relative to the `daily/` folder such as `packet.pdf`. No parent-folder paths, no script links, and no mail or phone links. |
 | `tasks[].materials` | Optional links for that task only. Same address rules as day materials. |
+| `tasks[].completed` | Optional. `true` starts that task marked finished. A check saved on the device replaces it. |
 | `tasks[].id` | Stable id, lowercase letters, numbers, and hyphens. |
 | `tasks[].version` | Integer starting at 1. |
 | `tasks[].steps` | At least one concrete step. Both pages show the steps. The guided page gives them more room. |

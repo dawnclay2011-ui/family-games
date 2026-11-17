@@ -23,6 +23,7 @@ import {
   setMark,
   setNote,
   storageKey,
+  taskMark,
   todayKey,
 } from "../checklist-model.js";
 
@@ -147,14 +148,14 @@ test("each page uses that child's plan and falls back to the shared day", () => 
       short: true,
     },
     "2026-11-17": {
-      movie: /\bedit\b/,
+      movie: null,
       title: "Today's case: Daily Case #14: The Old Park Mystery",
       href: "https://dawnclay2011-ui.github.io/family-games/case-files/day14/",
       short: true,
       puzzle: "Word Puzzles Pack 2 (printed, do with Mom): solve puzzles 17-22 and write your answers",
     },
     "2026-11-18": {
-      movie: /premiere/,
+      movie: null,
       title: "Today's case: Daily Case #15: Premiere Night",
       href: "https://dawnclay2011-ui.github.io/family-games/case-files/day15/",
       short: false,
@@ -163,16 +164,21 @@ test("each page uses that child's plan and falls back to the shared day", () => 
   for (const [date, expected] of Object.entries(movieDays)) {
     const cam = getDayContent(parsed.plan, "plan", date, "cam");
     const christian = getDayContent(parsed.plan, "plan", date, "christian");
-    assert.equal(cam.tasks.length, expected.puzzle ? 3 : 2, date);
-    assert.equal(cam.tasks[0].title, "Woods movie: today's step");
-    assert.match(cam.tasks[0].instruction, expected.movie);
-    assert.equal(cam.tasks[1].title, expected.title);
-    assert.equal(cam.tasks[1].materials[0].href, expected.href);
-    assert.equal(/short case/.test(cam.tasks[1].instruction), expected.short, date);
+    const offset = expected.movie ? 1 : 0;
+    assert.equal(cam.tasks.length, offset + 1 + (expected.puzzle ? 1 : 0), date);
+    if (expected.movie) {
+      assert.equal(cam.tasks[0].title, "Woods movie: today's step");
+      assert.match(cam.tasks[0].instruction, expected.movie);
+    } else {
+      assert.equal(cam.tasks.some((task) => task.id === "woods-movie"), false, date);
+    }
+    assert.equal(cam.tasks[offset].title, expected.title);
+    assert.equal(cam.tasks[offset].materials[0].href, expected.href);
+    assert.equal(/short case/.test(cam.tasks[offset].instruction), expected.short, date);
     if (expected.puzzle) {
-      assert.equal(cam.tasks[2].title, expected.puzzle);
-      assert.deepEqual(cam.tasks[2].materials, []);
-      assert.equal(/https?:|report/i.test(JSON.stringify(cam.tasks[2])), false);
+      assert.equal(cam.tasks[offset + 1].title, expected.puzzle);
+      assert.deepEqual(cam.tasks[offset + 1].materials, []);
+      assert.equal(/https?:|report/i.test(JSON.stringify(cam.tasks[offset + 1])), false);
     }
     assert.equal(christian.phase, "preparing", date);
     assert.equal(christian.message, "Your plan is being prepared.");
@@ -192,7 +198,17 @@ test("each page uses that child's plan and falls back to the shared day", () => 
   ]);
   assert.equal(cam16.tasks[0].materials[0].href, "https://dawnclay2011-ui.github.io/family-games/case-files/day12/");
   assert.equal(cam16.tasks[1].materials[0].href, "https://dawnclay2011-ui.github.io/family-games/case-files/day13/");
-  assert.deepEqual(cam16.tasks[2].materials, []);
+  assert.equal(cam16.tasks[2].id, "puzzle-pack-11");
+  assert.equal(cam16.tasks[2].completed, true);
+  assert.equal(taskMark(emptyRecord(), "2026-11-16", cam16.tasks[2]), "done");
+  const unchecked = setMark(emptyRecord(), {
+    dateKey: "2026-11-16",
+    taskId: "puzzle-pack-11",
+    version: 1,
+    mark: "open",
+    nowIso: "t",
+  });
+  assert.equal(taskMark(unchecked, "2026-11-16", cam16.tasks[2]), "open");
   assert.equal(cam16.tasks.some((task) => task.id === "woods-movie"), false);
   assert.deepEqual(christian16.tasks.map((task) => task.title), [
     "Carryover: Algebra review: Review Shift: Hold the Rounding",
