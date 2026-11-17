@@ -420,6 +420,82 @@
                 "Write your answers on the sheet."
               ],
               "finishedMeans": "Puzzles 17-22 are solved, and your answers are written on the sheet."
+            },
+            {
+              "id": "parachute",
+              "version": 1,
+              "title": "Make a parachute for your paratrooper with Mom, then test it",
+              "instruction": "With Mom, make a parachute for your paratrooper, then test it.",
+              "steps": [
+                "Make a parachute for your paratrooper with Mom.",
+                "Test the parachute."
+              ],
+              "finishedMeans": "The parachute is made, and you have tested it."
+            }
+          ]
+        },
+        "christian": {
+          "status": "ready",
+          "tasks": [
+            {
+              "id": "hold-the-rounding",
+              "version": 1,
+              "title": "Algebra review: Review Shift: Hold the Rounding",
+              "instruction": "Work six problems with hints. Round only at the end. Send the report to Mom when it clears.",
+              "steps": [
+                "Open Review Shift: Hold the Rounding.",
+                "Work the six problems, using the hints.",
+                "Round only at the end.",
+                "Send the report to Mom when it clears."
+              ],
+              "finishedMeans": "You worked the six problems, rounded only at the end, and sent the report to Mom.",
+              "materials": [
+                {
+                  "label": "Review Shift: Hold the Rounding",
+                  "href": "https://dawnclay2011-ui.github.io/family-games/food-truck/review/"
+                }
+              ]
+            },
+            {
+              "id": "zoo-sanctuary",
+              "version": 1,
+              "title": "Zoo vs. sanctuary argument paragraph",
+              "instruction": "Follow your printed lesson page. The sentences are your own.",
+              "steps": [
+                "Read the printed lesson page for the zoo vs. sanctuary argument.",
+                "Write the paragraph in your own sentences.",
+                "Read the paragraph from the start."
+              ],
+              "finishedMeans": "Your zoo vs. sanctuary argument paragraph is written in your own sentences."
+            },
+            {
+              "id": "parachute",
+              "version": 1,
+              "title": "Make a parachute for your paratrooper with Mom, then test it",
+              "instruction": "With Mom, make a parachute for your paratrooper, then test it.",
+              "steps": [
+                "Make a parachute for your paratrooper with Mom.",
+                "Test the parachute."
+              ],
+              "finishedMeans": "The parachute is made, and you have tested it."
+            },
+            {
+              "id": "fall-festival-shift",
+              "version": 1,
+              "title": "Optional: Food Truck Shift 4: Fall Festival Weekend",
+              "instruction": "If you have time, open Food Truck Shift 4: Fall Festival Weekend and work through the shift.",
+              "steps": [
+                "Open Food Truck Shift 4: Fall Festival Weekend.",
+                "Follow the shift from the start.",
+                "Finish the shift."
+              ],
+              "finishedMeans": "You have finished Food Truck Shift 4: Fall Festival Weekend.",
+              "materials": [
+                {
+                  "label": "Food Truck Shift 4: Fall Festival Weekend",
+                  "href": "https://dawnclay2011-ui.github.io/family-games/food-truck/day4/"
+                }
+              ]
             }
           ]
         }
@@ -450,6 +526,22 @@
                   "href": "https://dawnclay2011-ui.github.io/family-games/case-files/day15/"
                 }
               ]
+            }
+          ]
+        },
+        "christian": {
+          "status": "ready",
+          "tasks": [
+            {
+              "id": "tuesday-open",
+              "version": 1,
+              "title": "Finish anything from Tuesday that is still open",
+              "instruction": "Look at Tuesday's list. Finish any task that is still open.",
+              "steps": [
+                "Look at Tuesday's list.",
+                "Finish any task that is still open."
+              ],
+              "finishedMeans": "Anything from Tuesday that was still open is finished."
             }
           ]
         }
