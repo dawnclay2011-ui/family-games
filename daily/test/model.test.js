@@ -215,7 +215,7 @@ test("each page uses that child's plan and falls back to the shared day", () => 
     "Algebra review: Review Shift: Hold the Rounding",
     "Zoo vs. sanctuary argument paragraph",
     "Make a parachute for your paratrooper with Mom, then test it",
-    "Optional: Food Truck Shift 4: Fall Festival Weekend",
+    "Food Truck Shift 4: Fall Festival Weekend",
   ]);
   assert.equal(christian17.tasks[0].materials[0].href, "https://dawnclay2011-ui.github.io/family-games/food-truck/review/");
   assert.deepEqual(christian17.tasks[1].materials, []);
