@@ -400,7 +400,55 @@ camToday.host.querySelector("#day-input").value = "2026-11-14";
 camToday.host.querySelector("#day-input").dispatchEvent(new Event("change", { bubbles: true }));
 check("Cam November 14 shows the movie step then the case", text(camToday.host).includes("Woods movie: today's step") && text(camToday.host).includes("prep for filming") && text(camToday.host).indexOf("Woods movie: today's step") < text(camToday.host).indexOf("Daily Case #11: The Missing Script Page") && !text(camToday.host).includes("rebus"));
 check("Cam's November 14 case link is day 11", [...camToday.host.querySelectorAll("a")].some((anchor) => anchor.href.endsWith("/case-files/day11/")));
+check("Cam has no in progress control", camToday.host.querySelector("button.progress-toggle") == null);
 check("no form is added", document.querySelector("form") == null);
+
+const progressStore = createMemoryStorage();
+const progressView = await mount({
+  childId: "christian",
+  mode: "plan",
+  plan: real,
+  storage: progressStore,
+  now: () => new Date(2026, 10, 17, 9, 0, 0),
+  share: async () => {},
+  clipboard: { writeText: async () => {} },
+});
+const progressButton = progressView.host.querySelector("button.progress-toggle");
+check("Christian has an in progress control", progressButton?.textContent === "In progress" && Number.parseFloat(getComputedStyle(progressButton).minHeight) >= 44);
+progressButton.click();
+const progressTask = progressButton.closest("article");
+check("in progress is saved and is not finished", progressTask.dataset.mark === "progress" && progressTask.querySelector("[data-badge]").textContent === "In progress" && progressView.host.querySelector("#summary-text").textContent.includes("In progress:") && !progressView.host.querySelector("#summary-text").textContent.includes("You marked finished:"));
+const progressId = progressButton.id.replace("progress-", "");
+check("in progress is stored for this date", progressView.app.getState().record.days["2026-11-17"].tasks[progressId]["1"].mark === "progress");
+progressButton.click();
+check("tapping in progress again clears it", progressTask.dataset.mark === "open" && progressButton.getAttribute("aria-pressed") === "false");
+progressButton.click();
+progressTask.querySelector("input[id^='done-']").click();
+check("done clears in progress", progressTask.dataset.mark === "done" && progressButton.getAttribute("aria-pressed") === "false" && progressTask.querySelector("input[id^='done-']").checked);
+progressView.app.destroy();
+const progressAgain = await mount({
+  childId: "christian",
+  mode: "plan",
+  plan: real,
+  storage: progressStore,
+  now: () => new Date(2026, 10, 17, 9, 0, 0),
+  share: null,
+  clipboard: null,
+});
+const kept = progressAgain.host.querySelector(`#progress-${progressId}`);
+check("a refresh keeps in progress only when it was still in progress", kept?.getAttribute("aria-pressed") === "false");
+kept.click();
+progressAgain.app.destroy();
+const progressKept = await mount({
+  childId: "christian",
+  mode: "plan",
+  plan: real,
+  storage: progressStore,
+  now: () => new Date(2026, 10, 17, 9, 0, 0),
+  share: null,
+  clipboard: null,
+});
+check("a refresh restores in progress", progressKept.host.querySelector(`#progress-${progressId}`)?.getAttribute("aria-pressed") === "true" && progressKept.host.querySelector(`#task-${progressId}`)?.dataset.mark === "progress");
 
 document.querySelector("#app").dataset.ready = "true";
 document.querySelector("#out").textContent = failures.length

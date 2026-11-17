@@ -336,6 +336,32 @@ test("summary lists only what was marked", () => {
   assert.match(summary, /Your note:\nThe last count was tricky\./);
   assert.equal(summary.includes("You marked every task"), false);
   assert.equal(summary.includes("Mom received"), false);
+  const withProgress = buildSummary({
+    firstName: "Christian",
+    heading: "Tuesday, November 17, 2026",
+    phase: "tasks",
+    summaryLead: parsed.plan.presentations.guided.summaryLead,
+    emptyFinished: parsed.plan.presentations.guided.emptyFinished,
+    note: "",
+    tasks: [
+      { title: "Hold the Rounding", mark: "done" },
+      { title: "Zoo vs. sanctuary argument paragraph", mark: "progress" },
+      { title: "Make a parachute", mark: "open" },
+    ],
+  });
+  assert.match(withProgress, /You marked finished:\n- Hold the Rounding/);
+  assert.match(withProgress, /In progress:\n- Zoo vs\. sanctuary argument paragraph/);
+  assert.match(withProgress, /Still on your list:\n- Make a parachute/);
+  assert.equal(withProgress.includes("You marked finished:\n- Zoo vs. sanctuary"), false);
+  assert.equal(withProgress.includes("You marked every task"), false);
+  const savedProgress = setMark(emptyRecord(), {
+    dateKey: "2026-11-17",
+    taskId: "hold-the-rounding",
+    version: 1,
+    mark: "progress",
+    nowIso: "t",
+  });
+  assert.equal(getMark(loadRecord(JSON.stringify(savedProgress)).record, "2026-11-17", "hold-the-rounding", 1), "progress");
   const preparing = buildSummary({
     firstName: "Cam",
     heading: "Thursday, November 12, 2026",

@@ -73,6 +73,7 @@ function defaultShare(payload) {
 function badgeText(mark) {
   if (mark === "done") return "Marked finished";
   if (mark === "help") return "Needs help";
+  if (mark === "progress") return "In progress";
   return "Not marked yet";
 }
 
@@ -229,33 +230,71 @@ export async function createChecklistApp(container, options = {}) {
 
   function renderTask(task, contentDate) {
     const mark = taskMark(record, contentDate, task);
+    const showProgress = childId === "christian";
     const finishedId = `finished-${task.id}`;
     const doneId = `done-${task.id}`;
     const helpId = `help-${task.id}`;
+    const progressId = `progress-${task.id}`;
     const badge = el("p", { class: "badge", dataset: { badge: "true" }, text: badgeText(mark) });
     const doneInput = el("input", { type: "checkbox", id: doneId, "aria-describedby": finishedId });
     const helpInput = el("input", { type: "checkbox", id: helpId, "aria-describedby": finishedId });
+    let progressOn = mark === "progress";
     doneInput.checked = mark === "done";
     helpInput.checked = mark === "help";
+
+    function nextMark() {
+      if (doneInput.checked) return "done";
+      if (helpInput.checked) return "help";
+      if (progressOn) return "progress";
+      return "open";
+    }
 
     function syncBadge(next) {
       badge.textContent = badgeText(next);
       badge.dataset.state = next;
       article.dataset.mark = next;
+      if (progressButton) progressButton.setAttribute("aria-pressed", progressOn ? "true" : "false");
     }
 
     doneInput.addEventListener("change", () => {
-      if (doneInput.checked) helpInput.checked = false;
-      const next = doneInput.checked ? "done" : helpInput.checked ? "help" : "open";
+      if (doneInput.checked) {
+        helpInput.checked = false;
+        progressOn = false;
+      }
+      const next = nextMark();
       syncBadge(next);
       applyMark(task, next);
     });
     helpInput.addEventListener("change", () => {
-      if (helpInput.checked) doneInput.checked = false;
-      const next = helpInput.checked ? "help" : doneInput.checked ? "done" : "open";
+      if (helpInput.checked) {
+        doneInput.checked = false;
+        progressOn = false;
+      }
+      const next = nextMark();
       syncBadge(next);
       applyMark(task, next);
     });
+
+    const progressButton = showProgress
+      ? el("button", {
+        type: "button",
+        class: "choice progress-toggle",
+        id: progressId,
+        "aria-pressed": progressOn ? "true" : "false",
+      }, ["In progress"])
+      : null;
+    if (progressButton) {
+      progressButton.addEventListener("click", () => {
+        progressOn = !progressOn;
+        if (progressOn) {
+          doneInput.checked = false;
+          helpInput.checked = false;
+        }
+        const next = nextMark();
+        syncBadge(next);
+        applyMark(task, next);
+      });
+    }
 
     const article = el("article", { class: "task", id: `task-${task.id}`, dataset: { mark, taskId: task.id, version: String(task.version) } }, [
       el("h3", { text: task.title }),
@@ -272,6 +311,7 @@ export async function createChecklistApp(container, options = {}) {
         el("legend", { text: "Your check-in" }),
         el("label", { class: "choice done" }, [doneInput, el("span", { text: presentation.doneLabel })]),
         el("label", { class: "choice help" }, [helpInput, el("span", { text: presentation.helpLabel })]),
+        progressButton,
       ]),
       badge,
     ]);
