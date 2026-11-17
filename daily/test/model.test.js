@@ -149,9 +149,13 @@ test("each page uses that child's plan and falls back to the shared day", () => 
     },
     "2026-11-17": {
       movie: null,
-      title: "Today's case: Daily Case #14: The Old Park Mystery",
-      href: "https://dawnclay2011-ui.github.io/family-games/case-files/day14/",
-      short: true,
+      title: "Today's case: Daily Case #13: Tracks in the Mud",
+      href: "https://dawnclay2011-ui.github.io/family-games/case-files/day13/",
+      short: false,
+      later: {
+        title: "Daily Case #14: The Old Park Mystery (if there's time)",
+        href: "https://dawnclay2011-ui.github.io/family-games/case-files/day14/",
+      },
       puzzle: "Word Puzzles Pack 2 (printed, do with Mom): solve puzzles 17-22 and write your answers",
       parachute: true,
       christianReady: true,
@@ -168,7 +172,7 @@ test("each page uses that child's plan and falls back to the shared day", () => 
     const cam = getDayContent(parsed.plan, "plan", date, "cam");
     const christian = getDayContent(parsed.plan, "plan", date, "christian");
     const offset = expected.movie ? 1 : 0;
-    const extras = (expected.puzzle ? 1 : 0) + (expected.parachute ? 1 : 0);
+    const extras = (expected.later ? 1 : 0) + (expected.puzzle ? 1 : 0) + (expected.parachute ? 1 : 0);
     assert.equal(cam.tasks.length, offset + 1 + extras, date);
     if (expected.movie) {
       assert.equal(cam.tasks[0].title, "Woods movie: today's step");
@@ -179,10 +183,17 @@ test("each page uses that child's plan and falls back to the shared day", () => 
     assert.equal(cam.tasks[offset].title, expected.title);
     assert.equal(cam.tasks[offset].materials[0].href, expected.href);
     assert.equal(/short case/.test(cam.tasks[offset].instruction), expected.short, date);
+    let next = offset + 1;
+    if (expected.later) {
+      assert.equal(cam.tasks[next].title, expected.later.title);
+      assert.equal(cam.tasks[next].materials[0].href, expected.later.href);
+      next += 1;
+    }
     if (expected.puzzle) {
-      assert.equal(cam.tasks[offset + 1].title, expected.puzzle);
-      assert.deepEqual(cam.tasks[offset + 1].materials, []);
-      assert.equal(/https?:|report/i.test(JSON.stringify(cam.tasks[offset + 1])), false);
+      assert.equal(cam.tasks[next].title, expected.puzzle);
+      assert.deepEqual(cam.tasks[next].materials, []);
+      assert.equal(/https?:|report/i.test(JSON.stringify(cam.tasks[next])), false);
+      next += 1;
     }
     if (expected.parachute) {
       const parachute = cam.tasks.at(-1);
