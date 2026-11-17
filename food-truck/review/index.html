@@ -240,7 +240,26 @@ function ledger(L){
    <tr><th></th><th>Shift total</th><th></th><th class="good">${money(L.profit)}</th></tr></table>`;
 }
 function nextHTML(){
-  return `<div class="nextshift">Rosa can resend the packet. The exponent stays on, and the rounding waits until the end.<br><br><a href="../">Back to the main game (Food Truck Season)</a></div>`;
+  return `<div class="nextshift" id="review-next">Rosa can resend the packet. The exponent stays on, and the rounding waits until the end.<br><br><p id="review-gate"><b>Tap Send report to Mom first. Your review isn't done until Mom gets it.</b></p><p id="review-back" hidden><a href="https://dawnclay2011-ui.github.io/family-games/daily/christian/">Back to my checklist</a></p></div>`;
+}
+function revealChecklist(){
+  const gate=document.getElementById("review-gate");
+  const back=document.getElementById("review-back");
+  if(!gate || !back || back.dataset.ready==="1") return;
+  back.dataset.ready="1";
+  gate.hidden=true;
+  back.hidden=false;
+}
+function watchReportSent(){
+  const btn=document.querySelector("button.rep");
+  if(!btn) return;
+  const look=()=>{ if(btn.dataset.sent==="1") revealChecklist(); };
+  look();
+  if(typeof MutationObserver==="function"){
+    const obs=new MutationObserver(look);
+    obs.observe(btn,{attributes:true,attributeFilter:["data-sent","class"]});
+    if(btn.nextElementSibling) obs.observe(btn.nextElementSibling,{childList:true,characterData:true,subtree:true});
+  }
 }
 function done(){
   const L=st.lastDone; if(!L){ st.stage="brief"; return render(); }
@@ -254,6 +273,7 @@ function done(){
   ${nextHTML()}
   <p><button class="sec" onclick="replay()">Run this shift again</button></p></div>`;
   if(!PREVIEW && !st.autoSent){ st.autoSent=true; persist(); const b=document.querySelector("button.rep"); if(b) reportToMom(b,shiftReport); }
+  watchReportSent();
 }
 function replay(){ if(!confirm("Run this shift again? Your shift best is kept.")) return; st=fresh(st); persist(); render(); toTop(); }
 
