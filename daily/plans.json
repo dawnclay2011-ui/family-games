@@ -573,19 +573,6 @@
                   "href": "https://dawnclay2011-ui.github.io/family-games/case-files/day14/"
                 }
               ]
-            },
-            {
-              "id": "parachute",
-              "version": 1,
-              "title": "This afternoon: Paratrooper parachute lab with Mom",
-              "instruction": "Use your printed Paratrooper Lab sheet. Build the parachute, then test it seated. Fill in the drop table and draw your best parachute.",
-              "steps": [
-                "Use your printed Paratrooper Lab sheet.",
-                "Build the parachute, then test it seated.",
-                "Fill in the drop table.",
-                "Draw your best parachute."
-              ],
-              "finishedMeans": "The lab sheet table is filled in and you've shown Mom your best parachute."
             }
           ]
         },
@@ -622,20 +609,6 @@
                 "Read the paragraph from the start."
               ],
               "finishedMeans": "Your zoo vs. sanctuary argument paragraph is written in your own sentences."
-            },
-            {
-              "id": "parachute",
-              "version": 1,
-              "title": "This afternoon: Parachute engineering test (finish)",
-              "instruction": "Use your printed Parachute Test sheet. Finish the trials in the data table, work out the averages and speed, and write your conclusion in your own words. Test seated.",
-              "steps": [
-                "Use your printed Parachute Test sheet.",
-                "Finish the trials in the data table.",
-                "Work out the averages and the speed.",
-                "Write your conclusion in your own words.",
-                "Test seated."
-              ],
-              "finishedMeans": "The data table and conclusion are complete, and you've sent Mom a photo of the sheet."
             }
           ]
         }

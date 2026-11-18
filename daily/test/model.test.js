@@ -218,7 +218,7 @@ test("each page uses that child's plan and falls back to the shared day", () => 
   assert.equal(/Optional|If you have time/i.test(christian17.tasks[3].title + christian17.tasks[3].instruction), false);
   assert.equal(christian17.tasks[3].materials[0].href, "https://dawnclay2011-ui.github.io/family-games/food-truck/day4/");
   const christian18 = getDayContent(parsed.plan, "plan", "2026-11-18", "christian");
-  assert.deepEqual(christian18.tasks.map((task) => task.id), ["hold-the-rounding", "zoo-sanctuary", "parachute"]);
+  assert.deepEqual(christian18.tasks.map((task) => task.id), ["hold-the-rounding", "zoo-sanctuary"]);
   assert.equal(christian18.tasks[0].title, "Finish: Algebra review: Review Shift: Hold the Rounding");
   assert.deepEqual(christian18.tasks[0].steps, [
     "Open Review Shift: Hold the Rounding.",
@@ -231,10 +231,9 @@ test("each page uses that child's plan and falls back to the shared day", () => 
   assert.equal(christian18.tasks[1].title, "Finish: Zoo vs. sanctuary argument paragraph");
   assert.equal(christian18.tasks[1].instruction, "Follow your printed lesson page. The sentences are your own.");
   assert.deepEqual(christian18.tasks[1].materials, []);
-  assert.equal(christian18.tasks[2].title, "This afternoon: Parachute engineering test (finish)");
-  assert.match(christian18.tasks[2].finishedMeans, /photo of the sheet/);
+  assert.equal(christian18.tasks.some((task) => task.id === "parachute"), false);
   const cam18 = getDayContent(parsed.plan, "plan", "2026-11-18", "cam");
-  assert.deepEqual(cam18.tasks.map((task) => task.id), ["woods-case-13", "palmer-cursive", "woods-case-14", "parachute"]);
+  assert.deepEqual(cam18.tasks.map((task) => task.id), ["woods-case-13", "palmer-cursive", "woods-case-14"]);
   assert.equal(cam18.tasks[0].title, "Finish: Officer Cam's Case Files, Case #13");
   assert.equal(cam18.tasks[0].materials[0].href, "https://dawnclay2011-ui.github.io/family-games/case-files/day13/");
   assert.equal(cam18.tasks[1].title, "Finish: Palmer cursive practice sheet");
@@ -243,8 +242,7 @@ test("each page uses that child's plan and falls back to the shared day", () => 
   assert.deepEqual(cam18.tasks[1].materials, []);
   assert.equal(cam18.tasks[2].title, "If there's time: Case #14");
   assert.equal(cam18.tasks[2].materials[0].href, "https://dawnclay2011-ui.github.io/family-games/case-files/day14/");
-  assert.equal(cam18.tasks[3].title, "This afternoon: Paratrooper parachute lab with Mom");
-  assert.equal(cam18.tasks.some((task) => /17-22|puzzle-pack/.test(task.id + task.title)), false);
+  assert.equal(cam18.tasks.some((task) => task.id === "parachute" || /17-22|puzzle-pack/.test(task.id + task.title)), false);
 
   const nov16 = plan.days.find((day) => day.date === "2026-11-16");
   assert.equal(nov16.status, "preparing");
